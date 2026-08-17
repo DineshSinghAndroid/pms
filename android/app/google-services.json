@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "811664004421",
+    "project_id": "prince-banner",
+    "storage_bucket": "prince-banner.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:811664004421:android:2da9f1e7dd8f626f90da2c",
+        "android_client_info": {
+          "package_name": "com.pmchbanner.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJRsOwfb_Sl-l8978W3hi8j38wq7EIC7I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:811664004421:android:44ea540764a0949e90da2c",
+        "android_client_info": {
+          "package_name": "com.pms.prince.pms"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJRsOwfb_Sl-l8978W3hi8j38wq7EIC7I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
