@@ -10,7 +10,7 @@ class ApiService {
       return 'http://127.0.0.1:8000';
     }
     // Mac IP on local network for physical iPhone
-    return 'http://192.168.1.102:8000';
+    return 'http://192.168.1.146:8000';
   }
 
   ApiService() {
