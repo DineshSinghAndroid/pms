@@ -2,10 +2,22 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'bloc/announcement_bloc.dart';
-import 'bloc/announcement_event.dart';
+import 'bloc/category/category_bloc.dart';
+import 'bloc/category/category_event.dart';
+import 'bloc/product_type/product_type_bloc.dart';
+import 'bloc/product_type/product_type_event.dart';
+import 'bloc/user/user_bloc.dart';
+import 'bloc/user/user_event.dart';
+import 'bloc/vendor/vendor_bloc.dart';
+import 'bloc/vendor/vendor_event.dart';
+import 'bloc/wing/wing_bloc.dart';
+import 'bloc/wing/wing_event.dart';
 import 'firebase_options.dart';
-import 'repositories/announcement_repository.dart';
+import 'repositories/category_repository.dart';
+import 'repositories/product_type_repository.dart';
+import 'repositories/user_repository.dart';
+import 'repositories/vendor_repository.dart';
+import 'repositories/wing_repository.dart';
 import 'views/auth/login_screen.dart';
 import 'views/home/home_screen.dart';
 
@@ -28,16 +40,48 @@ class PmsApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
-        RepositoryProvider<AnnouncementRepository>(
-          create: (context) => AnnouncementRepository(),
+        RepositoryProvider<CategoryRepository>(
+          create: (context) => CategoryRepository(),
+        ),
+        RepositoryProvider<ProductTypeRepository>(
+          create: (context) => ProductTypeRepository(),
+        ),
+        RepositoryProvider<WingRepository>(
+          create: (context) => WingRepository(),
+        ),
+        RepositoryProvider<VendorRepository>(
+          create: (context) => VendorRepository(),
+        ),
+        RepositoryProvider<UserRepository>(
+          create: (context) => UserRepository(),
         ),
       ],
       child: MultiBlocProvider(
         providers: [
-          BlocProvider<AnnouncementBloc>(
-            create: (context) => AnnouncementBloc(
-              repository: context.read<AnnouncementRepository>(),
-            )..add(const FetchAnnouncementEvent()),
+          BlocProvider<CategoryBloc>(
+            create: (context) => CategoryBloc(
+              repository: context.read<CategoryRepository>(),
+            )..add(const FetchCategoriesEvent()),
+          ),
+          BlocProvider<ProductTypeBloc>(
+            create: (context) => ProductTypeBloc(
+              repository: context.read<ProductTypeRepository>(),
+            )..add(const FetchProductTypesEvent()),
+          ),
+          BlocProvider<WingBloc>(
+            create: (context) => WingBloc(
+              repository: context.read<WingRepository>(),
+            )..add(const FetchWingsEvent()),
+          ),
+          BlocProvider<VendorBloc>(
+            create: (context) => VendorBloc(
+              repository: context.read<VendorRepository>(),
+            )..add(const FetchVendorsEvent()),
+          ),
+          BlocProvider<UserBloc>(
+            create: (context) => UserBloc(
+              repository: context.read<UserRepository>(),
+            )..add(const FetchUsersEvent()),
           ),
         ],
         child: MaterialApp(

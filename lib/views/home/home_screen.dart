@@ -1,14 +1,131 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../bloc/announcement_bloc.dart';
-import '../../bloc/announcement_event.dart';
-import '../../bloc/announcement_state.dart';
+import '../../bloc/category/category_bloc.dart';
+import '../../bloc/category/category_event.dart';
+import '../../bloc/product_type/product_type_bloc.dart';
+import '../../bloc/product_type/product_type_event.dart';
+import '../../bloc/user/user_bloc.dart';
+import '../../bloc/user/user_event.dart';
+import '../../bloc/vendor/vendor_bloc.dart';
+import '../../bloc/vendor/vendor_event.dart';
+import '../../bloc/wing/wing_bloc.dart';
+import '../../bloc/wing/wing_event.dart';
+import '../categories/categories_tab_view.dart';
+import '../dashboard/dashboard_tab_view.dart';
+import '../layout/side_menu_drawer.dart';
+import '../product_types/product_types_tab_view.dart';
+import '../settings/settings_tab_view.dart';
+import '../users/users_tab_view.dart';
+import '../vendors/vendors_tab_view.dart';
+import '../wings/wings_tab_view.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final User user;
 
   const HomeScreen({super.key, required this.user});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  NavMenu _selectedMenu = NavMenu.dashboard;
+
+  bool get isSuperAdmin {
+    final phone = widget.user.phoneNumber ?? '';
+    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+    return cleanPhone.endsWith('7414055310');
+  }
+
+  String get _appBarTitle {
+    switch (_selectedMenu) {
+      case NavMenu.dashboard:
+        return 'Dashboard';
+      case NavMenu.vendors:
+        return 'Vendors';
+      case NavMenu.categories:
+        return 'Categories';
+      case NavMenu.productTypes:
+        return 'Product Types';
+      case NavMenu.wings:
+        return 'Wings Master';
+      case NavMenu.users:
+        return 'Users & Roles';
+      case NavMenu.settings:
+        return 'Settings';
+    }
+  }
+
+  void _onMenuSelected(NavMenu menu) {
+    setState(() {
+      _selectedMenu = menu;
+    });
+  }
+
+  void _refreshCurrentTab() {
+    if (isSuperAdmin) {
+      context.read<CategoryBloc>().add(const RefreshCategoriesEvent());
+      context.read<ProductTypeBloc>().add(const RefreshProductTypesEvent());
+      context.read<WingBloc>().add(const RefreshWingsEvent());
+      context.read<VendorBloc>().add(const RefreshVendorsEvent());
+      context.read<UserBloc>().add(const RefreshUsersEvent());
+    } else {
+      context.read<VendorBloc>().add(const RefreshVendorsEvent());
+    }
+  }
+
+  Widget _buildBody() {
+    switch (_selectedMenu) {
+      case NavMenu.dashboard:
+        return DashboardTabView(
+          isSuperAdmin: isSuperAdmin,
+          userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+          onNavigate: (menu) {
+            setState(() {
+              _selectedMenu = menu;
+            });
+          },
+        );
+      case NavMenu.vendors:
+        return isSuperAdmin
+            ? const VendorsTabView()
+            : DashboardTabView(
+                isSuperAdmin: isSuperAdmin,
+                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+              );
+      case NavMenu.categories:
+        return isSuperAdmin
+            ? const CategoriesTabView()
+            : DashboardTabView(
+                isSuperAdmin: isSuperAdmin,
+                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+              );
+      case NavMenu.productTypes:
+        return isSuperAdmin
+            ? const ProductTypesTabView()
+            : DashboardTabView(
+                isSuperAdmin: isSuperAdmin,
+                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+              );
+      case NavMenu.wings:
+        return isSuperAdmin
+            ? const WingsTabView()
+            : DashboardTabView(
+                isSuperAdmin: isSuperAdmin,
+                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+              );
+      case NavMenu.users:
+        return isSuperAdmin
+            ? const UsersTabView()
+            : DashboardTabView(
+                isSuperAdmin: isSuperAdmin,
+                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+              );
+      case NavMenu.settings:
+        return const SettingsTabView();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,13 +134,19 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E293B),
         elevation: 0,
-        centerTitle: false,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu_rounded, color: Colors.white),
+            tooltip: 'Open Menu',
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         title: Row(
           children: [
             const Text(
               'PMS Admin',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 17,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.3,
                 color: Colors.white,
@@ -31,16 +154,17 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: const BoxDecoration(
-                color: Color(0xFF1E3A8A),
-                borderRadius: BorderRadius.all(Radius.circular(6)),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E3A8A),
+                borderRadius: BorderRadius.circular(6),
               ),
-              child: const Text(
-                'LIVE',
-                style: TextStyle(
+              child: Text(
+                _appBarTitle.toUpperCase(),
+                style: const TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                   color: Color(0xFF60A5FA),
                 ),
               ),
@@ -50,12 +174,8 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Color(0xFF94A3B8)),
-            tooltip: 'Refresh Message',
-            onPressed: () {
-              context
-                  .read<AnnouncementBloc>()
-                  .add(const RefreshAnnouncementEvent());
-            },
+            tooltip: 'Refresh Data',
+            onPressed: _refreshCurrentTab,
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: Color(0xFFFDA4AF)),
@@ -66,301 +186,19 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        color: const Color(0xFF2563EB),
-        backgroundColor: const Color(0xFF1E293B),
-        onRefresh: () async {
-          context
-              .read<AnnouncementBloc>()
-              .add(const RefreshAnnouncementEvent());
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // User Status Header Card
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF334155)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.shield_outlined,
-                            color: Colors.white, size: 22),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Super Admin',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            user.phoneNumber ?? '+91 7414055310',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF94A3B8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF065F46).withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF059669)),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.circle, color: Color(0xFF10B981), size: 8),
-                          SizedBox(width: 5),
-                          Text(
-                            'Active',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF34D399),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Broadcast Title
-              const Row(
-                children: [
-                  Icon(Icons.campaign_rounded,
-                      color: Color(0xFF38BDF8), size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'Admin Broadcast Message',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              // BLoC State Builder for Real-Time Announcement Message
-              BlocBuilder<AnnouncementBloc, AnnouncementState>(
-                builder: (context, state) {
-                  if (state is AnnouncementLoading) {
-                    return Container(
-                      height: 140,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: const Color(0xFF334155)),
-                      ),
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF2563EB),
-                          strokeWidth: 2.5,
-                        ),
-                      ),
-                    );
-                  }
-
-                  if (state is AnnouncementError) {
-                    return Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4C0519).withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: const Color(0xFFE11D48)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Row(
-                            children: [
-                              Icon(Icons.error_outline_rounded,
-                                  color: Color(0xFFFB7185), size: 18),
-                              SizedBox(width: 8),
-                              Text(
-                                'Unable to load message',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFFDA4AF),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            state.errorMessage,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFFFECDD3),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              context
-                                  .read<AnnouncementBloc>()
-                                  .add(const FetchAnnouncementEvent());
-                            },
-                            icon: const Icon(Icons.refresh, size: 16),
-                            label: const Text('Retry Connection'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFBE123C),
-                              foregroundColor: Colors.white,
-                              textStyle: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  if (state is AnnouncementLoaded) {
-                    final msg = state.announcement.message;
-                    final author = state.announcement.author;
-
-                    return Container(
-                      padding: const EdgeInsets.all(22),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: const Color(0xFF3B82F6).withValues(alpha: 0.5),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2563EB).withValues(alpha: 0.12),
-                            blurRadius: 18,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF2563EB)
-                                      .withValues(alpha: 0.25),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.record_voice_over_rounded,
-                                        color: Color(0xFF60A5FA), size: 14),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'From: $author',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF93C5FD),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const Text(
-                                'Real-Time Sync',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF10B981),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            msg.isNotEmpty
-                                ? msg
-                                : 'No broadcast message currently set in PMS Admin.',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              height: 1.5,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          const Divider(color: Color(0xFF334155)),
-                          const SizedBox(height: 8),
-                          const Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Pull down to refresh',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Color(0xFF64748B),
-                                ),
-                              ),
-                              Text(
-                                'Synced via Dio API',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return const SizedBox.shrink();
-                },
-              ),
-            ],
-          ),
+      drawer: Drawer(
+        backgroundColor: const Color(0xFF0F172A),
+        child: SideMenuDrawer(
+          selectedMenu: _selectedMenu,
+          onMenuSelected: (menu) {
+            _onMenuSelected(menu);
+            Navigator.pop(context); // Close drawer
+          },
+          user: widget.user,
+          isSuperAdmin: isSuperAdmin,
         ),
       ),
+      body: _buildBody(),
     );
   }
 }
