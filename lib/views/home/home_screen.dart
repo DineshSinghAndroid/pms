@@ -3,18 +3,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/category/category_bloc.dart';
 import '../../bloc/category/category_event.dart';
+import '../../bloc/print_order/print_order_bloc.dart';
+import '../../bloc/print_order/print_order_event.dart';
 import '../../bloc/product_type/product_type_bloc.dart';
 import '../../bloc/product_type/product_type_event.dart';
+import '../../bloc/purchase_request/purchase_request_bloc.dart';
+import '../../bloc/purchase_request/purchase_request_event.dart';
 import '../../bloc/user/user_bloc.dart';
 import '../../bloc/user/user_event.dart';
 import '../../bloc/vendor/vendor_bloc.dart';
 import '../../bloc/vendor/vendor_event.dart';
 import '../../bloc/wing/wing_bloc.dart';
 import '../../bloc/wing/wing_event.dart';
+import '../../models/user_model.dart';
+import '../../repositories/user_repository.dart';
 import '../categories/categories_tab_view.dart';
 import '../dashboard/dashboard_tab_view.dart';
+import '../delivery_logs/delivery_logs_tab_view.dart';
 import '../layout/side_menu_drawer.dart';
+import '../post_orders/post_orders_tab_view.dart';
+import '../print_orders/print_orders_tab_view.dart';
 import '../product_types/product_types_tab_view.dart';
+import '../purchase_requests/purchase_requests_tab_view.dart';
 import '../settings/settings_tab_view.dart';
 import '../users/users_tab_view.dart';
 import '../vendors/vendors_tab_view.dart';
@@ -31,30 +41,65 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   NavMenu _selectedMenu = NavMenu.dashboard;
+  UserModel? _userProfile;
+  bool _isLoadingProfile = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final phone = widget.user.phoneNumber ?? '';
+    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+
+    try {
+      final repo = context.read<UserRepository>();
+      final profile = await repo.getProfile(cleanPhone);
+      if (mounted) {
+        setState(() {
+          _userProfile = profile;
+          _isLoadingProfile = false;
+        });
+
+        // Trigger appropriate PR fetch depending on role
+        if (isDesigner && _userProfile != null) {
+          context.read<PurchaseRequestBloc>().add(
+                FetchPurchaseRequestsEvent(
+                  designerId: _userProfile!.id,
+                  phone: cleanPhone,
+                ),
+              );
+        } else if (isSuperAdmin) {
+          context.read<PurchaseRequestBloc>().add(const FetchPurchaseRequestsEvent());
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingProfile = false;
+        });
+      }
+    }
+  }
 
   bool get isSuperAdmin {
+    if (_userProfile?.role.toLowerCase() == 'superadmin' ||
+        _userProfile?.role == 'Super Admin') {
+      return true;
+    }
     final phone = widget.user.phoneNumber ?? '';
     final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
     return cleanPhone.endsWith('7414055310');
   }
 
-  String get _appBarTitle {
-    switch (_selectedMenu) {
-      case NavMenu.dashboard:
-        return 'Dashboard';
-      case NavMenu.vendors:
-        return 'Vendors';
-      case NavMenu.categories:
-        return 'Categories';
-      case NavMenu.productTypes:
-        return 'Product Types';
-      case NavMenu.wings:
-        return 'Wings Master';
-      case NavMenu.users:
-        return 'Users & Roles';
-      case NavMenu.settings:
-        return 'Settings';
-    }
+  bool get isDesigner {
+    return _userProfile?.role == 'Designer';
+  }
+
+  bool get isVendor {
+    return _userProfile?.role.toLowerCase() == 'vendor';
   }
 
   void _onMenuSelected(NavMenu menu) {
@@ -64,14 +109,29 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _refreshCurrentTab() {
+    final phone = widget.user.phoneNumber ?? '';
+    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+
     if (isSuperAdmin) {
+      context.read<PurchaseRequestBloc>().add(const FetchPurchaseRequestsEvent());
       context.read<CategoryBloc>().add(const RefreshCategoriesEvent());
       context.read<ProductTypeBloc>().add(const RefreshProductTypesEvent());
       context.read<WingBloc>().add(const RefreshWingsEvent());
       context.read<VendorBloc>().add(const RefreshVendorsEvent());
       context.read<UserBloc>().add(const RefreshUsersEvent());
+      context.read<PrintOrderBloc>().add(FetchPrintOrders(phone: cleanPhone));
+      context.read<PrintOrderBloc>().add(const FetchDeliveryLogsEvent());
+    } else if (isDesigner) {
+      context.read<PurchaseRequestBloc>().add(
+            FetchPurchaseRequestsEvent(
+              designerId: _userProfile?.id,
+              phone: cleanPhone,
+            ),
+          );
+      context.read<PrintOrderBloc>().add(FetchPrintOrders(phone: cleanPhone));
     } else {
       context.read<VendorBloc>().add(const RefreshVendorsEvent());
+      context.read<PrintOrderBloc>().add(FetchPrintOrders(phone: cleanPhone));
     }
   }
 
@@ -80,6 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
       case NavMenu.dashboard:
         return DashboardTabView(
           isSuperAdmin: isSuperAdmin,
+          isDesigner: isDesigner,
+          userProfile: _userProfile,
           userPhone: widget.user.phoneNumber ?? '+91 7414055310',
           onNavigate: (menu) {
             setState(() {
@@ -92,13 +154,46 @@ class _HomeScreenState extends State<HomeScreen> {
             ? const VendorsTabView()
             : DashboardTabView(
                 isSuperAdmin: isSuperAdmin,
+                isDesigner: isDesigner,
+                userProfile: _userProfile,
                 userPhone: widget.user.phoneNumber ?? '+91 7414055310',
               );
+      case NavMenu.purchaseRequests:
+        return PurchaseRequestsTabView(
+          isSuperAdmin: isSuperAdmin,
+          currentUser: _userProfile,
+        );
+      case NavMenu.printOrders:
+        return PrintOrdersTabView(
+          isSuperAdmin: isSuperAdmin,
+          isDesigner: isDesigner,
+          userProfile: _userProfile,
+        );
+      case NavMenu.deliveryLogs:
+        return isSuperAdmin
+            ? DeliveryLogsTabView(
+                userProfile: _userProfile,
+                isSuperAdmin: isSuperAdmin,
+              )
+            : DashboardTabView(
+                isSuperAdmin: isSuperAdmin,
+                isDesigner: isDesigner,
+                userProfile: _userProfile,
+                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+              );
+      case NavMenu.postOrders:
+        return PostOrdersTabView(
+          isSuperAdmin: isSuperAdmin,
+          isDesigner: isDesigner,
+          currentUser: _userProfile,
+        );
       case NavMenu.categories:
         return isSuperAdmin
             ? const CategoriesTabView()
             : DashboardTabView(
                 isSuperAdmin: isSuperAdmin,
+                isDesigner: isDesigner,
+                userProfile: _userProfile,
                 userPhone: widget.user.phoneNumber ?? '+91 7414055310',
               );
       case NavMenu.productTypes:
@@ -106,6 +201,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ? const ProductTypesTabView()
             : DashboardTabView(
                 isSuperAdmin: isSuperAdmin,
+                isDesigner: isDesigner,
+                userProfile: _userProfile,
                 userPhone: widget.user.phoneNumber ?? '+91 7414055310',
               );
       case NavMenu.wings:
@@ -113,6 +210,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ? const WingsTabView()
             : DashboardTabView(
                 isSuperAdmin: isSuperAdmin,
+                isDesigner: isDesigner,
+                userProfile: _userProfile,
                 userPhone: widget.user.phoneNumber ?? '+91 7414055310',
               );
       case NavMenu.users:
@@ -120,6 +219,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ? const UsersTabView()
             : DashboardTabView(
                 isSuperAdmin: isSuperAdmin,
+                isDesigner: isDesigner,
+                userProfile: _userProfile,
                 userPhone: widget.user.phoneNumber ?? '+91 7414055310',
               );
       case NavMenu.settings:
@@ -129,6 +230,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingProfile) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0F172A),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A), // Slate 900
       appBar: AppBar(
@@ -152,23 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.white,
               ),
             ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E3A8A),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                _appBarTitle.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                  color: Color(0xFF60A5FA),
-                ),
-              ),
-            ),
+
           ],
         ),
         actions: [
@@ -195,7 +289,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.pop(context); // Close drawer
           },
           user: widget.user,
+          userProfile: _userProfile,
           isSuperAdmin: isSuperAdmin,
+          isDesigner: isDesigner,
         ),
       ),
       body: _buildBody(),

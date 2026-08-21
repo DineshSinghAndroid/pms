@@ -3,18 +3,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/category/category_bloc.dart';
 import '../../bloc/category/category_state.dart';
+import '../../bloc/print_order/print_order_bloc.dart';
+import '../../bloc/print_order/print_order_state.dart';
 import '../../bloc/product_type/product_type_bloc.dart';
 import '../../bloc/product_type/product_type_state.dart';
+import '../../bloc/purchase_request/purchase_request_bloc.dart';
+import '../../bloc/purchase_request/purchase_request_state.dart';
 import '../../bloc/user/user_bloc.dart';
 import '../../bloc/user/user_state.dart';
 import '../../bloc/vendor/vendor_bloc.dart';
 import '../../bloc/vendor/vendor_state.dart';
 import '../../bloc/wing/wing_bloc.dart';
 import '../../bloc/wing/wing_state.dart';
+import '../../models/user_model.dart';
 
 enum NavMenu {
   dashboard,
   vendors,
+  purchaseRequests,
+  printOrders,
+  deliveryLogs,
+  postOrders,
   categories,
   productTypes,
   wings,
@@ -26,14 +35,18 @@ class SideMenuDrawer extends StatefulWidget {
   final NavMenu selectedMenu;
   final Function(NavMenu) onMenuSelected;
   final User user;
+  final UserModel? userProfile;
   final bool isSuperAdmin;
+  final bool isDesigner;
 
   const SideMenuDrawer({
     super.key,
     required this.selectedMenu,
     required this.onMenuSelected,
     required this.user,
+    this.userProfile,
     required this.isSuperAdmin,
+    this.isDesigner = false,
   });
 
   @override
@@ -46,8 +59,10 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    final userPhone = widget.user.phoneNumber ?? '+91 7414055310';
-    final roleName = widget.isSuperAdmin ? 'Super Admin' : 'Printing Vendor';
+    final userPhone = widget.userProfile?.phone ?? widget.user.phoneNumber ?? '+91 7414055310';
+    final roleName = widget.userProfile?.role ??
+        (widget.isSuperAdmin ? 'Super Admin' : (widget.isDesigner ? 'Designer' : 'Printing Vendor'));
+    final displayName = widget.userProfile?.name ?? roleName;
 
     return Container(
       width: 280,
@@ -71,25 +86,27 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
+                      gradient: LinearGradient(
+                        colors: widget.isDesigner
+                            ? [const Color(0xFFF59E0B), const Color(0xFFD97706)]
+                            : [const Color(0xFF2563EB), const Color(0xFF4F46E5)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color:
-                              const Color(0xFF2563EB).withValues(alpha: 0.35),
+                          color: (widget.isDesigner ? const Color(0xFFF59E0B) : const Color(0xFF2563EB))
+                              .withValues(alpha: 0.35),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
                       ],
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
-                        'P',
-                        style: TextStyle(
+                        widget.isDesigner ? 'D' : 'P',
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
@@ -98,19 +115,19 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'PMS Admin',
-                        style: TextStyle(
+                        widget.isDesigner ? 'PMS Designer' : 'PMS Admin',
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           letterSpacing: -0.3,
                           color: Colors.white,
                         ),
                       ),
-                      Text(
+                      const Text(
                         'PRINCE EDUHUB',
                         style: TextStyle(
                           fontSize: 9,
@@ -143,7 +160,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   const SizedBox(height: 18),
 
                   // --- SECTION 2: PRINT MANAGEMENT (Expandable) ---
-                  if (widget.isSuperAdmin) ...[
+                  if (widget.isSuperAdmin || widget.isDesigner) ...[
                     _buildExpandableHeading(
                       title: 'PRINT MANAGEMENT',
                       color: const Color(0xFF60A5FA),
@@ -157,63 +174,124 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                     ),
                     if (_isPrintManagementExpanded) ...[
                       const SizedBox(height: 4),
-                      // 1. Vendors
-                      BlocBuilder<VendorBloc, VendorState>(
+                      // 1. Vendors (Admin only)
+                      if (widget.isSuperAdmin)
+                        BlocBuilder<VendorBloc, VendorState>(
+                          builder: (context, state) {
+                            final count =
+                                state is VendorLoaded ? state.vendors.length : 0;
+                            return _buildMenuItem(
+                              menu: NavMenu.vendors,
+                              icon: Icons.storefront_outlined,
+                              label: 'Vendors',
+                              badgeCount: count,
+                            );
+                          },
+                        ),
+                      // 2. Purchase Request (PR) - AVAILABLE TO BOTH ADMIN AND DESIGNER
+                      BlocBuilder<PurchaseRequestBloc, PurchaseRequestState>(
                         builder: (context, state) {
                           final count =
-                              state is VendorLoaded ? state.vendors.length : 0;
+                              state is PurchaseRequestLoaded ? state.requests.length : 0;
                           return _buildMenuItem(
-                            menu: NavMenu.vendors,
-                            icon: Icons.storefront_outlined,
-                            label: 'Vendors',
+                            menu: NavMenu.purchaseRequests,
+                            icon: Icons.assignment_outlined,
+                            label: widget.isDesigner ? 'Assigned PRs' : 'Purchase Request (PR)',
                             badgeCount: count,
                           );
                         },
                       ),
-                      // 2. Categories
-                      BlocBuilder<CategoryBloc, CategoryState>(
+                      // 2.5 Print Orders (PO) - AVAILABLE TO ADMIN, DESIGNER & VENDOR
+                      BlocBuilder<PrintOrderBloc, PrintOrderState>(
                         builder: (context, state) {
                           final count =
-                              state is CategoryLoaded ? state.categories.length : 0;
+                              state is PrintOrderLoaded ? state.printOrders.length : 0;
                           return _buildMenuItem(
-                            menu: NavMenu.categories,
-                            icon: Icons.category_outlined,
-                            label: 'Categories',
+                            menu: NavMenu.printOrders,
+                            icon: Icons.print_outlined,
+                            label: widget.isDesigner ? 'Print Orders' : 'Print Orders (PO)',
                             badgeCount: count,
                           );
                         },
                       ),
-                      // 3. Product Types
-                      BlocBuilder<ProductTypeBloc, ProductTypeState>(
+                      // 2.6 Delivery Logs - AVAILABLE TO ADMIN
+                      if (widget.isSuperAdmin)
+                        BlocBuilder<PrintOrderBloc, PrintOrderState>(
+                          builder: (context, state) {
+                            final count = state is DeliveryLogsLoaded
+                                ? state.deliveries.length
+                                : 0;
+                            return _buildMenuItem(
+                              menu: NavMenu.deliveryLogs,
+                              icon: Icons.inventory_2_outlined,
+                              label: 'Delivery Logs',
+                              badgeCount: count > 0 ? count : null,
+                            );
+                          },
+                        ),
+                      // 2.7 Post Orders - AVAILABLE TO ADMIN & DESIGNER
+                      BlocBuilder<PurchaseRequestBloc, PurchaseRequestState>(
                         builder: (context, state) {
-                          final count =
-                              state is ProductTypeLoaded ? state.productTypes.length : 0;
+                          final count = state is PurchaseRequestLoaded
+                              ? state.requests.where((r) => r.status == 'posted' || r.isPosted).length
+                              : 0;
                           return _buildMenuItem(
-                            menu: NavMenu.productTypes,
-                            icon: Icons.layers_outlined,
-                            label: 'Product Types',
+                            menu: NavMenu.postOrders,
+                            icon: Icons.campaign_outlined,
+                            label: 'Post Orders',
                             badgeCount: count,
                           );
                         },
                       ),
-                      // 4. Wings Management
-                      BlocBuilder<WingBloc, WingState>(
-                        builder: (context, state) {
-                          final count =
-                              state is WingLoaded ? state.wings.length : 0;
-                          return _buildMenuItem(
-                            menu: NavMenu.wings,
-                            icon: Icons.apartment_rounded,
-                            label: 'Wings Management',
-                            badgeCount: count,
-                          );
-                        },
-                      ),
+                      // 3. Categories (Admin only)
+                      if (widget.isSuperAdmin)
+                        BlocBuilder<CategoryBloc, CategoryState>(
+                          builder: (context, state) {
+                            final count =
+                                state is CategoryLoaded ? state.categories.length : 0;
+                            return _buildMenuItem(
+                              menu: NavMenu.categories,
+                              icon: Icons.category_outlined,
+                              label: 'Categories',
+                              badgeCount: count,
+                            );
+                          },
+                        ),
+                      // 4. Product Types (Admin only)
+                      if (widget.isSuperAdmin)
+                        BlocBuilder<ProductTypeBloc, ProductTypeState>(
+                          builder: (context, state) {
+                            final count =
+                                state is ProductTypeLoaded ? state.productTypes.length : 0;
+                            return _buildMenuItem(
+                              menu: NavMenu.productTypes,
+                              icon: Icons.layers_outlined,
+                              label: 'Product Types',
+                              badgeCount: count,
+                            );
+                          },
+                        ),
+                      // 5. Wings Management (Admin only)
+                      if (widget.isSuperAdmin)
+                        BlocBuilder<WingBloc, WingState>(
+                          builder: (context, state) {
+                            final count =
+                                state is WingLoaded ? state.wings.length : 0;
+                            return _buildMenuItem(
+                              menu: NavMenu.wings,
+                              icon: Icons.apartment_rounded,
+                              label: 'Wings Management',
+                              badgeCount: count,
+                            );
+                          },
+                        ),
                     ],
 
                     const SizedBox(height: 18),
+                  ],
 
-                    // --- SECTION 3: USER MANAGEMENT (Expandable) ---
+                  // --- SECTION 3: USER MANAGEMENT (Admin only) ---
+                  if (widget.isSuperAdmin) ...[
                     _buildExpandableHeading(
                       title: 'USER MANAGEMENT',
                       color: const Color(0xFFA78BFA),
@@ -271,18 +349,23 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2563EB).withValues(alpha: 0.2),
+                      color: widget.isDesigner
+                          ? const Color(0xFFF59E0B).withValues(alpha: 0.2)
+                          : const Color(0xFF2563EB).withValues(alpha: 0.2),
                       border: Border.all(
-                          color: const Color(0xFF2563EB).withValues(alpha: 0.4)),
+                        color: widget.isDesigner
+                            ? const Color(0xFFF59E0B).withValues(alpha: 0.4)
+                            : const Color(0xFF2563EB).withValues(alpha: 0.4),
+                      ),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
                       child: Text(
-                        roleName.isNotEmpty ? roleName[0] : 'U',
-                        style: const TextStyle(
+                        displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF60A5FA),
+                          color: widget.isDesigner ? const Color(0xFFFCD34D) : const Color(0xFF60A5FA),
                         ),
                       ),
                     ),
@@ -293,7 +376,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          roleName,
+                          displayName,
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -302,11 +385,12 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          userPhone,
+                          '$roleName · $userPhone',
                           style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF64748B),
+                            fontSize: 10,
+                            color: Color(0xFF94A3B8),
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -395,7 +479,9 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+            color: isSelected
+                ? (widget.isDesigner ? const Color(0xFFD97706) : const Color(0xFF2563EB))
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -422,7 +508,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                       const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? const Color(0xFF1E40AF)
+                        ? (widget.isDesigner ? const Color(0xFFB45309) : const Color(0xFF1E40AF))
                         : const Color(0xFF1E293B),
                     borderRadius: BorderRadius.circular(6),
                   ),

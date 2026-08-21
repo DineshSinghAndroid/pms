@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../services/permission_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -106,7 +107,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-      _showSnackBar('Authentication successful!');
+      _showSnackBar('Authentication successful! Checking permissions...');
+      await PermissionService.requestAllPermissionsOneByOne();
     } on FirebaseAuthException catch (e) {
       setState(() => _isLoading = false);
       if (e.code == 'invalid-verification-code') {

@@ -118,4 +118,35 @@ class UserRepository {
       throw Exception('Unexpected error: $e');
     }
   }
+
+  /// Get user profile by phone number
+  Future<UserModel?> getProfile(String phone) async {
+    try {
+      final response = await _apiService.client.get(
+        '/api/profile',
+        queryParameters: {'phone': phone},
+      );
+      if (response.statusCode == 200 && response.data != null) {
+        final Map<String, dynamic> body = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : Map<String, dynamic>.from(response.data as Map);
+
+        if (body['user'] != null && body['user'] is Map<String, dynamic>) {
+          return UserModel.fromJson(body['user'] as Map<String, dynamic>);
+        } else if (body['role'] != null) {
+          return UserModel(
+            id: body['id'] as int? ?? 0,
+            name: body['name'] as String? ?? 'User',
+            phone: body['phone'] as String? ?? phone,
+            role: body['role'] as String? ?? 'manager',
+            isActive: body['is_login_allowed'] as bool? ?? true,
+          );
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
 }
+

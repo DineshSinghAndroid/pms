@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'bloc/category/category_bloc.dart';
 import 'bloc/category/category_event.dart';
+import 'bloc/print_order/print_order_bloc.dart';
 import 'bloc/product_type/product_type_bloc.dart';
 import 'bloc/product_type/product_type_event.dart';
+import 'bloc/purchase_request/purchase_request_bloc.dart';
 import 'bloc/user/user_bloc.dart';
 import 'bloc/user/user_event.dart';
 import 'bloc/vendor/vendor_bloc.dart';
@@ -14,12 +16,16 @@ import 'bloc/wing/wing_bloc.dart';
 import 'bloc/wing/wing_event.dart';
 import 'firebase_options.dart';
 import 'repositories/category_repository.dart';
+import 'repositories/print_order_repository.dart';
 import 'repositories/product_type_repository.dart';
+import 'repositories/purchase_request_repository.dart';
 import 'repositories/user_repository.dart';
 import 'repositories/vendor_repository.dart';
 import 'repositories/wing_repository.dart';
+import 'services/permission_service.dart';
 import 'views/auth/login_screen.dart';
 import 'views/home/home_screen.dart';
+import 'views/permissions/permission_required_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,6 +61,12 @@ class PmsApp extends StatelessWidget {
         RepositoryProvider<UserRepository>(
           create: (context) => UserRepository(),
         ),
+        RepositoryProvider<PurchaseRequestRepository>(
+          create: (context) => PurchaseRequestRepository(),
+        ),
+        RepositoryProvider<PrintOrderRepository>(
+          create: (context) => PrintOrderRepository(),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -82,6 +94,16 @@ class PmsApp extends StatelessWidget {
             create: (context) => UserBloc(
               repository: context.read<UserRepository>(),
             )..add(const FetchUsersEvent()),
+          ),
+          BlocProvider<PurchaseRequestBloc>(
+            create: (context) => PurchaseRequestBloc(
+              repository: context.read<PurchaseRequestRepository>(),
+            ),
+          ),
+          BlocProvider<PrintOrderBloc>(
+            create: (context) => PrintOrderBloc(
+              repository: context.read<PrintOrderRepository>(),
+            ),
           ),
         ],
         child: MaterialApp(
@@ -114,15 +136,82 @@ class AuthGate extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
+            backgroundColor: Color(0xFF0F172A),
             body: Center(
               child: CircularProgressIndicator(color: Color(0xFF2563EB)),
             ),
           );
         }
         if (snapshot.hasData && snapshot.data != null) {
-          return HomeScreen(user: snapshot.data!);
+          return PermissionGate(user: snapshot.data!);
         }
         return const LoginScreen();
+      },
+    );
+  }
+}
+
+/// Permission Enforcement Gate
+class PermissionGate extends StatefulWidget {
+  final User user;
+  const PermissionGate({super.key, required this.user});
+
+  @override
+  State<PermissionGate> createState() => _PermissionGateState();
+}
+
+class _PermissionGateState extends State<PermissionGate> with WidgetsBindingObserver {
+  bool _isLoading = true;
+  bool _allGranted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkPermissions();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkPermissions();
+    }
+  }
+
+  Future<void> _checkPermissions() async {
+    final granted = await PermissionService.areAllPermissionsGranted();
+    if (mounted) {
+      setState(() {
+        _allGranted = granted;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0F172A),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+        ),
+      );
+    }
+
+    if (_allGranted) {
+      return HomeScreen(user: widget.user);
+    }
+
+    return PermissionRequiredScreen(
+      onAllGranted: () {
+        setState(() => _allGranted = true);
       },
     );
   }
