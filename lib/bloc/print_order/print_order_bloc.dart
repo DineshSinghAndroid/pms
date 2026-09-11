@@ -1,14 +1,18 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pms/bloc/print_order/print_order_event.dart';
 import 'package:pms/bloc/print_order/print_order_state.dart';
+import 'package:pms/models/print_order_delivery_model.dart';
+import 'package:pms/models/print_order_model.dart';
 import 'package:pms/repositories/print_order_repository.dart';
 
 class PrintOrderBloc extends Bloc<PrintOrderEvent, PrintOrderState> {
   final PrintOrderRepository _repository;
+  List<PrintOrderModel> _cachedOrders = [];
+  List<PrintOrderDeliveryModel> _cachedDeliveries = [];
 
   PrintOrderBloc({PrintOrderRepository? repository})
-      : _repository = repository ?? PrintOrderRepository(),
-        super(PrintOrderInitial()) {
+    : _repository = repository ?? PrintOrderRepository(),
+      super(PrintOrderInitial()) {
     on<FetchPrintOrders>(_onFetchPrintOrders);
     on<CreatePrintOrderEvent>(_onCreatePrintOrder);
     on<UpdatePrintOrderStatusEvent>(_onUpdatePrintOrderStatus);
@@ -26,7 +30,11 @@ class PrintOrderBloc extends Bloc<PrintOrderEvent, PrintOrderState> {
         status: event.status,
         search: event.search,
       );
-      emit(DeliveryLogsLoaded(deliveries: logs));
+      _cachedDeliveries = logs;
+      emit(DeliveryLogsLoaded(
+        deliveries: _cachedDeliveries,
+        printOrders: _cachedOrders,
+      ));
     } catch (e) {
       emit(PrintOrderError(e.toString().replaceAll('Exception: ', '')));
     }
@@ -47,18 +55,22 @@ class PrintOrderBloc extends Bloc<PrintOrderEvent, PrintOrderState> {
         items: event.items,
       );
 
-      final message = result['message']?.toString() ?? 'Delivery recorded successfully!';
-      emit(DeliveryRecordedSuccess(
-        message: message,
-        delivery: result['delivery'],
-        printOrder: result['print_order'],
-        isCompleted: result['is_completed'] ?? false,
-      ));
+      final message =
+          result['message']?.toString() ?? 'Delivery recorded successfully!';
+      emit(
+        DeliveryRecordedSuccess(
+          message: message,
+          delivery: result['delivery'],
+          printOrder: result['print_order'],
+          isCompleted: result['is_completed'] ?? false,
+        ),
+      );
 
       // Refresh delivery logs
-      final logs = await _repository.getDeliveryLogs();
+      _cachedDeliveries = await _repository.getDeliveryLogs();
       emit(DeliveryLogsLoaded(
-        deliveries: logs,
+        deliveries: _cachedDeliveries,
+        printOrders: _cachedOrders,
         successMessage: message,
       ));
     } catch (e) {
@@ -80,7 +92,11 @@ class PrintOrderBloc extends Bloc<PrintOrderEvent, PrintOrderState> {
         search: event.search,
         purchaseRequestId: event.purchaseRequestId,
       );
-      emit(PrintOrderLoaded(printOrders: orders));
+      _cachedOrders = orders;
+      emit(PrintOrderLoaded(
+        printOrders: _cachedOrders,
+        deliveries: _cachedDeliveries,
+      ));
     } catch (e) {
       emit(PrintOrderError(e.toString().replaceAll('Exception: ', '')));
     }
@@ -103,16 +119,22 @@ class PrintOrderBloc extends Bloc<PrintOrderEvent, PrintOrderState> {
         phone: event.phone,
         items: event.items,
       );
-      emit(PrintOrderActionSuccess(
-        message: 'Print Order ${order.poNumber} created and dispatched!',
-        printOrder: order,
-      ));
+      emit(
+        PrintOrderActionSuccess(
+          message: 'Print Order ${order.poNumber} created and dispatched!',
+          printOrder: order,
+        ),
+      );
       // Refresh list
-      final orders = await _repository.getPrintOrders(phone: event.phone);
-      emit(PrintOrderLoaded(
-        printOrders: orders,
-        successMessage: 'Print Order ${order.poNumber} created and dispatched!',
-      ));
+      _cachedOrders = await _repository.getPrintOrders(phone: event.phone);
+      emit(
+        PrintOrderLoaded(
+          printOrders: _cachedOrders,
+          deliveries: _cachedDeliveries,
+          successMessage:
+              'Print Order ${order.poNumber} created and dispatched!',
+        ),
+      );
     } catch (e) {
       emit(PrintOrderError(e.toString().replaceAll('Exception: ', '')));
     }
@@ -132,16 +154,21 @@ class PrintOrderBloc extends Bloc<PrintOrderEvent, PrintOrderState> {
         fileBytes: event.fileBytes,
         fileName: event.fileName,
       );
-      emit(PrintOrderActionSuccess(
-        message: "Print Order status updated to '${event.status}'!",
-        printOrder: order,
-      ));
+      emit(
+        PrintOrderActionSuccess(
+          message: "Print Order status updated to '${event.status}'!",
+          printOrder: order,
+        ),
+      );
       // Refresh list
-      final orders = await _repository.getPrintOrders(phone: event.phone);
-      emit(PrintOrderLoaded(
-        printOrders: orders,
-        successMessage: "Print Order status updated to '${event.status}'!",
-      ));
+      _cachedOrders = await _repository.getPrintOrders(phone: event.phone);
+      emit(
+        PrintOrderLoaded(
+          printOrders: _cachedOrders,
+          deliveries: _cachedDeliveries,
+          successMessage: "Print Order status updated to '${event.status}'!",
+        ),
+      );
     } catch (e) {
       emit(PrintOrderError(e.toString().replaceAll('Exception: ', '')));
     }

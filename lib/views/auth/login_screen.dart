@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../../services/permission_service.dart';
+import '../../widgets/app_logo.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,8 +12,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _phoneController =
-      TextEditingController(text: '8905165310');
+  final TextEditingController _phoneController = TextEditingController(
+    text: '8905165310',
+  );
   final TextEditingController _otpController = TextEditingController();
 
   bool _isOtpSent = false;
@@ -34,8 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
           message,
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
-        backgroundColor:
-            isError ? const Color(0xFFE11D48) : const Color(0xFF059669),
+        backgroundColor: isError ? Color(0xFFDC2626) : Color(0xFF059669),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -46,8 +48,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _sendOtp() async {
     final rawPhone = _phoneController.text.trim();
     if (rawPhone.length != 10) {
-      _showSnackBar('Please enter a valid 10-digit mobile number.',
-          isError: true);
+      _showSnackBar(
+        'Please enter a valid 10-digit mobile number.',
+        isError: true,
+      );
       return;
     }
 
@@ -112,7 +116,10 @@ class _LoginScreenState extends State<LoginScreen> {
     } on FirebaseAuthException catch (e) {
       setState(() => _isLoading = false);
       if (e.code == 'invalid-verification-code') {
-        _showSnackBar('Incorrect OTP entered. Please check SMS.', isError: true);
+        _showSnackBar(
+          'Incorrect OTP entered. Please check SMS.',
+          isError: true,
+        );
       } else {
         _showSnackBar(e.message ?? 'Verification failed.', isError: true);
       }
@@ -124,9 +131,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      body: SafeArea(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
+        backgroundColor: Color(0xFFF8FAFC),
+        body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -137,56 +147,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Logo / Header
-                  Center(
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2563EB).withValues(alpha: 0.35),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'P',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                  const Center(child: AppLogo(size: 96)),
+                  const SizedBox(height: 20),
                   const Text(
-                    'PMS Admin',
+                    'Prince Eduhub',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                       letterSpacing: -0.5,
-                      color: Colors.white,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   const Text(
-                    'Real Mobile OTP Authentication',
+                    'PMS Admin · Real Mobile OTP',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF94A3B8),
-                    ),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                   ),
                   const SizedBox(height: 36),
 
@@ -194,9 +171,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
+                      color: Color(0xFFFFFFFF),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF334155)),
+                      border: Border.all(color: Color(0xFFE2E8F0)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.2),
@@ -215,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFFCBD5E1),
+                              color: Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -227,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 1.2,
-                              color: Colors.white,
+                              color: Color(0xFF0F172A),
                             ),
                             decoration: InputDecoration(
                               counterText: '',
@@ -238,25 +215,32 @@ class _LoginScreenState extends State<LoginScreen> {
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF94A3B8),
+                                    color: Color(0xFF64748B),
                                   ),
                                 ),
                               ),
                               prefixIconConstraints: const BoxConstraints(
-                                  minWidth: 0, minHeight: 0),
+                                minWidth: 0,
+                                minHeight: 0,
+                              ),
                               filled: true,
-                              fillColor: const Color(0xFF0F172A),
+                              fillColor: Color(0xFFF8FAFC),
                               contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 16),
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
-                                    color: Color(0xFF475569)),
+                                  color: Color(0xFF475569),
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
-                                    color: Color(0xFF2563EB), width: 2),
+                                  color: Color(0xFF2563EB),
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ),
@@ -279,8 +263,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ElevatedButton(
                             onPressed: _isLoading ? null : _sendOtp,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2563EB),
-                              foregroundColor: Colors.white,
+                              backgroundColor: Color(0xFF2563EB),
+                              foregroundColor: Color(0xFFFFFFFF),
                               padding: const EdgeInsets.symmetric(vertical: 15),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -293,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2.5,
-                                      color: Colors.white,
+                                      color: Color(0xFF0F172A),
                                     ),
                                   )
                                 : const Text(
@@ -316,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     'SMS Sent To:',
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: Color(0xFF94A3B8),
+                                      color: Color(0xFF64748B),
                                     ),
                                   ),
                                   Text(
@@ -324,7 +308,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                                      color: Color(0xFF0F172A),
                                     ),
                                   ),
                                 ],
@@ -340,7 +324,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   'Change',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF60A5FA),
+                                    color: Color(0xFF2563EB),
                                   ),
                                 ),
                               ),
@@ -352,7 +336,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFFCBD5E1),
+                              color: Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -365,7 +349,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontSize: 22,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 8,
-                              color: Colors.white,
+                              color: Color(0xFF0F172A),
                             ),
                             decoration: InputDecoration(
                               counterText: '',
@@ -375,18 +359,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                 letterSpacing: 8,
                               ),
                               filled: true,
-                              fillColor: const Color(0xFF0F172A),
+                              fillColor: Color(0xFFF8FAFC),
                               contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 14),
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
-                                    color: Color(0xFF475569)),
+                                  color: Color(0xFF475569),
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
-                                    color: Color(0xFF2563EB), width: 2),
+                                  color: Color(0xFF2563EB),
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ),
@@ -399,7 +388,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'Resend Code',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF60A5FA),
+                                  color: Color(0xFF2563EB),
                                 ),
                               ),
                             ),
@@ -410,8 +399,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ElevatedButton(
                             onPressed: _isLoading ? null : _verifyOtp,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2563EB),
-                              foregroundColor: Colors.white,
+                              backgroundColor: Color(0xFF2563EB),
+                              foregroundColor: Color(0xFFFFFFFF),
                               padding: const EdgeInsets.symmetric(vertical: 15),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -424,7 +413,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2.5,
-                                      color: Colors.white,
+                                      color: Color(0xFF0F172A),
                                     ),
                                   )
                                 : const Text(
@@ -444,10 +433,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Text(
                     'PMS Admin • Prince Eduhub',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF475569),
-                    ),
+                    style: TextStyle(fontSize: 11, color: Color(0xFF475569)),
                   ),
                 ],
               ),
@@ -455,6 +441,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

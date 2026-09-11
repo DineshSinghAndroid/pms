@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+
 import '../models/vendor_model.dart';
 import '../services/api_service.dart';
 
@@ -6,7 +7,7 @@ class VendorRepository {
   final ApiService _apiService;
 
   VendorRepository({ApiService? apiService})
-      : _apiService = apiService ?? ApiService();
+    : _apiService = apiService ?? ApiService();
 
   /// Fetch all vendors from PMS Admin backend
   Future<List<VendorModel>> getVendors() async {
@@ -26,7 +27,9 @@ class VendorRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error connecting to PMS Admin',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error connecting to PMS Admin',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -36,8 +39,10 @@ class VendorRepository {
   /// Create a new printing vendor
   Future<VendorModel> createVendor(Map<String, dynamic> payload) async {
     try {
-      final response =
-          await _apiService.client.post('/api/vendors', data: payload);
+      final response = await _apiService.client.post(
+        '/api/vendors',
+        data: payload,
+      );
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
@@ -50,7 +55,9 @@ class VendorRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error creating vendor',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error creating vendor',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -59,10 +66,14 @@ class VendorRepository {
 
   /// Update an existing vendor
   Future<VendorModel> updateVendor(
-      int vendorId, Map<String, dynamic> payload) async {
+    int vendorId,
+    Map<String, dynamic> payload,
+  ) async {
     try {
-      final response =
-          await _apiService.client.put('/api/vendors/$vendorId', data: payload);
+      final response = await _apiService.client.put(
+        '/api/vendors/$vendorId',
+        data: payload,
+      );
       if (response.statusCode == 200 && response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>
@@ -74,7 +85,9 @@ class VendorRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error updating vendor',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error updating vendor',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -84,14 +97,17 @@ class VendorRepository {
   /// Delete a vendor
   Future<void> deleteVendor(int vendorId) async {
     try {
-      final response =
-          await _apiService.client.delete('/api/vendors/$vendorId');
+      final response = await _apiService.client.delete(
+        '/api/vendors/$vendorId',
+      );
       if (response.statusCode != 200) {
         throw Exception('Failed to delete vendor: ${response.statusCode}');
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error deleting vendor',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error deleting vendor',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -101,8 +117,9 @@ class VendorRepository {
   /// Toggle vendor login access
   Future<VendorModel> toggleVendorLogin(int vendorId) async {
     try {
-      final response =
-          await _apiService.client.post('/api/vendors/$vendorId/toggle-login');
+      final response = await _apiService.client.post(
+        '/api/vendors/$vendorId/toggle-login',
+      );
       if (response.statusCode == 200 && response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>
@@ -110,11 +127,15 @@ class VendorRepository {
 
         return VendorModel.fromJson(body['data'] as Map<String, dynamic>);
       } else {
-        throw Exception('Failed to toggle login access: ${response.statusCode}');
+        throw Exception(
+          'Failed to toggle login access: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error toggling login access',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error toggling login access',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');

@@ -1,9 +1,11 @@
 import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../../bloc/print_order/print_order_bloc.dart';
 import '../../bloc/print_order/print_order_event.dart';
 import '../../bloc/purchase_request/purchase_request_bloc.dart';
@@ -37,6 +39,17 @@ class PRDetailsScreen extends StatefulWidget {
 
 class _PRDetailsScreenState extends State<PRDetailsScreen> {
   bool get isDesigner => widget.currentUser?.role == 'Designer';
+  bool get isManager => widget.currentUser?.role.toLowerCase() == 'manager';
+  bool get isSuperAdmin =>
+      widget.isSuperAdmin ||
+      widget.currentUser?.role.toLowerCase() == 'superadmin' ||
+      widget.currentUser?.role.toLowerCase() == 'super admin' ||
+      widget.currentUser?.phone == '7414055310';
+  bool get isAdminOrManager => isSuperAdmin || isManager;
+  bool get isDigitalStudioIncharge =>
+      widget.currentUser?.role == 'Digital Studio Incharge';
+  bool get canReviewArtwork => isAdminOrManager;
+  bool get canWorkOnArtwork => isDesigner;
 
   String _getAttachmentUrl(String? path) {
     if (path == null || path.isEmpty) return '';
@@ -79,6 +92,46 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
+  String _formatDateTime(DateTime? dt) {
+    if (dt == null) return '';
+    final local = dt.toLocal();
+    final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
+    final ampm = local.hour >= 12 ? 'PM' : 'AM';
+    final minuteStr = local.minute.toString().padLeft(2, '0');
+    return '${local.day} ${_monthName(local.month)} ${local.year}, $hour:$minuteStr $ampm';
+  }
+
+  bool _isPRCreator(PurchaseRequestModel pr) {
+    if (widget.currentUser == null) return false;
+    if (pr.createdByUserId != null &&
+        pr.createdByUserId == widget.currentUser!.id) {
+      return true;
+    }
+    if (pr.createdByUser != null &&
+        pr.createdByUser!.id == widget.currentUser!.id) {
+      return true;
+    }
+    if (pr.createdByUser?.phone != null &&
+        pr.createdByUser!.phone == widget.currentUser!.phone) {
+      return true;
+    }
+    return false;
+  }
+
+  bool _isPRDesigner(PurchaseRequestModel pr) {
+    if (widget.currentUser == null) return false;
+    final uid = widget.currentUser!.id;
+    final phone = widget.currentUser!.phone;
+    return isDesigner &&
+        (pr.assignedDesignerId == uid ||
+            pr.workStartedByUserId == uid ||
+            (pr.assignedDesigner?.phone != null &&
+                pr.assignedDesigner!.phone == phone) ||
+            (pr.workStartedByUser?.phone != null &&
+                pr.workStartedByUser!.phone == phone) ||
+            pr.createdByUserId == uid);
+  }
+
   Future<void> _openExternalUrl(String url) async {
     final uri = Uri.parse(url);
     try {
@@ -86,7 +139,10 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open file URL.'), backgroundColor: Color(0xFFE11D48)),
+          const SnackBar(
+            content: Text('Could not open file URL.'),
+            backgroundColor: Color(0xFFDC2626),
+          ),
         );
       }
     }
@@ -97,46 +153,143 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       context: context,
       builder: (ctx) {
         return Dialog(
-          backgroundColor: const Color(0xFF0F172A),
-          insetPadding: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: const Color(0xFFFFFFFF),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                      icon: const Icon(
+                        Icons.close,
+                        color: Color(0xFF0F172A),
+                        size: 20,
+                      ),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                   ],
                 ),
               ),
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 180,
-                      color: const Color(0xFF1E293B),
-                      child: const Center(
-                        child: Text('Unable to preview image file.', style: TextStyle(color: Color(0xFF94A3B8))),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.65,
+                ),
+                child: InteractiveViewer(
+                  panEnabled: true,
+                  minScale: 0.8,
+                  maxScale: 4.0,
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      final total = loadingProgress.expectedTotalBytes;
+                      final loaded = loadingProgress.cumulativeBytesLoaded;
+                      return Container(
+                        height: 200,
+                        color: const Color(0xFFF8FAFC),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Color(0xFF2563EB),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                total != null
+                                    ? 'Loading image (${(loaded / (1024 * 1024)).toStringAsFixed(1)} / ${(total / (1024 * 1024)).toStringAsFixed(1)} MB)...'
+                                    : 'Loading image...',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 180,
+                        padding: const EdgeInsets.all(16),
+                        color: const Color(0xFFFFFFFF),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.broken_image_outlined,
+                                color: Color(0xFFDC2626),
+                                size: 36,
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Unable to preview image directly.',
+                                style: TextStyle(
+                                  color: Color(0xFF64748B),
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              InkWell(
+                                onTap: () => _openExternalUrl(imageUrl),
+                                child: const Text(
+                                  'Tap here to open in external viewer',
+                                  style: TextStyle(
+                                    color: Color(0xFF2563EB),
+                                    fontSize: 12,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => _openExternalUrl(imageUrl),
+                      icon: const Icon(Icons.open_in_new, size: 14),
+                      label: const Text(
+                        'Open Full File',
+                        style: TextStyle(fontSize: 12),
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -156,7 +309,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: Color(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -181,18 +334,30 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.cloud_upload_outlined, color: Color(0xFFA78BFA), size: 22),
+                            const Icon(
+                              Icons.cloud_upload_outlined,
+                              color: Color(0xFF2563EB),
+                              size: 22,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               pr.revisionCount > 0
                                   ? 'Resubmit Artwork (Rev #${pr.revisionCount + 1})'
                                   : 'Submit Artwork for Approval',
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F172A),
+                              ),
                             ),
                           ],
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: Color(0xFF94A3B8), size: 20),
+                          icon: const Icon(
+                            Icons.close,
+                            color: Color(0xFF64748B),
+                            size: 20,
+                          ),
                           onPressed: () => Navigator.pop(bottomCtx),
                         ),
                       ],
@@ -200,25 +365,35 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     const SizedBox(height: 12),
 
                     // Admin Feedback if revision
-                    if (pr.adminReviewRemarks != null && pr.status == 'rejected_revision_needed') ...[
+                    if (pr.adminReviewRemarks != null &&
+                        pr.status == 'rejected_revision_needed') ...[
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF881337).withValues(alpha: 0.3),
+                          color: Color(0xFFFEF2F2).withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFFB7185).withValues(alpha: 0.5)),
+                          border: Border.all(
+                            color: Color(0xFFDC2626).withValues(alpha: 0.5),
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
                               '⚠️ Admin Feedback to Fix:',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFFDA4AF)),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFB91C1C),
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               pr.adminReviewRemarks!,
-                              style: const TextStyle(fontSize: 12, color: Colors.white),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF0F172A),
+                              ),
                             ),
                           ],
                         ),
@@ -229,7 +404,11 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     // ATTACH MEDIA SECTION (2 OPTIONS: CLICK / CAMERA or EXPLORE FILES)
                     const Text(
                       'Attach Media / Proof (No upload limit · Image, Video, PDF, Any File)',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFCBD5E1)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF475569),
+                      ),
                     ),
                     const SizedBox(height: 8),
 
@@ -255,24 +434,41 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                               }
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 10,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0F172A),
+                                color: Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.5)),
+                                border: Border.all(
+                                  color: Color(0xFF2563EB)
+                                      .withValues(alpha: 0.5),
+                                ),
                               ),
                               child: const Column(
                                 children: [
-                                  Icon(Icons.camera_alt_rounded, color: Color(0xFF60A5FA), size: 22),
+                                  Icon(
+                                    Icons.camera_alt_rounded,
+                                    color: Color(0xFF2563EB),
+                                    size: 22,
+                                  ),
                                   SizedBox(height: 4),
                                   Text(
                                     'Click / Camera',
-                                    style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFF0F172A),
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   SizedBox(height: 2),
                                   Text(
                                     'Take live photo',
-                                    style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8)),
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      color: Color(0xFF64748B),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -301,24 +497,41 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                               }
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 10,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0F172A),
+                                color: Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFA855F7).withValues(alpha: 0.5)),
+                                border: Border.all(
+                                  color: Color(0xFF2563EB)
+                                      .withValues(alpha: 0.5),
+                                ),
                               ),
                               child: const Column(
                                 children: [
-                                  Icon(Icons.folder_open_rounded, color: Color(0xFFA78BFA), size: 22),
+                                  Icon(
+                                    Icons.folder_open_rounded,
+                                    color: Color(0xFF2563EB),
+                                    size: 22,
+                                  ),
                                   SizedBox(height: 4),
                                   Text(
                                     'Explore Files',
-                                    style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFF0F172A),
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   SizedBox(height: 2),
                                   Text(
                                     'Gallery, PDF, Video',
-                                    style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8)),
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      color: Color(0xFF64748B),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -334,9 +547,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F172A),
+                          color: Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF10B981)),
+                          border: Border.all(color: Color(0xFF059669)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,27 +564,35 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                         pickedType == 'image'
                                             ? Icons.image_rounded
                                             : pickedType == 'video'
-                                                ? Icons.videocam_rounded
-                                                : pickedType == 'pdf'
-                                                    ? Icons.picture_as_pdf_rounded
-                                                    : Icons.insert_drive_file_rounded,
-                                        color: const Color(0xFF10B981),
+                                            ? Icons.videocam_rounded
+                                            : pickedType == 'pdf'
+                                            ? Icons.picture_as_pdf_rounded
+                                            : Icons.insert_drive_file_rounded,
+                                        color: Color(0xFF059669),
                                         size: 20,
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               pickedName!,
-                                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF0F172A),
+                                              ),
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
                                               '${pickedSize != null ? _formatFileSize(pickedSize!) : ''} · Ready to upload',
-                                              style: const TextStyle(fontSize: 10, color: Color(0xFF34D399)),
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                color: Color(0xFF059669),
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -380,7 +601,11 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.close_rounded, color: Color(0xFFFDA4AF), size: 18),
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    color: Color(0xFFB91C1C),
+                                    size: 18,
+                                  ),
                                   onPressed: () {
                                     setModalState(() {
                                       pickedBytes = null;
@@ -392,7 +617,8 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 ),
                               ],
                             ),
-                            if (pickedType == 'image' && pickedBytes != null) ...[
+                            if (pickedType == 'image' &&
+                                pickedBytes != null) ...[
                               const SizedBox(height: 8),
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
@@ -412,19 +638,37 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     const SizedBox(height: 14),
 
                     // Submission Remarks
-                    const Text('Designer Notes & Submission Remarks *', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFCBD5E1))),
+                    const Text(
+                      'Designer Notes & Submission Remarks *',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: remarksCtrl,
                       maxLines: 3,
-                      style: const TextStyle(fontSize: 12, color: Colors.white),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF0F172A),
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Describe artwork layout, media specs, color profiles, or corrections...',
-                        hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                        hintStyle: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 12,
+                        ),
                         filled: true,
-                        fillColor: const Color(0xFF0F172A),
+                        fillColor: Color(0xFFF8FAFC),
                         contentPadding: const EdgeInsets.all(12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF334155))),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 18),
@@ -432,35 +676,40 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     ElevatedButton.icon(
                       onPressed: () {
                         final remarks = remarksCtrl.text.trim();
-                        final artName = pickedName ?? 'artwork_${pr.prNumber}.png';
+                        final artName =
+                            pickedName ?? 'artwork_${pr.prNumber}.png';
 
                         context.read<PurchaseRequestBloc>().add(
-                              SubmitWorkEvent(
-                                prId: pr.id,
-                                remarks: remarks.isNotEmpty ? remarks : 'Artwork completed and submitted for admin review.',
-                                artworkPath: artName,
-                                artworkName: artName,
-                                fileBytes: pickedBytes,
-                                phone: widget.currentUser?.phone,
-                                designerId: widget.currentUser?.id,
-                              ),
-                            );
+                          SubmitWorkEvent(
+                            prId: pr.id,
+                            remarks: remarks.isNotEmpty ? remarks : 'Artwork completed and submitted for admin review.',
+                            artworkPath: artName,
+                            artworkName: artName,
+                            fileBytes: pickedBytes,
+                            phone: widget.currentUser?.phone,
+                            designerId: widget.currentUser?.id,
+                          ),
+                        );
 
                         Navigator.pop(bottomCtx);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('✓ Artwork submitted to Super Admin for approval!'),
-                            backgroundColor: Color(0xFF7C3AED),
+                            content: Text(
+                              '✓ Artwork submitted to Super Admin for approval!',
+                            ),
+                            backgroundColor: Color(0xFF2563EB),
                           ),
                         );
                       },
                       icon: const Icon(Icons.send_rounded, size: 16),
                       label: const Text('Send to Admin for Approval'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF7C3AED),
-                        foregroundColor: Colors.white,
+                        backgroundColor: Color(0xFF2563EB),
+                        foregroundColor: Color(0xFFFFFFFF),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ],
@@ -480,13 +729,22 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          backgroundColor: Color(0xFFFFFFFF),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
           title: const Row(
             children: [
-              Icon(Icons.assignment_return_rounded, color: Color(0xFFFDA4AF), size: 20),
+              Icon(
+                Icons.assignment_return_rounded,
+                color: Color(0xFFB91C1C),
+                size: 20,
+              ),
               SizedBox(width: 8),
-              Text('Request Revision', style: TextStyle(color: Colors.white, fontSize: 16)),
+              Text(
+                'Request Revision',
+                style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+              ),
             ],
           ),
           content: Column(
@@ -495,20 +753,26 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             children: [
               Text(
                 'Enter revision comments for Designer (${pr.assignedDesigner?.name ?? 'Designer'}):',
-                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: remarksCtrl,
                 maxLines: 3,
-                style: const TextStyle(fontSize: 12, color: Colors.white),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A)),
                 decoration: InputDecoration(
                   hintText: 'Specify exact changes needed (e.g. font size, logo color, margin)...',
-                  hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                  hintStyle: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 12,
+                  ),
                   filled: true,
-                  fillColor: const Color(0xFF0F172A),
+                  fillColor: Color(0xFFF8FAFC),
                   contentPadding: const EdgeInsets.all(12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF334155))),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
                 ),
               ),
             ],
@@ -516,37 +780,39 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Cancel', style: TextStyle(color: Color(0xFF94A3B8))),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Color(0xFF64748B)),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
                 final remarks = remarksCtrl.text.trim();
-                if (remarks.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please enter revision remarks.'), backgroundColor: Color(0xFFE11D48)),
-                  );
-                  return;
-                }
+                final finalRemarks = remarks.isNotEmpty
+                    ? remarks
+                    : 'Revision requested. Please review and make necessary changes.';
 
                 context.read<PurchaseRequestBloc>().add(
-                      RejectRevisionPREvent(
-                        prId: pr.id,
-                        remarks: remarks,
-                        phone: widget.currentUser?.phone,
-                      ),
-                    );
+                  RejectRevisionPREvent(
+                    prId: pr.id,
+                    remarks: finalRemarks,
+                    phone: widget.currentUser?.phone,
+                  ),
+                );
 
                 Navigator.pop(dialogCtx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('✓ PR ${pr.prNumber} returned to Designer with revision notes.'),
-                    backgroundColor: const Color(0xFFE11D48),
+                    content: Text(
+                      '✓ PR ${pr.prNumber} returned to Designer with revision notes.',
+                    ),
+                    backgroundColor: Color(0xFFDC2626),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE11D48),
-                foregroundColor: Colors.white,
+                backgroundColor: Color(0xFFDC2626),
+                foregroundColor: Color(0xFFFFFFFF),
               ),
               child: const Text('Return to Designer'),
             ),
@@ -561,45 +827,57 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          backgroundColor: Color(0xFFFFFFFF),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
           title: const Row(
             children: [
-              Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 20),
+              Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF059669),
+                size: 20,
+              ),
               SizedBox(width: 8),
-              Text('Approve Artwork', style: TextStyle(color: Colors.white, fontSize: 16)),
+              Text(
+                'Approve Artwork',
+                style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+              ),
             ],
           ),
           content: Text(
             'Are you sure you want to approve the artwork for PR ${pr.prNumber}? This will mark the design phase as completed.',
-            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+            style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Cancel', style: TextStyle(color: Color(0xFF94A3B8))),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Color(0xFF64748B)),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
                 context.read<PurchaseRequestBloc>().add(
-                      ApprovePREvent(
-                        prId: pr.id,
-                        remarks: 'Artwork approved for printing.',
-                        phone: widget.currentUser?.phone,
-                      ),
-                    );
+                  ApprovePREvent(
+                    prId: pr.id,
+                    remarks: 'Artwork approved for printing.',
+                    phone: widget.currentUser?.phone,
+                  ),
+                );
 
                 Navigator.pop(dialogCtx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('✓ PR ${pr.prNumber} approved successfully!'),
-                    backgroundColor: const Color(0xFF059669),
+                    backgroundColor: Color(0xFF059669),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF059669),
-                foregroundColor: Colors.white,
+                backgroundColor: Color(0xFF059669),
+                foregroundColor: Color(0xFFFFFFFF),
               ),
               child: const Text('Confirm Approval'),
             ),
@@ -612,30 +890,45 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: Color(0xFFFFFFFF),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Color(0xFF0F172A),
+            size: 18,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'PR Details',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0F172A),
+          ),
         ),
       ),
       body: BlocBuilder<PurchaseRequestBloc, PurchaseRequestState>(
         builder: (context, state) {
           if (state is PurchaseRequestLoading) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)));
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+            );
           }
 
           if (state is PurchaseRequestLoaded) {
-            final prList = state.requests.where((x) => x.id == widget.prId).toList();
+            final prList = state.requests
+                .where((x) => x.id == widget.prId)
+                .toList();
             if (prList.isEmpty) {
               return const Center(
-                child: Text('Purchase Request not found.', style: TextStyle(color: Color(0xFF94A3B8))),
+                child: Text(
+                  'Purchase Request not found.',
+                  style: TextStyle(color: Color(0xFF64748B)),
+                ),
               );
             }
 
@@ -643,7 +936,12 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             return _buildPRDetailsContent(context, pr);
           }
 
-          return const Center(child: Text('Error loading PR details.', style: TextStyle(color: Color(0xFF94A3B8))));
+          return const Center(
+            child: Text(
+              'Error loading PR details.',
+              style: TextStyle(color: Color(0xFF64748B)),
+            ),
+          );
         },
       ),
     );
@@ -691,9 +989,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(color: Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -702,11 +1000,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  color: Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFF334155)),
+                  border: Border.all(color: Color(0xFFE2E8F0)),
                 ),
                 child: Text(
                   pr.prNumber,
@@ -715,7 +1016,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     fontFamily: 'monospace',
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.0,
-                    color: Color(0xFFFDA4AF),
+                    color: Color(0xFFB91C1C),
                   ),
                 ),
               ),
@@ -723,7 +1024,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(color: Color(0xFF334155), height: 1),
+          const Divider(color: Color(0xFFE2E8F0), height: 1),
           const SizedBox(height: 12),
 
           // Meta Grid
@@ -733,11 +1034,18 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Campus / Wing', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                    const Text(
+                      'Campus / Wing',
+                      style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       pr.wing?.name ?? 'General Wing',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
                     ),
                   ],
                 ),
@@ -746,11 +1054,18 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Expected Delivery', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                    const Text(
+                      'Expected Delivery',
+                      style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       '${pr.expectedDeliveryDate ?? 'N/A'} (${pr.expectedDeliveryTime ?? 'Anytime'})',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
                     ),
                   ],
                 ),
@@ -764,20 +1079,28 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F172A),
+              color: Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFF334155)),
+              border: Border.all(color: Color(0xFFE2E8F0)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.brush_rounded, color: Color(0xFFF59E0B), size: 15),
+                const Icon(
+                  Icons.brush_rounded,
+                  color: Color(0xFFD97706),
+                  size: 15,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     pr.assignedDesigner != null
                         ? 'Designer: ${pr.assignedDesigner!.name} (${pr.assignedDesigner!.phone})'
                         : 'Designer: Unassigned',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -792,59 +1115,94 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
   /// 2. Live Design Phase / Active Review State Card
   Widget _buildLiveStateCard(BuildContext context, PurchaseRequestModel pr) {
     if (pr.status == 'rejected_revision_needed') {
-      final hasArtwork = pr.artworkFilePath != null && pr.artworkFilePath!.isNotEmpty;
+      final hasArtwork =
+          pr.artworkFilePath != null && pr.artworkFilePath!.isNotEmpty;
       final fileUrl = hasArtwork ? _getAttachmentUrl(pr.artworkFilePath) : '';
 
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFF881337).withValues(alpha: 0.25),
+          color: Color(0xFFFEF2F2).withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFFB7185).withValues(alpha: 0.6)),
+          border: Border.all(color: Color(0xFFDC2626).withValues(alpha: 0.6)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const Icon(Icons.assignment_return_rounded, color: Color(0xFFFDA4AF), size: 16),
+                const Icon(
+                  Icons.assignment_return_rounded,
+                  color: Color(0xFFB91C1C),
+                  size: 16,
+                ),
                 const SizedBox(width: 6),
-                Text(
-                  'Admin Revision Feedback (Revision #${pr.revisionCount > 0 ? pr.revisionCount : 1})',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFFDA4AF)),
+                Expanded(
+                  child: Text(
+                    'Admin Revision Feedback (Revision #${pr.revisionCount > 0 ? pr.revisionCount : 1})',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFB91C1C),
+                    ),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
             Text(
-              pr.adminReviewRemarks ?? 'Please review requested changes and submit revised artwork.',
-              style: const TextStyle(fontSize: 12, color: Colors.white, height: 1.3),
+              pr.adminReviewRemarks ??
+                  'Please review requested changes and submit revised artwork.',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF0F172A),
+                height: 1.3,
+              ),
             ),
             if (hasArtwork) ...[
               const SizedBox(height: 10),
               InkWell(
                 onTap: () {
                   if (_isImage(pr.artworkFilePath)) {
-                    _showImageDialog(context, fileUrl, pr.artworkFileName ?? 'Previous Artwork');
+                    _showImageDialog(
+                      context,
+                      fileUrl,
+                      pr.artworkFileName ?? 'Previous Artwork',
+                    );
                   } else {
                     _openExternalUrl(fileUrl);
                   }
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
+                    color: Color(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFF475569)),
+                    border: Border.all(color: Color(0xFF475569)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.remove_red_eye_outlined, color: Color(0xFFD8B4FE), size: 14),
+                      const Icon(
+                        Icons.remove_red_eye_outlined,
+                        color: Color(0xFF475569),
+                        size: 14,
+                      ),
                       const SizedBox(width: 6),
-                      Text(
-                        'View Last Submitted File \n(${pr.artworkFileName ?? 'Artwork'})',
-                        style: const TextStyle(fontSize: 11, color: Color(0xFFD8B4FE), fontWeight: FontWeight.bold),
+                      Flexible(
+                        child: Text(
+                          'View Last Submitted File \n(${pr.artworkFileName ?? 'Artwork'})',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF475569),
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
@@ -863,9 +1221,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFF581C87).withValues(alpha: 0.25),
+          color: Color(0xFFF5F3FF).withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFA855F7).withValues(alpha: 0.6)),
+          border: Border.all(color: Color(0xFF2563EB).withValues(alpha: 0.6)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -873,38 +1231,76 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
-                  children: [
-                    Icon(Icons.hourglass_top_rounded, color: Color(0xFFD8B4FE), size: 16),
-                    SizedBox(width: 6),
-                    Text(
-                      'Artwork Proof Submitted for Approval',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFD8B4FE)),
-                    ),
-                  ],
+                const Expanded(
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.hourglass_top_rounded,
+                        color: Color(0xFF475569),
+                        size: 16,
+                      ),
+                      SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Artwork Proof Submitted for Approval',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF475569),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 if (isImg)
                   InkWell(
-                    onTap: () => _showImageDialog(context, fileUrl, 'Artwork Proof - ${pr.prNumber}'),
+                    onTap: () => _showImageDialog(
+                      context,
+                      fileUrl,
+                      'Artwork Proof - ${pr.prNumber}',
+                    ),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF7C3AED),
+                        color: Color(0xFF2563EB),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text('View Image', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'View Image',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   )
                 else
                   InkWell(
                     onTap: () => _openExternalUrl(fileUrl),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB),
+                        color: Color(0xFF2563EB),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text('Open File', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Open File',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -912,19 +1308,28 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             const SizedBox(height: 6),
             Text(
               'File: ${pr.artworkFileName ?? pr.artworkFilePath ?? 'artwork_upload'}',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
             ),
-            if (pr.designerSubmissionRemarks != null && pr.designerSubmissionRemarks!.isNotEmpty) ...[
+            if (pr.designerSubmissionRemarks != null &&
+                pr.designerSubmissionRemarks!.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
                 'Designer Note: ${pr.designerSubmissionRemarks}',
-                style: const TextStyle(fontSize: 11, color: Color(0xFFCBD5E1)),
+                style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
               ),
             ],
             if (isImg && fileUrl.isNotEmpty) ...[
               const SizedBox(height: 8),
               GestureDetector(
-                onTap: () => _showImageDialog(context, fileUrl, 'Artwork Proof - ${pr.prNumber}'),
+                onTap: () => _showImageDialog(
+                  context,
+                  fileUrl,
+                  'Artwork Proof - ${pr.prNumber}',
+                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
@@ -932,7 +1337,25 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     height: 120,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 120,
+                        color: const Color(0xFFF1F5F9),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFF2563EB),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox.shrink(),
                   ),
                 ),
               ),
@@ -942,33 +1365,36 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       );
     }
 
-    if (pr.status == 'approved' || pr.status == 'sent_to_print' || pr.status == 'posted' || pr.status == 'completed') {
+    if (pr.status == 'approved' ||
+        pr.status == 'sent_to_print' ||
+        pr.status == 'posted' ||
+        pr.status == 'completed') {
       final fileUrl = _getAttachmentUrl(pr.artworkFilePath);
       final isImg = _isImage(pr.artworkFilePath);
 
       String title = 'Approved Artwork';
-      Color headerColor = const Color(0xFF34D399);
+      Color headerColor = Color(0xFF059669);
       IconData headerIcon = Icons.check_circle_rounded;
       if (pr.status == 'sent_to_print') {
         title = 'Dispatched to Print Vendor';
-        headerColor = const Color(0xFF93C5FD);
+        headerColor = Color(0xFF2563EB);
         headerIcon = Icons.print_rounded;
       } else if (pr.status == 'posted') {
         title = 'Forwarded for Post Publishing';
-        headerColor = const Color(0xFFD8B4FE);
+        headerColor = Color(0xFF475569);
         headerIcon = Icons.campaign_rounded;
       } else if (pr.status == 'completed') {
         title = 'Completed & Delivered';
-        headerColor = const Color(0xFF34D399);
+        headerColor = Color(0xFF059669);
         headerIcon = Icons.task_alt_rounded;
       }
 
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFF064E3B).withValues(alpha: 0.25),
+          color: Color(0xFFECFDF5).withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6)),
+          border: Border.all(color: Color(0xFF059669).withValues(alpha: 0.6)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -976,17 +1402,28 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(headerIcon, color: headerColor, size: 16),
-                    const SizedBox(width: 6),
-                    Text(
-                      title,
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: headerColor),
-                    ),
-                  ],
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(headerIcon, color: headerColor, size: 16),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: headerColor,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                if (pr.artworkFilePath != null && pr.artworkFilePath!.isNotEmpty)
+                const SizedBox(width: 8),
+                if (pr.artworkFilePath != null &&
+                    pr.artworkFilePath!.isNotEmpty)
                   InkWell(
                     onTap: () {
                       if (isImg) {
@@ -996,12 +1433,22 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       }
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF059669),
+                        color: Color(0xFF059669),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text('View Artwork', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'View Artwork',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -1015,18 +1462,22 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFF312E81).withValues(alpha: 0.25),
+          color: Color(0xFFEFF6FF).withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.5)),
+          border: Border.all(color: Color(0xFF2563EB).withValues(alpha: 0.5)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.brush_rounded, color: Color(0xFFA5B4FC), size: 16),
+            const Icon(Icons.brush_rounded, color: Color(0xFF2563EB), size: 16),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Design work in progress by ${pr.workStartedByUser?.name ?? pr.assignedDesigner?.name ?? 'Designer'}',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFA5B4FC)),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2563EB),
+                ),
               ),
             ),
           ],
@@ -1038,13 +1489,102 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
   }
 
   /// 3. Order Specifications & Requested Products Card
-  Widget _buildOrderSpecificationsCard(BuildContext context, PurchaseRequestModel pr) {
+  Widget _buildOrderSpecificationsCard(
+    BuildContext context,
+    PurchaseRequestModel pr,
+  ) {
+    // Manager and Admin ALWAYS see task details without lock. Only non-admin designers see lock before work starts.
+    final bool isLockedForDesigner = !isAdminOrManager &&
+        isDesigner &&
+        (pr.status == 'assigned_to_designer' || pr.status == 'pending_assignment');
+
+    if (isLockedForDesigner) {
+      return Container(
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFBEB),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFDE68A)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFF59E0B)),
+              ),
+              child: const Icon(
+                Icons.lock_rounded,
+                color: Color(0xFFD97706),
+                size: 30,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Task Details Locked',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF92400E),
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Work has not been started yet. Click the button below to start work and unlock all material specifications, product dimensions, remarks, and reference proofs.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFFB45309),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () {
+                context.read<PurchaseRequestBloc>().add(
+                  StartWorkEvent(
+                    prId: pr.id,
+                    phone: widget.currentUser?.phone,
+                    designerId: widget.currentUser?.id,
+                  ),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      '✓ Work started! Task specifications unlocked.',
+                    ),
+                    backgroundColor: Color(0xFF059669),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.lock_open_rounded, size: 18),
+              label: const Text(
+                'Start Work (Unlock Details)',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD97706),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(color: Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1054,20 +1594,35 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.layers_rounded, color: Color(0xFF34D399), size: 16),
+                  Icon(
+                    Icons.layers_rounded,
+                    color: Color(0xFF059669),
+                    size: 16,
+                  ),
                   SizedBox(width: 6),
-                  Text('Requested Material & Specs', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text(
+                    'Requested Material & Specs',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  color: Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   '${pr.items.length} item(s)',
-                  style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -1080,22 +1635,40 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               padding: const EdgeInsets.all(10),
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF334155)),
+                border: Border.all(color: Color(0xFFE2E8F0)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.notes_rounded, color: Color(0xFF60A5FA), size: 14),
+                      Icon(
+                        Icons.notes_rounded,
+                        color: Color(0xFF2563EB),
+                        size: 14,
+                      ),
                       SizedBox(width: 4),
-                      Text('Requester Order Instructions', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF93C5FD))),
+                      Text(
+                        'Requester Order Instructions',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2563EB),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(pr.remarks!, style: const TextStyle(fontSize: 11, color: Color(0xFFCBD5E1), height: 1.3)),
+                  Text(
+                    pr.remarks!,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF475569),
+                      height: 1.3,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1112,9 +1685,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF334155)),
+                border: Border.all(color: Color(0xFFE2E8F0)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1128,20 +1701,32 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                             if (it.productType?.productCode != null)
                               Container(
                                 margin: const EdgeInsets.only(right: 6),
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF1E293B),
+                                  color: Color(0xFFFFFFFF),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
                                   it.productType!.productCode!,
-                                  style: const TextStyle(fontSize: 9, fontFamily: 'monospace', color: Color(0xFF34D399), fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    fontSize: 9,
+                                    fontFamily: 'monospace',
+                                    color: Color(0xFF059669),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             Expanded(
                               child: Text(
                                 '#${idx + 1}. ${it.productName}',
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0F172A),
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -1149,26 +1734,39 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE11D48).withValues(alpha: 0.2),
+                          color: Color(0xFFDC2626).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           'Qty: ${it.quantity}',
-                          style: const TextStyle(fontSize: 10, color: Color(0xFFFDA4AF), fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFFB91C1C),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    it.size != null && it.size!.isNotEmpty ? 'Size: ${it.size}' : 'Size: Not specified',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                    it.size != null && it.size!.isNotEmpty
+                        ? 'Size: ${it.size}'
+                        : 'Size: Not specified',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                    ),
                   ),
 
                   // Optional Sample Attachment
-                  if (it.attachmentPath != null && it.attachmentPath!.isNotEmpty) ...[
+                  if (it.attachmentPath != null &&
+                      it.attachmentPath!.isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1176,25 +1774,43 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         Expanded(
                           child: Text(
                             'Sample: ${it.attachmentName ?? it.attachmentPath}',
-                            style: const TextStyle(fontSize: 10, color: Color(0xFFCBD5E1), fontStyle: FontStyle.italic),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF475569),
+                              fontStyle: FontStyle.italic,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         InkWell(
                           onTap: () {
                             if (isImg) {
-                              _showImageDialog(context, attachmentUrl, it.productName);
+                              _showImageDialog(
+                                context,
+                                attachmentUrl,
+                                it.productName,
+                              );
                             } else {
                               _openExternalUrl(attachmentUrl);
                             }
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF334155),
+                              color: Color(0xFFE2E8F0),
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Text('View Sample', style: TextStyle(fontSize: 9, color: Color(0xFF93C5FD), fontWeight: FontWeight.bold)),
+                            child: const Text(
+                              'View Sample',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Color(0xFF2563EB),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -1210,13 +1826,16 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
   }
 
   /// 4. Compact Audit Trail & Revision Timeline
-  Widget _buildAuditTrailTimeline(BuildContext context, PurchaseRequestModel pr) {
+  Widget _buildAuditTrailTimeline(
+    BuildContext context,
+    PurchaseRequestModel pr,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(color: Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1226,21 +1845,39 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.history_rounded, color: Color(0xFFA78BFA), size: 16),
+                  Icon(
+                    Icons.history_rounded,
+                    color: Color(0xFF2563EB),
+                    size: 16,
+                  ),
                   SizedBox(width: 6),
-                  Text('Audit Trail & Revision History', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text(
+                    'Audit Trail & Revision History',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
                 ],
               ),
               if (pr.revisionCount > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE11D48).withValues(alpha: 0.2),
+                    color: Color(0xFFDC2626).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     'Revisions: ${pr.revisionCount}',
-                    style: const TextStyle(fontSize: 10, color: Color(0xFFFDA4AF), fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFFB91C1C),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
             ],
@@ -1248,51 +1885,55 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           const SizedBox(height: 12),
 
           if (pr.activities.isEmpty)
-            const Text('No activity logs recorded yet.', style: TextStyle(fontSize: 11, color: Color(0xFF64748B)))
+            const Text(
+              'No activity logs recorded yet.',
+              style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+            )
           else
             ...pr.activities.map((act) {
-              final actDate = act.createdAt != null
-                  ? '${act.createdAt!.day} ${_monthName(act.createdAt!.month)} ${act.createdAt!.year}, ${act.createdAt!.hour.toString().padLeft(2, '0')}:${act.createdAt!.minute.toString().padLeft(2, '0')}'
-                  : '';
+              final actDate = _formatDateTime(act.createdAt);
 
-              Color badgeBg = const Color(0xFF0F172A);
-              Color badgeBorder = const Color(0xFF334155);
-              Color badgeText = const Color(0xFF94A3B8);
+              Color badgeBg = Color(0xFFF8FAFC);
+              Color badgeBorder = Color(0xFFE2E8F0);
+              Color badgeText = Color(0xFF64748B);
               String actionTitle = act.action;
 
               if (act.action == 'work_started') {
-                badgeBg = const Color(0xFF312E81).withValues(alpha: 0.4);
-                badgeBorder = const Color(0xFF6366F1);
-                badgeText = const Color(0xFFA5B4FC);
+                badgeBg = Color(0xFFEFF6FF).withValues(alpha: 0.4);
+                badgeBorder = Color(0xFF2563EB);
+                badgeText = Color(0xFF2563EB);
                 actionTitle = 'Work Started';
               } else if (act.action == 'submitted_for_approval') {
-                badgeBg = const Color(0xFF581C87).withValues(alpha: 0.4);
-                badgeBorder = const Color(0xFFA855F7);
-                badgeText = const Color(0xFFD8B4FE);
+                badgeBg = Color(0xFFF5F3FF).withValues(alpha: 0.4);
+                badgeBorder = Color(0xFF2563EB);
+                badgeText = Color(0xFF475569);
                 actionTitle = 'Artwork Submitted';
               } else if (act.action == 'rejected_with_revision') {
-                badgeBg = const Color(0xFF881337).withValues(alpha: 0.4);
-                badgeBorder = const Color(0xFFFB7185);
-                badgeText = const Color(0xFFFDA4AF);
+                badgeBg = Color(0xFFFEF2F2).withValues(alpha: 0.4);
+                badgeBorder = Color(0xFFDC2626);
+                badgeText = Color(0xFFB91C1C);
                 actionTitle = 'Revision Requested';
               } else if (act.action == 'approved') {
-                badgeBg = const Color(0xFF064E3B).withValues(alpha: 0.4);
-                badgeBorder = const Color(0xFF10B981);
-                badgeText = const Color(0xFF6EE7B7);
+                badgeBg = Color(0xFFECFDF5).withValues(alpha: 0.4);
+                badgeBorder = Color(0xFF059669);
+                badgeText = Color(0xFF059669);
                 actionTitle = 'Approved';
               }
 
-              final hasActAttach = act.attachmentPath != null && act.attachmentPath!.isNotEmpty;
-              final actUrl = hasActAttach ? _getAttachmentUrl(act.attachmentPath) : '';
+              final hasActAttach =
+                  act.attachmentPath != null && act.attachmentPath!.isNotEmpty;
+              final actUrl = hasActAttach
+                  ? _getAttachmentUrl(act.attachmentPath)
+                  : '';
               final isActImg = hasActAttach && _isImage(act.attachmentPath);
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  color: Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF334155)),
+                  border: Border.all(color: Color(0xFFE2E8F0)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1301,22 +1942,42 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: badgeBg,
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(color: badgeBorder),
                           ),
-                          child: Text(actionTitle, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: badgeText)),
+                          child: Text(
+                            actionTitle,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: badgeText,
+                            ),
+                          ),
                         ),
-                        Text(actDate, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                        Text(
+                          actDate,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
                       ],
                     ),
                     if (act.remarks != null && act.remarks!.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
-                        act.remarks!,
-                        style: const TextStyle(fontSize: 11, color: Colors.white, height: 1.3),
+                        _sanitizeAuditRemarks(act.remarks!, pr),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF0F172A),
+                          height: 1.3,
+                        ),
                       ),
                     ],
                     if (hasActAttach) ...[
@@ -1324,31 +1985,44 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       InkWell(
                         onTap: () {
                           if (isActImg) {
-                            _showImageDialog(context, actUrl, act.attachmentName ?? 'Proof');
+                            _showImageDialog(
+                              context,
+                              actUrl,
+                              act.attachmentName ?? 'Proof',
+                            );
                           } else {
                             _openExternalUrl(actUrl);
                           }
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
+                            color: Color(0xFFFFFFFF),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: const Color(0xFF475569)),
+                            border: Border.all(color: Color(0xFF475569)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                isActImg ? Icons.image_rounded : Icons.attach_file_rounded,
+                                isActImg
+                                    ? Icons.image_rounded
+                                    : Icons.attach_file_rounded,
                                 size: 12,
-                                color: const Color(0xFFA78BFA),
+                                color: Color(0xFF2563EB),
                               ),
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
                                   'View Attached Proof \n(${act.attachmentName ?? 'File'})',
-                                  style: const TextStyle(fontSize: 10, color: Color(0xFFA78BFA), fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFF2563EB),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
@@ -1365,104 +2039,244 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     );
   }
 
+  String _sanitizeAuditRemarks(String remarks, PurchaseRequestModel pr) {
+    if (isAdminOrManager) return remarks;
+
+    String sanitized = remarks;
+
+    final vendorNames = <String>{};
+    if (pr.activePrintOrder?.vendor?.name != null &&
+        pr.activePrintOrder!.vendor!.name.isNotEmpty) {
+      vendorNames.add(pr.activePrintOrder!.vendor!.name);
+    }
+    for (final po in pr.printOrders) {
+      if (po.vendor?.name != null && po.vendor!.name.isNotEmpty) {
+        vendorNames.add(po.vendor!.name);
+      }
+    }
+
+    for (final vName in vendorNames) {
+      final trimmed = vName.trim();
+      if (trimmed.isNotEmpty && trimmed != 'XXXX' && !trimmed.contains('XXXX')) {
+        sanitized = sanitized.replaceAll(
+          RegExp(RegExp.escape(trimmed), caseSensitive: false),
+          'XXXX',
+        );
+      }
+    }
+
+    sanitized = sanitized.replaceAll(
+      RegExp(r"Vendor\s*['\x22][^'\x22]+['\x22]", caseSensitive: false),
+      "Vendor 'XXXX'",
+    );
+    sanitized = sanitized.replaceAll(
+      RegExp(r"dispatched to Vendor\s+[^\s,;]+(?:\s+[^\s,;]+)*\s+by", caseSensitive: false),
+      "dispatched to Vendor 'XXXX' by",
+    );
+    sanitized = sanitized.replaceAll(
+      RegExp(r"to\s+Vendor\s+[^,;\n\r]+\s+was cancelled", caseSensitive: false),
+      "to Printing Vendor was cancelled",
+    );
+    sanitized = sanitized.replaceAll(
+      RegExp(r"to\s+[^,;\n\r]+\s+was cancelled", caseSensitive: false),
+      "to Printing Vendor was cancelled",
+    );
+
+    return sanitized;
+  }
+
   Widget _buildBottomActionBar(BuildContext context, PurchaseRequestModel pr) {
-    // 1. DESIGNER ACTIONS
-    if (isDesigner) {
-      if (pr.status == 'assigned_to_designer' || pr.status == 'pending_assignment') {
+    final bool isCreatorWingIncharge =
+        widget.currentUser?.isWingIncharge == true && _isPRCreator(pr);
+    final bool isAssignedDesigner = isDesigner && _isPRDesigner(pr);
+    final bool canReviewThisPR = canReviewArtwork || isCreatorWingIncharge;
+    final bool canDispatchApproved =
+        widget.isSuperAdmin || isManager || isAssignedDesigner;
+
+    // 1. DESIGNER & CREATIVE EXECUTION ACTIONS (Only for Designers when NOT Admin/Manager)
+    if (isDesigner && !isAdminOrManager) {
+      if (pr.status == 'assigned_to_designer' ||
+          pr.status == 'pending_assignment') {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
-            color: Color(0xFF1E293B),
-            border: Border(top: BorderSide(color: Color(0xFF334155))),
+            color: Color(0xFFFFFFFF),
+            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
           ),
           child: ElevatedButton.icon(
             onPressed: () {
               context.read<PurchaseRequestBloc>().add(
-                    StartWorkEvent(
-                      prId: pr.id,
-                      phone: widget.currentUser?.phone,
-                      designerId: widget.currentUser?.id,
-                    ),
-                  );
+                StartWorkEvent(
+                  prId: pr.id,
+                  phone: widget.currentUser?.phone,
+                  designerId: widget.currentUser?.id,
+                ),
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('✓ Work started! Start time recorded in Admin.'),
-                  backgroundColor: Color(0xFF2563EB),
+                  content: Text(
+                    '✓ Work started! Task details unlocked.',
+                  ),
+                  backgroundColor: Color(0xFF059669),
                 ),
               );
             },
-            icon: const Icon(Icons.play_arrow_rounded, size: 18),
-            label: const Text('Start Work (Mark as In Progress)', style: TextStyle(fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.lock_open_rounded, size: 18),
+            label: const Text(
+              '🔒 Start Work (Unlock Task Details)',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFFD97706),
+              foregroundColor: const Color(0xFFFFFFFF),
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         );
       }
 
-      if (pr.status == 'in_progress' || pr.status == 'rejected_revision_needed') {
+      if (pr.status == 'in_progress' ||
+          pr.status == 'rejected_revision_needed') {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
-            color: Color(0xFF1E293B),
-            border: Border(top: BorderSide(color: Color(0xFF334155))),
+            color: Color(0xFFFFFFFF),
+            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
           ),
           child: ElevatedButton.icon(
             onPressed: () => _showSubmitWorkModal(context, pr),
             icon: const Icon(Icons.cloud_upload_outlined, size: 18),
             label: Text(
-              pr.status == 'rejected_revision_needed' ? 'Resubmit Artwork for Approval' : 'Submit Work for Approval',
+              pr.status == 'rejected_revision_needed'
+                  ? 'Resubmit Artwork for Approval'
+                  : 'Submit Work for Approval',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7C3AED),
-              foregroundColor: Colors.white,
+              backgroundColor: Color(0xFF2563EB),
+              foregroundColor: Color(0xFFFFFFFF),
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         );
       }
 
-      if (pr.status == 'submitted_for_approval') {
+      if (isDesigner && pr.status == 'submitted_for_approval') {
         return Container(
           padding: const EdgeInsets.all(16),
-          color: const Color(0xFF1E293B),
+          color: const Color(0xFFFFFFFF),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFF581C87).withValues(alpha: 0.3),
+              color: const Color(0xFFEFF6FF).withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFA855F7)),
+              border: Border.all(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.5),
+              ),
             ),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.hourglass_top_rounded, color: Color(0xFFD8B4FE), size: 16),
+                Icon(Icons.hourglass_top_rounded, color: Color(0xFF2563EB), size: 16),
                 SizedBox(width: 8),
-                Text('Submitted to Admin for Approval\nWaiting for Review', style: TextStyle(color: Color(0xFFD8B4FE), fontSize: 12, fontWeight: FontWeight.bold)),
+                Text(
+                  'Artwork Submitted · Waiting for Incharge Approval',
+                  style: TextStyle(
+                    color: Color(0xFF2563EB),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ),
         );
       }
+    }
 
-      if (pr.status == 'approved' || pr.status == 'sent_to_print' || pr.status == 'posted' || pr.status == 'completed') {
-        return _buildApprovedActionsBar(context, pr);
+    // Admin / Manager / Wing Incharge status cards before submission for approval
+    if (!isDesigner || isAdminOrManager) {
+      if (pr.status == 'pending_assignment') {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          color: const Color(0xFFFFFFFF),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0xFFD97706).withValues(alpha: 0.5),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.hourglass_empty_rounded, color: Color(0xFFD97706), size: 16),
+                SizedBox(width: 8),
+                Text(
+                  'Waiting for Admin to Assign Designer',
+                  style: TextStyle(
+                    color: Color(0xFFD97706),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+      if (pr.status == 'assigned_to_designer') {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          color: const Color(0xFFFFFFFF),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF).withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.5),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.palette_outlined, color: Color(0xFF2563EB), size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  pr.assignedDesigner != null
+                      ? 'Assigned to Designer: \n${pr.assignedDesigner!.name} (Pending Work Start)'
+                      : 'Assigned to Designer \n(Pending Work Start)',
+                  style: const TextStyle(
+                    color: Color(0xFF2563EB),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+
+            ),
+          ),
+        );
       }
     }
 
-    // 2. SUPER ADMIN ACTIONS
-    if (widget.isSuperAdmin) {
+    // 2. REVIEW & APPROVAL ACTIONS (Super Admin, Manager, Digital Studio Incharge, and PR Creator Wing Incharge)
+    if (canReviewThisPR) {
       if (pr.status == 'submitted_for_approval') {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
-            color: Color(0xFF1E293B),
-            border: Border(top: BorderSide(color: Color(0xFF334155))),
+            color: Color(0xFFFFFFFF),
+            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
           ),
           child: Row(
             children: [
@@ -1472,10 +2286,12 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   icon: const Icon(Icons.assignment_return_rounded, size: 16),
                   label: const Text('Request Revision'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFFDA4AF),
-                    side: const BorderSide(color: Color(0xFFE11D48)),
+                    foregroundColor: const Color(0xFFB91C1C),
+                    side: const BorderSide(color: Color(0xFFDC2626)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -1487,9 +2303,11 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   label: const Text('Approve Artwork'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF059669),
-                    foregroundColor: Colors.white,
+                    foregroundColor: const Color(0xFFFFFFFF),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -1501,24 +2319,34 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       if (pr.status == 'rejected_revision_needed') {
         return Container(
           padding: const EdgeInsets.all(16),
-          color: const Color(0xFF1E293B),
+          color: const Color(0xFFFFFFFF),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFF881337).withValues(alpha: 0.3),
+              color: const Color(0xFFFEF2F2).withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFFB7185).withValues(alpha: 0.5)),
+              border: Border.all(
+                color: const Color(0xFFDC2626).withValues(alpha: 0.5),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.history_rounded, color: Color(0xFFFDA4AF), size: 16),
+                const Icon(
+                  Icons.history_rounded,
+                  color: Color(0xFFB91C1C),
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   pr.revisionCount > 0
                       ? 'Submitted for Revision (#${pr.revisionCount}) \nWaiting for Designer'
                       : 'Submitted for Revision \nWaiting for Designer',
-                  style: const TextStyle(color: Color(0xFFFDA4AF), fontSize: 12, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Color(0xFFB91C1C),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -1529,22 +2357,82 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       if (pr.status == 'in_progress') {
         return Container(
           padding: const EdgeInsets.all(16),
-          color: const Color(0xFF1E293B),
+          color: const Color(0xFFFFFFFF),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFF312E81).withValues(alpha: 0.3),
+              color: const Color(0xFFEFF6FF).withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.5)),
+              border: Border.all(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.5),
+              ),
             ),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.brush_rounded, color: Color(0xFFA5B4FC), size: 16),
+                Icon(Icons.brush_rounded, color: Color(0xFF2563EB), size: 16),
                 SizedBox(width: 8),
                 Text(
                   'Designer is Currently Working on this PR',
-                  style: TextStyle(color: Color(0xFFA5B4FC), fontSize: 12, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Color(0xFF2563EB),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+
+    // 3. APPROVED & DISPATCH ACTIONS (Super Admin, Manager, Digital Studio Incharge, and Assigned Designer)
+    if (pr.status == 'approved' ||
+        pr.status == 'sent_to_print' ||
+        pr.status == 'posted' ||
+        pr.status == 'completed') {
+      if (isCreatorWingIncharge && !widget.isSuperAdmin && !isManager) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Color(0xFFFFFFFF),
+            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0xFF059669).withValues(alpha: 0.6),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: Color(0xFF059669),
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    pr.status == 'completed'
+                        ? 'Purchase Request Completed & Delivered ✓'
+                        : (pr.status == 'sent_to_print'
+                            ? 'Artwork Approved & Sent to Print!'
+                            : (pr.status == 'posted'
+                                ? 'Artwork Approved & Published!'
+                                : 'Artwork Approved! Pending Dispatch.')),
+                    style: const TextStyle(
+                      color: Color(0xFF059669),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ],
             ),
@@ -1552,7 +2440,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
         );
       }
 
-      if (pr.status == 'approved' || pr.status == 'sent_to_print' || pr.status == 'posted' || pr.status == 'completed') {
+      if (canDispatchApproved) {
         return _buildApprovedActionsBar(context, pr);
       }
     }
@@ -1560,7 +2448,10 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     return const SizedBox.shrink();
   }
 
-  Widget _buildApprovedActionsBar(BuildContext context, PurchaseRequestModel pr) {
+  Widget _buildApprovedActionsBar(
+    BuildContext context,
+    PurchaseRequestModel pr,
+  ) {
     final activePO = pr.activePrintOrder;
     final isSentToPrint = pr.status == 'sent_to_print' || activePO != null;
     final isPosted = pr.status == 'posted' || pr.isPosted;
@@ -1569,8 +2460,8 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
-        color: Color(0xFF1E293B),
-        border: Border(top: BorderSide(color: Color(0xFF334155))),
+        color: Color(0xFFFFFFFF),
+        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1580,19 +2471,25 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E3A8A).withValues(alpha: 0.35),
+                color: Color(0xFFEFF6FF).withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.6)),
+                border: Border.all(
+                  color: Color(0xFF2563EB).withValues(alpha: 0.6),
+                ),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2563EB),
+                      color: Color(0xFF2563EB),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.print_rounded, color: Colors.white, size: 16),
+                    child: const Icon(
+                      Icons.print_rounded,
+                      color: Color(0xFF0F172A),
+                      size: 16,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -1600,9 +2497,11 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Sent to Print to ${activePO?.vendor?.name ?? 'Vendor'}',
+                          widget.isSuperAdmin || isManager
+                              ? 'Sent to Print to ${activePO?.vendor?.name ?? 'Vendor'}'
+                              : 'Sent to Print to XXXX (Printing Vendor)',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: Color(0xFF0F172A),
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1613,7 +2512,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         Text(
                           '${activePO?.poNumber ?? ''} · Status: ${(activePO?.status ?? 'dispatched').replaceAll('_', ' ').toUpperCase()}',
                           style: const TextStyle(
-                            color: Color(0xFF93C5FD),
+                            color: Color(0xFF2563EB),
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1636,13 +2535,25 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         );
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.5)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
                         ),
-                        child: const Text('View PO', style: TextStyle(fontSize: 10, color: Color(0xFF93C5FD), fontWeight: FontWeight.bold)),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF2563EB).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: Color(0xFF2563EB).withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: const Text(
+                          'View PO',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF2563EB),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -1651,14 +2562,25 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     OutlinedButton(
                       onPressed: () => _confirmCancelPrint(pr, activePO),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFFFDA4AF),
-                        side: const BorderSide(color: Color(0xFFE11D48)),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        foregroundColor: Color(0xFFB91C1C),
+                        side: const BorderSide(color: Color(0xFFDC2626)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                       ),
-                      child: const Text('Cancel Print', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Cancel Print',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                 ],
               ),
@@ -1669,19 +2591,25 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFF581C87).withValues(alpha: 0.35),
+                color: Color(0xFFF5F3FF).withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFA855F7).withValues(alpha: 0.6)),
+                border: Border.all(
+                  color: Color(0xFF2563EB).withValues(alpha: 0.6),
+                ),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF7C3AED),
+                      color: Color(0xFF2563EB),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.campaign_rounded, color: Colors.white, size: 16),
+                    child: const Icon(
+                      Icons.campaign_rounded,
+                      color: Color(0xFF0F172A),
+                      size: 16,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -1691,7 +2619,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         const Text(
                           'Forwarded for Post Publishing ✓',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Color(0xFF0F172A),
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1699,9 +2627,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         if (pr.postedAt != null) ...[
                           const SizedBox(height: 2),
                           Text(
-                            'Posted on ${pr.postedAt!.day.toString().padLeft(2, '0')}/${pr.postedAt!.month.toString().padLeft(2, '0')}/${pr.postedAt!.year} ${pr.postedAt!.hour.toString().padLeft(2, '0')}:${pr.postedAt!.minute.toString().padLeft(2, '0')}',
+                            'Posted on ${_formatDateTime(pr.postedAt)}',
                             style: const TextStyle(
-                              color: Color(0xFFD8B4FE),
+                              color: Color(0xFF475569),
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1714,14 +2642,25 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   OutlinedButton(
                     onPressed: () => _confirmCancelPost(pr),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFFDA4AF),
-                      side: const BorderSide(color: Color(0xFFE11D48)),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      foregroundColor: Color(0xFFB91C1C),
+                      side: const BorderSide(color: Color(0xFFDC2626)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                     ),
-                    child: const Text('Cancel Post', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Cancel Post',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1732,18 +2671,28 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
               decoration: BoxDecoration(
-                color: const Color(0xFF064E3B).withValues(alpha: 0.35),
+                color: Color(0xFFECFDF5).withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6)),
+                border: Border.all(
+                  color: Color(0xFF059669).withValues(alpha: 0.6),
+                ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.task_alt_rounded, color: Color(0xFF34D399), size: 18),
+                  const Icon(
+                    Icons.task_alt_rounded,
+                    color: Color(0xFF059669),
+                    size: 18,
+                  ),
                   const SizedBox(width: 10),
                   const Expanded(
                     child: Text(
                       'Purchase Request Completed & Delivered ✓',
-                      style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 12, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Color(0xFF059669),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   if (activePO != null)
@@ -1760,13 +2709,25 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         );
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
                         ),
-                        child: const Text('View PO', style: TextStyle(fontSize: 10, color: Color(0xFF6EE7B7), fontWeight: FontWeight.bold)),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF059669).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: Color(0xFF059669).withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: const Text(
+                          'View PO',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF059669),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                 ],
@@ -1783,13 +2744,18 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     icon: const Icon(Icons.campaign_rounded, size: 18),
                     label: const Text(
                       'Post It',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF7C3AED), // Purple
-                      foregroundColor: Colors.white,
+                      backgroundColor: Color(0xFF2563EB), // Purple
+                      foregroundColor: Color(0xFFFFFFFF),
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -1801,13 +2767,18 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     icon: const Icon(Icons.print_rounded, size: 18),
                     label: const Text(
                       'Send to Print',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB), // Blue
-                      foregroundColor: Colors.white,
+                      backgroundColor: Color(0xFF2563EB), // Blue
+                      foregroundColor: Color(0xFFFFFFFF),
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -1822,43 +2793,51 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: Color(0xFFFFFFFF),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
-            Icon(Icons.cancel_outlined, color: Color(0xFFFDA4AF), size: 20),
+            Icon(Icons.cancel_outlined, color: Color(0xFFB91C1C), size: 20),
             SizedBox(width: 8),
-            Text('Cancel Print Order', style: TextStyle(color: Colors.white, fontSize: 16)),
+            Text(
+              'Cancel Print Order',
+              style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+            ),
           ],
         ),
         content: Text(
           'Are you sure you want to cancel print order ${activePO?.poNumber ?? ''} dispatched to ${activePO?.vendor?.name ?? 'vendor'}? PR status will revert to Approved.',
-          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+          style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('No, Keep Order', style: TextStyle(color: Colors.white54)),
+            child: const Text(
+              'No, Keep Order',
+              style: TextStyle(color: Color(0xFF64748B)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(dialogCtx);
               context.read<PurchaseRequestBloc>().add(
-                    CancelPrintPREvent(
-                      prId: pr.id,
-                      phone: widget.currentUser?.phone,
-                    ),
-                  );
+                CancelPrintPREvent(
+                  prId: pr.id,
+                  phone: widget.currentUser?.phone,
+                ),
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('✓ Print order for ${pr.prNumber} cancelled. Status reverted to Approved.'),
-                  backgroundColor: const Color(0xFFE11D48),
+                  content: Text(
+                    '✓ Print order for ${pr.prNumber} cancelled. Status reverted to Approved.',
+                  ),
+                  backgroundColor: Color(0xFFDC2626),
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE11D48),
-              foregroundColor: Colors.white,
+              backgroundColor: Color(0xFFDC2626),
+              foregroundColor: Color(0xFFFFFFFF),
             ),
             child: const Text('Cancel Print Order'),
           ),
@@ -1871,43 +2850,49 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: Color(0xFFFFFFFF),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
-            Icon(Icons.cancel_outlined, color: Color(0xFFFDA4AF), size: 20),
+            Icon(Icons.cancel_outlined, color: Color(0xFFB91C1C), size: 20),
             SizedBox(width: 8),
-            Text('Cancel Post Request', style: TextStyle(color: Colors.white, fontSize: 16)),
+            Text(
+              'Cancel Post Request',
+              style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+            ),
           ],
         ),
         content: Text(
           'Are you sure you want to cancel the post publishing request for ${pr.prNumber}?',
-          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+          style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('No, Keep Post', style: TextStyle(color: Colors.white54)),
+            child: const Text(
+              'No, Keep Post',
+              style: TextStyle(color: Color(0xFF64748B)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(dialogCtx);
               context.read<PurchaseRequestBloc>().add(
-                    CancelPostPREvent(
-                      prId: pr.id,
-                      phone: widget.currentUser?.phone,
-                    ),
-                  );
+                CancelPostPREvent(
+                  prId: pr.id,
+                  phone: widget.currentUser?.phone,
+                ),
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('✓ Post request for ${pr.prNumber} cancelled.'),
-                  backgroundColor: const Color(0xFFE11D48),
+                  backgroundColor: Color(0xFFDC2626),
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE11D48),
-              foregroundColor: Colors.white,
+              backgroundColor: Color(0xFFDC2626),
+              foregroundColor: Color(0xFFFFFFFF),
             ),
             child: const Text('Cancel Post Request'),
           ),
@@ -1922,22 +2907,30 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: Color(0xFFFFFFFF),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
+                color: Color(0xFF2563EB).withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.campaign_rounded, color: Color(0xFFA78BFA), size: 20),
+              child: const Icon(
+                Icons.campaign_rounded,
+                color: Color(0xFF2563EB),
+                size: 20,
+              ),
             ),
             const SizedBox(width: 10),
             const Text(
               'Submit Post Request',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                color: Color(0xFF0F172A),
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ],
         ),
@@ -1947,21 +2940,24 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           children: [
             Text(
               'Forward approved artwork for ${pr.prNumber} for digital & social media posting?',
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
+              style: const TextStyle(color: Color(0xFF475569), fontSize: 13),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: remarksController,
               maxLines: 2,
-              style: const TextStyle(color: Colors.white, fontSize: 13),
+              style: const TextStyle(color: Color(0xFF0F172A), fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'Optional instructions (e.g. publish on Instagram & Facebook)...',
-                hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+                hintStyle: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 12,
+                ),
                 filled: true,
-                fillColor: const Color(0xFF0F172A),
+                fillColor: Color(0xFFF8FAFC),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF334155)),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                 ),
               ),
             ),
@@ -1970,7 +2966,10 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF64748B)),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -1991,8 +2990,10 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    backgroundColor: const Color(0xFF1E293B),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    backgroundColor: Color(0xFFFFFFFF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     content: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -2000,21 +3001,32 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                            color: Color(0xFF059669).withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.check_circle_rounded, color: Color(0xFF34D399), size: 30),
+                          child: const Icon(
+                            Icons.check_circle_rounded,
+                            color: Color(0xFF059669),
+                            size: 30,
+                          ),
                         ),
                         const SizedBox(height: 14),
                         const Text(
                           'Thank You!',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                          style: TextStyle(
+                            color: Color(0xFF0F172A),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           'Post request received for ${pr.prNumber}.',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                          style: const TextStyle(
+                            color: Color(0xFF475569),
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
@@ -2025,17 +3037,21 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                             Navigator.pop(ctx);
                             if (mounted) {
                               context.read<PurchaseRequestBloc>().add(
-                                    FetchPurchaseRequestsEvent(
-                                      designerId: isDesigner ? widget.currentUser?.id : null,
-                                      phone: widget.currentUser?.phone,
-                                    ),
-                                  );
+                                FetchPurchaseRequestsEvent(
+                                  designerId: isDesigner
+                                      ? widget.currentUser?.id
+                                      : null,
+                                  phone: widget.currentUser?.phone,
+                                ),
+                              );
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF7C3AED),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            backgroundColor: Color(0xFF2563EB),
+                            foregroundColor: Color(0xFFFFFFFF),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                           child: const Text('OK'),
                         ),
@@ -2046,16 +3062,24 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               } catch (e) {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: $e'), backgroundColor: const Color(0xFFEF4444)),
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    backgroundColor: Color(0xFFDC2626),
+                  ),
                 );
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7C3AED),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              backgroundColor: Color(0xFF2563EB),
+              foregroundColor: Color(0xFFFFFFFF),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Submit Post', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Submit Post',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -2078,7 +3102,8 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
         quantityCtrl: TextEditingController(text: '${it.quantity}'),
         sizeCtrl: TextEditingController(text: it.size ?? ''),
         defaultAttachmentPath: pr.artworkFilePath ?? it.attachmentPath,
-        defaultAttachmentName: pr.artworkFileName ?? it.attachmentName ?? 'Approved Proof',
+        defaultAttachmentName:
+            pr.artworkFileName ?? it.attachmentName ?? 'Approved Proof',
       );
     }).toList();
 
@@ -2093,10 +3118,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           return Container(
             height: MediaQuery.of(context).size.height * 0.9,
             decoration: const BoxDecoration(
-              color: Color(0xFF1E293B),
+              color: Color(0xFFFFFFFF),
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               boxShadow: [
-                BoxShadow(color: Colors.black54, blurRadius: 20, offset: Offset(0, -4)),
+                BoxShadow(
+                  color: Colors.black54,
+                  blurRadius: 20,
+                  offset: Offset(0, -4),
+                ),
               ],
             ),
             child: Column(
@@ -2106,12 +3135,15 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   height: 4,
                   margin: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF475569),
+                    color: Color(0xFF475569),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -2120,10 +3152,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF2563EB).withValues(alpha: 0.2),
+                              color: Color(0xFF2563EB).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.print_rounded, color: Color(0xFF60A5FA), size: 22),
+                            child: const Icon(
+                              Icons.print_rounded,
+                              color: Color(0xFF2563EB),
+                              size: 22,
+                            ),
                           ),
                           const SizedBox(width: 10),
                           Column(
@@ -2134,12 +3170,15 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: Color(0xFF0F172A),
                                 ),
                               ),
                               Text(
                                 '${pr.prNumber} · ${pr.wing?.name ?? 'General Wing'}',
-                                style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF64748B),
+                                ),
                               ),
                             ],
                           ),
@@ -2147,12 +3186,12 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(modalCtx),
-                        icon: const Icon(Icons.close, color: Colors.white70),
+                        icon: const Icon(Icons.close, color: Color(0xFF475569)),
                       ),
                     ],
                   ),
                 ),
-                const Divider(color: Color(0xFF334155), height: 1),
+                const Divider(color: Color(0xFFE2E8F0), height: 1),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(20),
@@ -2162,7 +3201,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         const Text(
                           'SELECT PRINTING VENDOR *',
                           style: TextStyle(
-                            color: Color(0xFF818CF8),
+                            color: Color(0xFF2563EB),
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -2173,32 +3212,40 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0F172A),
+                              color: Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Text('No vendors found. Please register a vendor first.',
-                                style: TextStyle(color: Colors.white60, fontSize: 12)),
+                            child: const Text(
+                              'No vendors found. Please register a vendor first.',
+                              style: TextStyle(
+                                color: Color(0xFF64748B),
+                                fontSize: 12,
+                              ),
+                            ),
                           )
                         else
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0F172A),
+                              color: Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF334155)),
+                              border: Border.all(color: Color(0xFFE2E8F0)),
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<VendorModel>(
                                 value: selectedVendor,
                                 isExpanded: true,
-                                dropdownColor: const Color(0xFF1E293B),
+                                dropdownColor: Color(0xFFFFFFFF),
                                 items: vendors.map((v) {
                                   return DropdownMenuItem<VendorModel>(
                                     value: v,
                                     child: Text(
                                       '${v.name} (+91 ${v.mobile1})',
                                       style: const TextStyle(
-                                          color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                                        color: Color(0xFF0F172A),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   );
                                 }).toList(),
@@ -2214,7 +3261,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         const Text(
                           'PRODUCTS TO PRINT (ADJUST QTY & ATTACHMENTS)',
                           style: TextStyle(
-                            color: Color(0xFF818CF8),
+                            color: Color(0xFF2563EB),
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -2234,9 +3281,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0F172A),
+                            color: Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFF334155)),
+                            border: Border.all(color: Color(0xFFE2E8F0)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2245,40 +3292,75 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        const Text('Target Wing (Read-Only):',
-                                            style: TextStyle(color: Colors.white38, fontSize: 10)),
+                                        const Text(
+                                          'Target Wing (Read-Only):',
+                                          style: TextStyle(
+                                            color: Color(0xFF64748B),
+                                            fontSize: 10,
+                                          ),
+                                        ),
                                         const SizedBox(height: 2),
-                                        Text(pr.wing?.name ?? 'General Wing',
-                                            style: const TextStyle(
-                                                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                                        Text(
+                                          pr.wing?.name ?? 'General Wing',
+                                          style: const TextStyle(
+                                            color: Color(0xFF0F172A),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        const Text('Expected Delivery (Read-Only):',
-                                            style: TextStyle(color: Colors.white38, fontSize: 10)),
+                                        const Text(
+                                          'Expected Delivery (Read-Only):',
+                                          style: TextStyle(
+                                            color: Color(0xFF64748B),
+                                            fontSize: 10,
+                                          ),
+                                        ),
                                         const SizedBox(height: 2),
                                         Text(
-                                            '${pr.expectedDeliveryDate ?? 'ASAP'} (${pr.expectedDeliveryTime ?? 'Anytime'})',
-                                            style: const TextStyle(
-                                                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                                          '${pr.expectedDeliveryDate ?? 'ASAP'} (${pr.expectedDeliveryTime ?? 'Anytime'})',
+                                          style: const TextStyle(
+                                            color: Color(0xFF0F172A),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
                                 ],
                               ),
-                              if (pr.remarks != null && pr.remarks!.isNotEmpty) ...[
-                                const Divider(color: Color(0xFF334155), height: 16),
-                                const Text('Requester Remarks (Read-Only):',
-                                    style: TextStyle(color: Colors.white38, fontSize: 10)),
+                              if (pr.remarks != null &&
+                                  pr.remarks!.isNotEmpty) ...[
+                                const Divider(
+                                  color: Color(0xFFE2E8F0),
+                                  height: 16,
+                                ),
+                                const Text(
+                                  'Requester Remarks (Read-Only):',
+                                  style: TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontSize: 10,
+                                  ),
+                                ),
                                 const SizedBox(height: 2),
-                                Text(pr.remarks!,
-                                    style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                                Text(
+                                  pr.remarks!,
+                                  style: const TextStyle(
+                                    color: Color(0xFF475569),
+                                    fontSize: 11,
+                                  ),
+                                ),
                               ],
                             ],
                           ),
@@ -2287,7 +3369,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         const Text(
                           'PRINT ORDER REMARKS FOR VENDOR / PRINTER',
                           style: TextStyle(
-                            color: Color(0xFF818CF8),
+                            color: Color(0xFF2563EB),
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -2297,16 +3379,23 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         TextField(
                           controller: printOrderRemarksCtrl,
                           maxLines: 2,
-                          style: const TextStyle(color: Colors.white, fontSize: 13),
+                          style: const TextStyle(
+                            color: Color(0xFF0F172A),
+                            fontSize: 13,
+                          ),
                           decoration: InputDecoration(
-                            hintText:
-                                'Specific instructions (e.g. 300 GSM Star Flex, 4 corner eyelets, urgent delivery)...',
-                            hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+                            hintText: 'Specific instructions (e.g. 300 GSM Star Flex, 4 corner eyelets, urgent delivery)...',
+                            hintStyle: const TextStyle(
+                              color: Color(0xFF64748B),
+                              fontSize: 12,
+                            ),
                             filled: true,
-                            fillColor: const Color(0xFF0F172A),
+                            fillColor: Color(0xFFF8FAFC),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFF334155)),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE2E8F0),
+                              ),
                             ),
                           ),
                         ),
@@ -2318,8 +3407,11 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                               if (selectedVendor == null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                      content: Text('Please select a printing vendor.'),
-                                      backgroundColor: Color(0xFFEF4444)),
+                                    content: Text(
+                                      'Please select a printing vendor.',
+                                    ),
+                                    backgroundColor: Color(0xFFDC2626),
+                                  ),
                                 );
                                 return;
                               }
@@ -2328,12 +3420,17 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 return CreatePrintOrderItemParam(
                                   productTypeId: ic.item.productTypeId,
                                   productName: ic.item.productName,
-                                  quantity: int.tryParse(ic.quantityCtrl.text.trim()) ?? 1,
+                                  quantity:
+                                      int.tryParse(
+                                        ic.quantityCtrl.text.trim(),
+                                      ) ??
+                                      1,
                                   size: ic.sizeCtrl.text.trim().isNotEmpty
                                       ? ic.sizeCtrl.text.trim()
                                       : null,
-                                  attachmentPath:
-                                      ic.pickedBytes == null ? ic.defaultAttachmentPath : null,
+                                  attachmentPath: ic.pickedBytes == null
+                                      ? ic.defaultAttachmentPath
+                                      : null,
                                   attachmentName: ic.pickedBytes != null
                                       ? ic.pickedName
                                       : ic.defaultAttachmentName,
@@ -2345,8 +3442,11 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 Navigator.pop(modalCtx);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                      content: Text('Dispatching Print Order to Vendor...'),
-                                      backgroundColor: Color(0xFF2563EB)),
+                                    content: Text(
+                                      'Dispatching Print Order to Vendor...',
+                                    ),
+                                    backgroundColor: Color(0xFF2563EB),
+                                  ),
                                 );
 
                                 final repo = PrintOrderRepository();
@@ -2359,46 +3459,53 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                   expectedDeliveryTime: pr.expectedDeliveryTime,
                                   requesterRemarks: pr.remarks,
                                   printOrderRemarks:
-                                      printOrderRemarksCtrl.text.trim().isNotEmpty
-                                          ? printOrderRemarksCtrl.text.trim()
-                                          : null,
+                                      printOrderRemarksCtrl.text
+                                          .trim()
+                                          .isNotEmpty
+                                      ? printOrderRemarksCtrl.text.trim()
+                                      : null,
                                   phone: phone,
                                   items: dispatchItems,
                                 );
 
                                 if (!mounted) return;
-                                this
-                                    .context
-                                    .read<PrintOrderBloc>()
-                                    .add(FetchPrintOrders(phone: phone));
+                                this.context.read<PrintOrderBloc>().add(
+                                  FetchPrintOrders(phone: phone),
+                                );
 
                                 ScaffoldMessenger.of(this.context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                        '✓ Print Order ${po.poNumber} dispatched to ${selectedVendor!.name}!'),
-                                    backgroundColor: const Color(0xFF10B981),
+                                      '✓ Print Order ${po.poNumber} dispatched to ${selectedVendor!.name}!',
+                                    ),
+                                    backgroundColor: Color(0xFF059669),
                                   ),
                                 );
                               } catch (e) {
                                 if (!mounted) return;
                                 ScaffoldMessenger.of(this.context).showSnackBar(
                                   SnackBar(
-                                      content: Text('Error: $e'),
-                                      backgroundColor: const Color(0xFFEF4444)),
+                                    content: Text('Error: $e'),
+                                    backgroundColor: Color(0xFFDC2626),
+                                  ),
                                 );
                               }
                             },
                             icon: const Icon(Icons.send_rounded, size: 18),
                             label: const Text(
                               'Dispatch Print Order',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2563EB),
-                              foregroundColor: Colors.white,
+                              backgroundColor: Color(0xFF2563EB),
+                              foregroundColor: Color(0xFFFFFFFF),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ),
@@ -2423,9 +3530,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
+        color: Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(color: Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2436,14 +3543,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                  color: Color(0xFF2563EB).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Center(
                   child: Text(
                     '${idx + 1}',
                     style: const TextStyle(
-                      color: Color(0xFF818CF8),
+                      color: Color(0xFF2563EB),
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
@@ -2455,7 +3562,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 child: Text(
                   state.item.productName,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: Color(0xFF0F172A),
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
@@ -2471,16 +3578,25 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   controller: state.quantityCtrl,
                   keyboardType: TextInputType.number,
                   style: const TextStyle(
-                      color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                    color: Color(0xFF0F172A),
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Quantity',
-                    labelStyle: const TextStyle(color: Colors.white60, fontSize: 11),
+                    labelStyle: const TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 11,
+                    ),
                     filled: true,
-                    fillColor: const Color(0xFF1E293B),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    fillColor: Color(0xFFFFFFFF),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFF334155)),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                     ),
                   ),
                 ),
@@ -2489,16 +3605,25 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               Expanded(
                 child: TextField(
                   controller: state.sizeCtrl,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  style: const TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontSize: 13,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Size / Dimension',
-                    labelStyle: const TextStyle(color: Colors.white60, fontSize: 11),
+                    labelStyle: const TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 11,
+                    ),
                     filled: true,
-                    fillColor: const Color(0xFF1E293B),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    fillColor: Color(0xFFFFFFFF),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFF334155)),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                     ),
                   ),
                 ),
@@ -2511,22 +3636,26 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                color: Color(0xFF059669).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF10B981)),
+                border: Border.all(color: Color(0xFF059669)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle_rounded,
-                      color: Color(0xFF34D399), size: 14),
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: Color(0xFF059669),
+                    size: 14,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'Attached: ${state.pickedName}',
                       style: const TextStyle(
-                          color: Color(0xFF34D399),
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold),
+                        color: Color(0xFF059669),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -2538,7 +3667,11 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         state.pickedType = null;
                       });
                     },
-                    child: const Icon(Icons.close, color: Colors.white54, size: 14),
+                    child: const Icon(
+                      Icons.close,
+                      color: Color(0xFF64748B),
+                      size: 14,
+                    ),
                   ),
                 ],
               ),
@@ -2548,19 +3681,25 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
+                color: Color(0xFFFFFFFF),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF334155)),
+                border: Border.all(color: Color(0xFFE2E8F0)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.image_outlined,
-                      color: Color(0xFF818CF8), size: 14),
+                  const Icon(
+                    Icons.image_outlined,
+                    color: Color(0xFF2563EB),
+                    size: 14,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'Using Proof: ${state.defaultAttachmentName ?? 'Artwork'}',
-                      style: const TextStyle(color: Colors.white70, fontSize: 11),
+                      style: const TextStyle(
+                        color: Color(0xFF475569),
+                        fontSize: 11,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -2589,13 +3728,17 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     }
                   },
                   icon: const Icon(Icons.camera_alt_rounded, size: 14),
-                  label: const Text('Click Photo', style: TextStyle(fontSize: 11)),
+                  label: const Text(
+                    'Click Photo',
+                    style: TextStyle(fontSize: 11),
+                  ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF60A5FA),
-                    side: const BorderSide(color: Color(0xFF3B82F6)),
+                    foregroundColor: Color(0xFF2563EB),
+                    side: const BorderSide(color: Color(0xFF2563EB)),
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
@@ -2614,13 +3757,17 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     }
                   },
                   icon: const Icon(Icons.folder_open_rounded, size: 14),
-                  label: const Text('Explore Files', style: TextStyle(fontSize: 11)),
+                  label: const Text(
+                    'Explore Files',
+                    style: TextStyle(fontSize: 11),
+                  ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFA78BFA),
-                    side: const BorderSide(color: Color(0xFFA855F7)),
+                    foregroundColor: Color(0xFF2563EB),
+                    side: const BorderSide(color: Color(0xFF2563EB)),
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
@@ -2632,58 +3779,58 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
   }
 
   Widget _buildStatusBadge(String status, PurchaseRequestModel pr) {
-    Color bg = const Color(0xFF78350F).withValues(alpha: 0.4);
-    Color border = const Color(0xFFF59E0B);
-    Color text = const Color(0xFFFCD34D);
+    Color bg = Color(0xFFFFF7ED).withValues(alpha: 0.4);
+    Color border = Color(0xFFD97706);
+    Color text = Color(0xFFD97706);
     IconData icon = Icons.hourglass_empty_rounded;
     String label = 'Pending Assignment';
 
     if (status == 'assigned_to_designer') {
-      bg = const Color(0xFF1E3A8A).withValues(alpha: 0.4);
-      border = const Color(0xFF3B82F6);
-      text = const Color(0xFF93C5FD);
+      bg = Color(0xFFEFF6FF).withValues(alpha: 0.4);
+      border = Color(0xFF2563EB);
+      text = Color(0xFF2563EB);
       icon = Icons.assignment_ind_rounded;
       label = 'Assigned';
     } else if (status == 'in_progress') {
-      bg = const Color(0xFF312E81).withValues(alpha: 0.4);
-      border = const Color(0xFF6366F1);
-      text = const Color(0xFFA5B4FC);
+      bg = Color(0xFFEFF6FF).withValues(alpha: 0.4);
+      border = Color(0xFF2563EB);
+      text = Color(0xFF2563EB);
       icon = Icons.draw_rounded;
       label = 'In Progress';
     } else if (status == 'submitted_for_approval') {
-      bg = const Color(0xFF581C87).withValues(alpha: 0.4);
-      border = const Color(0xFFA855F7);
-      text = const Color(0xFFD8B4FE);
+      bg = Color(0xFFF5F3FF).withValues(alpha: 0.4);
+      border = Color(0xFF2563EB);
+      text = Color(0xFF475569);
       icon = Icons.hourglass_top_rounded;
       label = 'Under Review';
     } else if (status == 'rejected_revision_needed') {
-      bg = const Color(0xFF881337).withValues(alpha: 0.5);
-      border = const Color(0xFFFB7185);
-      text = const Color(0xFFFDA4AF);
+      bg = Color(0xFFFEF2F2).withValues(alpha: 0.5);
+      border = Color(0xFFDC2626);
+      text = Color(0xFFB91C1C);
       icon = Icons.replay_rounded;
       label = 'Revision (#${pr.revisionCount})';
     } else if (status == 'approved') {
-      bg = const Color(0xFF0D9488).withValues(alpha: 0.35);
-      border = const Color(0xFF14B8A6);
-      text = const Color(0xFF5EEAD4);
+      bg = Color(0xFF059669).withValues(alpha: 0.35);
+      border = Color(0xFF059669);
+      text = Color(0xFF059669);
       icon = Icons.check_circle_rounded;
       label = 'Approved';
     } else if (status == 'sent_to_print') {
-      bg = const Color(0xFF1E3A8A).withValues(alpha: 0.4);
-      border = const Color(0xFF3B82F6);
-      text = const Color(0xFF93C5FD);
+      bg = Color(0xFFEFF6FF).withValues(alpha: 0.4);
+      border = Color(0xFF2563EB);
+      text = Color(0xFF2563EB);
       icon = Icons.print_rounded;
       label = 'Sent to Print';
     } else if (status == 'posted') {
-      bg = const Color(0xFF581C87).withValues(alpha: 0.4);
-      border = const Color(0xFFA855F7);
-      text = const Color(0xFFD8B4FE);
+      bg = Color(0xFFF5F3FF).withValues(alpha: 0.4);
+      border = Color(0xFF2563EB);
+      text = Color(0xFF475569);
       icon = Icons.campaign_rounded;
       label = 'Posted ✓';
     } else if (status == 'completed') {
-      bg = const Color(0xFF064E3B).withValues(alpha: 0.4);
-      border = const Color(0xFF10B981);
-      text = const Color(0xFF6EE7B7);
+      bg = Color(0xFFECFDF5).withValues(alpha: 0.4);
+      border = Color(0xFF059669);
+      text = Color(0xFF059669);
       icon = Icons.task_alt_rounded;
       label = 'Completed ✓';
     }
@@ -2702,7 +3849,11 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: text),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: text,
+            ),
           ),
         ],
       ),
@@ -2710,7 +3861,20 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
   }
 
   String _monthName(int month) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return (month >= 1 && month <= 12) ? months[month - 1] : '';
   }
 }
@@ -2733,4 +3897,3 @@ class _SendToPrintItemState {
     this.defaultAttachmentName,
   });
 }
-

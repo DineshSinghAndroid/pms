@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../repositories/user_repository.dart';
 import 'user_event.dart';
 import 'user_state.dart';
@@ -24,8 +25,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       final users = await repository.getUsers();
       emit(UserLoaded(users: users));
     } catch (e) {
-      emit(UserError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(UserError(errorMessage: e.toString().replaceAll('Exception: ', '')));
     }
   }
 
@@ -37,8 +37,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       final users = await repository.getUsers();
       emit(UserLoaded(users: users));
     } catch (e) {
-      emit(UserError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(UserError(errorMessage: e.toString().replaceAll('Exception: ', '')));
     }
   }
 
@@ -51,8 +50,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       final users = await repository.getUsers();
       emit(UserLoaded(users: users));
     } catch (e) {
-      emit(UserError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(UserError(errorMessage: e.toString().replaceAll('Exception: ', '')));
     }
   }
 
@@ -65,8 +63,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       final users = await repository.getUsers();
       emit(UserLoaded(users: users));
     } catch (e) {
-      emit(UserError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(UserError(errorMessage: e.toString().replaceAll('Exception: ', '')));
     }
   }
 
@@ -79,8 +76,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       final users = await repository.getUsers();
       emit(UserLoaded(users: users));
     } catch (e) {
-      emit(UserError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(UserError(errorMessage: e.toString().replaceAll('Exception: ', '')));
     }
   }
 
@@ -97,8 +93,9 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         }).toList();
         emit(UserLoaded(users: updatedList));
       } catch (e) {
-        emit(UserError(
-            errorMessage: e.toString().replaceAll('Exception: ', '')));
+        emit(
+          UserError(errorMessage: e.toString().replaceAll('Exception: ', '')),
+        );
       }
     }
   }

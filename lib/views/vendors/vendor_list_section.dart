@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../bloc/vendor/vendor_bloc.dart';
 import '../../bloc/vendor/vendor_event.dart';
 import '../../bloc/vendor/vendor_state.dart';
@@ -35,7 +36,7 @@ class _VendorListSectionState extends State<VendorListSection> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: Color(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -58,15 +59,21 @@ class _VendorListSectionState extends State<VendorListSection> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          vendor != null ? 'Edit Printing Vendor' : 'Add New Printing Vendor',
+                          vendor != null
+                              ? 'Edit Printing Vendor'
+                              : 'Add New Printing Vendor',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: Color(0xFF94A3B8), size: 20),
+                          icon: const Icon(
+                            Icons.close,
+                            color: Color(0xFF64748B),
+                            size: 20,
+                          ),
                           onPressed: () => Navigator.pop(ctx),
                         ),
                       ],
@@ -127,17 +134,20 @@ class _VendorListSectionState extends State<VendorListSection> {
 
                     // Allow App Login Checkbox
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F172A),
+                        color: Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF334155)),
+                        border: Border.all(color: Color(0xFFE2E8F0)),
                       ),
                       child: Row(
                         children: [
                           Checkbox(
                             value: isLoginAllowed,
-                            activeColor: const Color(0xFF2563EB),
+                            activeColor: Color(0xFF2563EB),
                             onChanged: (val) {
                               setModalState(() {
                                 isLoginAllowed = val ?? false;
@@ -153,12 +163,15 @@ class _VendorListSectionState extends State<VendorListSection> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: Color(0xFF0F172A),
                                   ),
                                 ),
                                 Text(
                                   'Vendor can log in using Mobile 1 OTP',
-                                  style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFF64748B),
+                                  ),
                                 ),
                               ],
                             ),
@@ -180,8 +193,10 @@ class _VendorListSectionState extends State<VendorListSection> {
                         if (name.isEmpty || mobile1.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Please fill Vendor Name and Mobile 1'),
-                              backgroundColor: Color(0xFFE11D48),
+                              content: Text(
+                                'Please fill Vendor Name and Mobile 1',
+                              ),
+                              backgroundColor: Color(0xFFDC2626),
                             ),
                           );
                           return;
@@ -198,31 +213,47 @@ class _VendorListSectionState extends State<VendorListSection> {
 
                         if (vendor != null) {
                           context.read<VendorBloc>().add(
-                                UpdateVendorEvent(vendorId: vendor.id, payload: payload),
-                              );
+                            UpdateVendorEvent(
+                              vendorId: vendor.id,
+                              payload: payload,
+                            ),
+                          );
                         } else {
-                          context.read<VendorBloc>().add(CreateVendorEvent(payload));
+                          context.read<VendorBloc>().add(
+                            CreateVendorEvent(payload),
+                          );
                         }
 
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(vendor != null ? '✓ Vendor updated!' : '✓ Vendor created!'),
-                            backgroundColor: const Color(0xFF059669),
+                            content: Text(
+                              vendor != null
+                                  ? '✓ Vendor updated!'
+                                  : '✓ Vendor created!',
+                            ),
+                            backgroundColor: Color(0xFF059669),
                             behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
+                        backgroundColor: Color(0xFF2563EB),
+                        foregroundColor: Color(0xFFFFFFFF),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: Text(
                         vendor != null ? 'Save Changes' : 'Create Vendor',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],
@@ -240,17 +271,25 @@ class _VendorListSectionState extends State<VendorListSection> {
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Delete Vendor', style: TextStyle(color: Colors.white, fontSize: 16)),
+          backgroundColor: Color(0xFFFFFFFF),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Delete Vendor',
+            style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+          ),
           content: Text(
             'Are you sure you want to delete vendor "${vendor.name}"?',
-            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+            style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Cancel', style: TextStyle(color: Color(0xFF94A3B8))),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Color(0xFF64748B)),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -259,11 +298,14 @@ class _VendorListSectionState extends State<VendorListSection> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('✓ Vendor deleted'),
-                    backgroundColor: Color(0xFFE11D48),
+                    backgroundColor: Color(0xFFDC2626),
                   ),
                 );
               },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE11D48), foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFDC2626),
+                foregroundColor: Color(0xFFFFFFFF),
+              ),
               child: const Text('Delete'),
             ),
           ],
@@ -285,29 +327,42 @@ class _VendorListSectionState extends State<VendorListSection> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFCBD5E1)),
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF475569),
+          ),
         ),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
-          style: const TextStyle(fontSize: 13, color: Colors.white),
+          style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
             prefixText: prefix,
-            prefixStyle: const TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold),
+            prefixStyle: const TextStyle(
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.bold,
+            ),
             filled: true,
-            fillColor: const Color(0xFF0F172A),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            fillColor: Color(0xFFF8FAFC),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF334155)),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+              borderSide: const BorderSide(
+                color: Color(0xFF2563EB),
+                width: 1.5,
+              ),
             ),
           ),
         ),
@@ -326,14 +381,18 @@ class _VendorListSectionState extends State<VendorListSection> {
           children: [
             const Row(
               children: [
-                Icon(Icons.storefront_rounded, color: Color(0xFF60A5FA), size: 20),
+                Icon(
+                  Icons.storefront_rounded,
+                  color: Color(0xFF2563EB),
+                  size: 20,
+                ),
                 SizedBox(width: 8),
                 Text(
                   'Printing Vendors Directory',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: Color(0xFF0F172A),
                   ),
                 ),
               ],
@@ -344,11 +403,19 @@ class _VendorListSectionState extends State<VendorListSection> {
                 icon: const Icon(Icons.add, size: 14),
                 label: const Text('Add Vendor'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  backgroundColor: Color(0xFF2563EB),
+                  foregroundColor: Color(0xFFFFFFFF),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
           ],
@@ -362,14 +429,22 @@ class _VendorListSectionState extends State<VendorListSection> {
           onChanged: (val) {
             setState(() => _searchQuery = val.trim().toLowerCase());
           },
-          style: const TextStyle(fontSize: 13, color: Colors.white),
+          style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
           decoration: InputDecoration(
             hintText: 'Search vendors by name, phone or address...',
             hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-            prefixIcon: const Icon(Icons.search, color: Color(0xFF64748B), size: 18),
+            prefixIcon: const Icon(
+              Icons.search,
+              color: Color(0xFF64748B),
+              size: 18,
+            ),
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(Icons.clear, color: Color(0xFF64748B), size: 16),
+                    icon: const Icon(
+                      Icons.clear,
+                      color: Color(0xFF64748B),
+                      size: 16,
+                    ),
                     onPressed: () {
                       _searchController.clear();
                       setState(() => _searchQuery = '');
@@ -377,15 +452,21 @@ class _VendorListSectionState extends State<VendorListSection> {
                   )
                 : null,
             filled: true,
-            fillColor: const Color(0xFF1E293B),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            fillColor: Color(0xFFFFFFFF),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF334155)),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+              borderSide: const BorderSide(
+                color: Color(0xFF2563EB),
+                width: 1.5,
+              ),
             ),
           ),
         ),
@@ -399,12 +480,15 @@ class _VendorListSectionState extends State<VendorListSection> {
               return Container(
                 height: 120,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
+                  color: Color(0xFFFFFFFF),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF334155)),
+                  border: Border.all(color: Color(0xFFE2E8F0)),
                 ),
                 child: const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF2563EB), strokeWidth: 2.5),
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF2563EB),
+                    strokeWidth: 2.5,
+                  ),
                 ),
               );
             }
@@ -413,25 +497,30 @@ class _VendorListSectionState extends State<VendorListSection> {
               return Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4C0519).withValues(alpha: 0.3),
+                  color: Color(0xFFFEF2F2).withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE11D48)),
+                  border: Border.all(color: Color(0xFFDC2626)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Failed to load vendors: ${state.errorMessage}',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFFFECDD3)),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFFB91C1C),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: () {
-                        context.read<VendorBloc>().add(const FetchVendorsEvent());
+                        context.read<VendorBloc>().add(
+                          const FetchVendorsEvent(),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFBE123C),
-                        foregroundColor: Colors.white,
+                        backgroundColor: Color(0xFFB91C1C),
+                        foregroundColor: Color(0xFFFFFFFF),
                         textStyle: const TextStyle(fontSize: 11),
                       ),
                       child: const Text('Retry'),
@@ -446,8 +535,10 @@ class _VendorListSectionState extends State<VendorListSection> {
                 if (_searchQuery.isEmpty) return true;
                 return v.name.toLowerCase().contains(_searchQuery) ||
                     v.mobile1.toLowerCase().contains(_searchQuery) ||
-                    (v.mobile2?.toLowerCase().contains(_searchQuery) ?? false) ||
-                    (v.address?.toLowerCase().contains(_searchQuery) ?? false) ||
+                    (v.mobile2?.toLowerCase().contains(_searchQuery) ??
+                        false) ||
+                    (v.address?.toLowerCase().contains(_searchQuery) ??
+                        false) ||
                     (v.email?.toLowerCase().contains(_searchQuery) ?? false);
               }).toList();
 
@@ -455,9 +546,9 @@ class _VendorListSectionState extends State<VendorListSection> {
                 return Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
+                    color: Color(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF334155)),
+                    border: Border.all(color: Color(0xFFE2E8F0)),
                   ),
                   child: const Center(
                     child: Text(
@@ -472,7 +563,8 @@ class _VendorListSectionState extends State<VendorListSection> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: vendors.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 10),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final vendor = vendors[index];
                   return _buildVendorCard(context, vendor);
@@ -491,9 +583,9 @@ class _VendorListSectionState extends State<VendorListSection> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(color: Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,11 +597,15 @@ class _VendorListSectionState extends State<VendorListSection> {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.2),
+                  color: Color(0xFF2563EB).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Center(
-                  child: Icon(Icons.print_rounded, color: Color(0xFF60A5FA), size: 18),
+                  child: Icon(
+                    Icons.print_rounded,
+                    color: Color(0xFF2563EB),
+                    size: 18,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -522,13 +618,16 @@ class _VendorListSectionState extends State<VendorListSection> {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Color(0xFF0F172A),
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'ID: #${vendor.id}',
-                      style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF64748B),
+                      ),
                     ),
                   ],
                 ),
@@ -537,19 +636,26 @@ class _VendorListSectionState extends State<VendorListSection> {
               InkWell(
                 onTap: widget.isSuperAdmin
                     ? () {
-                        context.read<VendorBloc>().add(ToggleVendorLoginEvent(vendor.id));
+                        context.read<VendorBloc>().add(
+                          ToggleVendorLoginEvent(vendor.id),
+                        );
                       }
                     : null,
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: vendor.isLoginAllowed
-                        ? const Color(0xFF065F46).withValues(alpha: 0.5)
-                        : const Color(0xFF334155),
+                        ? Color(0xFFECFDF5).withValues(alpha: 0.5)
+                        : Color(0xFFE2E8F0),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: vendor.isLoginAllowed ? const Color(0xFF059669) : const Color(0xFF475569),
+                      color: vendor.isLoginAllowed
+                          ? Color(0xFF059669)
+                          : Color(0xFF475569),
                     ),
                   ),
                   child: Row(
@@ -558,15 +664,21 @@ class _VendorListSectionState extends State<VendorListSection> {
                       Icon(
                         Icons.circle,
                         size: 6,
-                        color: vendor.isLoginAllowed ? const Color(0xFF34D399) : const Color(0xFF94A3B8),
+                        color: vendor.isLoginAllowed
+                            ? Color(0xFF059669)
+                            : Color(0xFF64748B),
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        vendor.isLoginAllowed ? 'Login Allowed' : 'Login Disabled',
+                        vendor.isLoginAllowed
+                            ? 'Login Allowed'
+                            : 'Login Disabled',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: vendor.isLoginAllowed ? const Color(0xFF34D399) : const Color(0xFF94A3B8),
+                          color: vendor.isLoginAllowed
+                              ? Color(0xFF059669)
+                              : Color(0xFF64748B),
                         ),
                       ),
                     ],
@@ -577,23 +689,37 @@ class _VendorListSectionState extends State<VendorListSection> {
           ),
 
           const SizedBox(height: 12),
-          const Divider(color: Color(0xFF334155), height: 1),
+          const Divider(color: Color(0xFFE2E8F0), height: 1),
           const SizedBox(height: 10),
 
           // Contact details
           Row(
             children: [
-              const Icon(Icons.phone_iphone_rounded, color: Color(0xFF94A3B8), size: 14),
+              const Icon(
+                Icons.phone_iphone_rounded,
+                color: Color(0xFF64748B),
+                size: 14,
+              ),
               const SizedBox(width: 6),
               Text(
                 '+91 ${vendor.mobile1}',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFE2E8F0)),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFE2E8F0),
+                ),
               ),
               if (vendor.mobile2 != null && vendor.mobile2!.isNotEmpty) ...[
                 const SizedBox(width: 8),
                 const Text('•', style: TextStyle(color: Color(0xFF64748B))),
                 const SizedBox(width: 8),
-                Text('+91 ${vendor.mobile2}', style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+                Text(
+                  '+91 ${vendor.mobile2}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
               ],
             ],
           ),
@@ -602,9 +728,19 @@ class _VendorListSectionState extends State<VendorListSection> {
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.email_outlined, color: Color(0xFF94A3B8), size: 14),
+                const Icon(
+                  Icons.email_outlined,
+                  color: Color(0xFF64748B),
+                  size: 14,
+                ),
                 const SizedBox(width: 6),
-                Text(vendor.email!, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+                Text(
+                  vendor.email!,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
               ],
             ),
           ],
@@ -613,12 +749,19 @@ class _VendorListSectionState extends State<VendorListSection> {
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.location_on_outlined, color: Color(0xFF94A3B8), size: 14),
+                const Icon(
+                  Icons.location_on_outlined,
+                  color: Color(0xFF64748B),
+                  size: 14,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     vendor.address!,
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -637,11 +780,16 @@ class _VendorListSectionState extends State<VendorListSection> {
                   icon: const Icon(Icons.edit, size: 12),
                   label: const Text('Edit'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF60A5FA),
-                    side: const BorderSide(color: Color(0xFF3B82F6)),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    foregroundColor: Color(0xFF2563EB),
+                    side: const BorderSide(color: Color(0xFF2563EB)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     textStyle: const TextStyle(fontSize: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -650,11 +798,16 @@ class _VendorListSectionState extends State<VendorListSection> {
                   icon: const Icon(Icons.delete_outline, size: 12),
                   label: const Text('Delete'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFFDA4AF),
-                    side: const BorderSide(color: Color(0xFFE11D48)),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    foregroundColor: Color(0xFFB91C1C),
+                    side: const BorderSide(color: Color(0xFFDC2626)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     textStyle: const TextStyle(fontSize: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ],

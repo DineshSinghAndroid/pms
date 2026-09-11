@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import 'category_model.dart';
 
 class ProductTypeModel extends Equatable {
@@ -27,7 +28,8 @@ class ProductTypeModel extends Equatable {
       name: json['name'] as String? ?? '',
       productCode: json['product_code'] as String?,
       subName: json['sub_name'] as String?,
-      category: json['category'] != null && json['category'] is Map<String, dynamic>
+      category:
+          json['category'] != null && json['category'] is Map<String, dynamic>
           ? CategoryModel.fromJson(json['category'] as Map<String, dynamic>)
           : null,
       createdAt: json['created_at'] != null
@@ -48,5 +50,13 @@ class ProductTypeModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, categoryId, name, productCode, subName, category, createdAt];
+  List<Object?> get props => [
+    id,
+    categoryId,
+    name,
+    productCode,
+    subName,
+    category,
+    createdAt,
+  ];
 }

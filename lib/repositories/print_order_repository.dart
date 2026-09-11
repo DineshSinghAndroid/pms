@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:pms/models/print_order_delivery_model.dart';
 import 'package:pms/models/print_order_model.dart';
@@ -28,7 +29,7 @@ class PrintOrderRepository {
   final ApiService _apiService;
 
   PrintOrderRepository({ApiService? apiService})
-      : _apiService = apiService ?? ApiService();
+    : _apiService = apiService ?? ApiService();
 
   Future<List<PrintOrderModel>> getPrintOrders({
     String? phone,
@@ -61,8 +62,9 @@ class PrintOrderRepository {
 
         final List<dynamic> list = body['data'] as List<dynamic>? ?? [];
         return list
-            .map((item) =>
-                PrintOrderModel.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => PrintOrderModel.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
       }
       throw Exception('Failed to load print orders: ${response.statusCode}');
@@ -86,11 +88,11 @@ class PrintOrderRepository {
             ? response.data as Map<String, dynamic>
             : Map<String, dynamic>.from(response.data as Map);
 
-        return PrintOrderModel.fromJson(
-            body['data'] as Map<String, dynamic>);
+        return PrintOrderModel.fromJson(body['data'] as Map<String, dynamic>);
       }
       throw Exception(
-          'Failed to load print order details: ${response.statusCode}');
+        'Failed to load print order details: ${response.statusCode}',
+      );
     } on DioException catch (e) {
       throw Exception(
         e.response?.data?['message'] ??
@@ -117,26 +119,28 @@ class PrintOrderRepository {
       final formData = FormData();
       formData.fields.add(MapEntry('vendor_id', vendorId.toString()));
       if (purchaseRequestId != null) {
-        formData.fields
-            .add(MapEntry('purchase_request_id', purchaseRequestId.toString()));
+        formData.fields.add(
+          MapEntry('purchase_request_id', purchaseRequestId.toString()),
+        );
       }
       if (wingId != null) {
         formData.fields.add(MapEntry('wing_id', wingId.toString()));
       }
       if (expectedDeliveryDate != null) {
-        formData.fields
-            .add(MapEntry('expected_delivery_date', expectedDeliveryDate));
+        formData.fields.add(
+          MapEntry('expected_delivery_date', expectedDeliveryDate),
+        );
       }
       if (expectedDeliveryTime != null) {
-        formData.fields
-            .add(MapEntry('expected_delivery_time', expectedDeliveryTime));
+        formData.fields.add(
+          MapEntry('expected_delivery_time', expectedDeliveryTime),
+        );
       }
       if (requesterRemarks != null) {
         formData.fields.add(MapEntry('requester_remarks', requesterRemarks));
       }
       if (printOrderRemarks != null) {
-        formData.fields
-            .add(MapEntry('print_order_remarks', printOrderRemarks));
+        formData.fields.add(MapEntry('print_order_remarks', printOrderRemarks));
       }
       if (phone != null) {
         formData.fields.add(MapEntry('phone', phone));
@@ -146,33 +150,44 @@ class PrintOrderRepository {
         final it = items[i];
         if (it.productTypeId != null) {
           formData.fields.add(
-              MapEntry('items[$i][product_type_id]', it.productTypeId.toString()));
+            MapEntry('items[$i][product_type_id]', it.productTypeId.toString()),
+          );
         }
-        formData.fields
-            .add(MapEntry('items[$i][product_name]', it.productName));
-        formData.fields
-            .add(MapEntry('items[$i][quantity]', it.quantity.toString()));
+        formData.fields.add(
+          MapEntry('items[$i][product_name]', it.productName),
+        );
+        formData.fields.add(
+          MapEntry('items[$i][quantity]', it.quantity.toString()),
+        );
         if (it.size != null && it.size!.isNotEmpty) {
           formData.fields.add(MapEntry('items[$i][size]', it.size!));
         }
         if (it.attachmentPath != null && it.attachmentPath!.isNotEmpty) {
-          formData.fields
-              .add(MapEntry('items[$i][attachment_path]', it.attachmentPath!));
+          formData.fields.add(
+            MapEntry('items[$i][attachment_path]', it.attachmentPath!),
+          );
         }
         if (it.attachmentName != null && it.attachmentName!.isNotEmpty) {
-          formData.fields
-              .add(MapEntry('items[$i][attachment_name]', it.attachmentName!));
+          formData.fields.add(
+            MapEntry('items[$i][attachment_name]', it.attachmentName!),
+          );
         }
 
         if (it.fileBytes != null && it.fileBytes!.isNotEmpty) {
           final fName = it.attachmentName ?? 'item_$i.png';
-          formData.files.add(MapEntry(
-            'item_file_$i',
-            MultipartFile.fromBytes(it.fileBytes!, filename: fName),
-          ));
+          formData.files.add(
+            MapEntry(
+              'item_file_$i',
+              MultipartFile.fromBytes(it.fileBytes!, filename: fName),
+            ),
+          );
           // Dual-channel base64 fallback
           formData.fields.add(
-              MapEntry('items[$i][attachment_base64]', base64Encode(it.fileBytes!)));
+            MapEntry(
+              'items[$i][attachment_base64]',
+              base64Encode(it.fileBytes!),
+            ),
+          );
         }
       }
 
@@ -187,8 +202,7 @@ class PrintOrderRepository {
             ? response.data as Map<String, dynamic>
             : Map<String, dynamic>.from(response.data as Map);
 
-        return PrintOrderModel.fromJson(
-            body['data'] as Map<String, dynamic>);
+        return PrintOrderModel.fromJson(body['data'] as Map<String, dynamic>);
       }
       throw Exception('Failed to create print order: ${response.statusCode}');
     } on DioException catch (e) {
@@ -213,16 +227,21 @@ class PrintOrderRepository {
     try {
       dynamic postData;
       if (fileBytes != null && fileBytes.isNotEmpty) {
-        final fName = fileName ?? 'proof_${DateTime.now().millisecondsSinceEpoch}.png';
+        final fName =
+            fileName ?? 'proof_${DateTime.now().millisecondsSinceEpoch}.png';
         final formData = FormData();
         formData.fields.add(MapEntry('status', status));
         if (remarks != null) formData.fields.add(MapEntry('remarks', remarks));
         if (phone != null) formData.fields.add(MapEntry('phone', phone));
-        formData.files.add(MapEntry(
-          'attachment',
-          MultipartFile.fromBytes(fileBytes, filename: fName),
-        ));
-        formData.fields.add(MapEntry('attachment_base64', base64Encode(fileBytes)));
+        formData.files.add(
+          MapEntry(
+            'attachment',
+            MultipartFile.fromBytes(fileBytes, filename: fName),
+          ),
+        );
+        formData.fields.add(
+          MapEntry('attachment_base64', base64Encode(fileBytes)),
+        );
         formData.fields.add(MapEntry('attachment_name', fName));
         postData = formData;
       } else {
@@ -243,8 +262,7 @@ class PrintOrderRepository {
             ? response.data as Map<String, dynamic>
             : Map<String, dynamic>.from(response.data as Map);
 
-        return PrintOrderModel.fromJson(
-            body['data'] as Map<String, dynamic>);
+        return PrintOrderModel.fromJson(body['data'] as Map<String, dynamic>);
       }
       throw Exception('Failed to update PO status: ${response.statusCode}');
     } on DioException catch (e) {
@@ -279,8 +297,11 @@ class PrintOrderRepository {
 
         final List<dynamic> list = body['data'] as List<dynamic>? ?? [];
         return list
-            .map((item) =>
-                PrintOrderDeliveryModel.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) => PrintOrderDeliveryModel.fromJson(
+                item as Map<String, dynamic>,
+              ),
+            )
             .toList();
       }
       throw Exception('Failed to load delivery logs: ${response.statusCode}');
@@ -322,11 +343,13 @@ class PrintOrderRepository {
 
         final delivery = body['delivery'] != null
             ? PrintOrderDeliveryModel.fromJson(
-                body['delivery'] as Map<String, dynamic>)
+                body['delivery'] as Map<String, dynamic>,
+              )
             : null;
         final printOrder = body['print_order'] != null
             ? PrintOrderModel.fromJson(
-                body['print_order'] as Map<String, dynamic>)
+                body['print_order'] as Map<String, dynamic>,
+              )
             : null;
 
         return {
@@ -349,4 +372,3 @@ class PrintOrderRepository {
     }
   }
 }
-

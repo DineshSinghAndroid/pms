@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import '../../models/vendor_model.dart';
 
 abstract class VendorState extends Equatable {

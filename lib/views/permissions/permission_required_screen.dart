@@ -1,20 +1,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../../services/permission_service.dart';
+import '../../widgets/app_logo.dart';
 
 class PermissionRequiredScreen extends StatefulWidget {
   final VoidCallback onAllGranted;
 
-  const PermissionRequiredScreen({
-    super.key,
-    required this.onAllGranted,
-  });
+  const PermissionRequiredScreen({super.key, required this.onAllGranted});
 
   @override
-  State<PermissionRequiredScreen> createState() => _PermissionRequiredScreenState();
+  State<PermissionRequiredScreen> createState() =>
+      _PermissionRequiredScreenState();
 }
 
-class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> with WidgetsBindingObserver {
+class _PermissionRequiredScreenState extends State<PermissionRequiredScreen>
+    with WidgetsBindingObserver {
   List<AppPermissionStatus> _permissionStatuses = [];
   bool _isLoading = true;
   bool _isRequesting = false;
@@ -70,12 +71,16 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
       if (allGranted) {
         widget.onAllGranted();
       } else {
-        final anyPermanentlyDenied = statuses.any((s) => !s.isGranted && s.isPermanentlyDenied);
+        final anyPermanentlyDenied = statuses.any(
+          (s) => !s.isGranted && s.isPermanentlyDenied,
+        );
         if (anyPermanentlyDenied) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Some permissions are permanently denied. Please enable them in App Settings.'),
-              backgroundColor: Color(0xFFE11D48),
+              content: Text(
+                'Some permissions are permanently denied. Please enable them in App Settings.',
+              ),
+              backgroundColor: Color(0xFFDC2626),
             ),
           );
         }
@@ -86,10 +91,12 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
   @override
   Widget build(BuildContext context) {
     final anyMissing = _permissionStatuses.any((s) => !s.isGranted);
-    final anyPermanentlyDenied = _permissionStatuses.any((s) => !s.isGranted && s.isPermanentlyDenied);
+    final anyPermanentlyDenied = _permissionStatuses.any(
+      (s) => !s.isGranted && s.isPermanentlyDenied,
+    );
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: Color(0xFFF8FAFC),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -100,33 +107,8 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Shield Icon Header
-                  Center(
-                    child: Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFE11D48), Color(0xFFBE123C)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(22),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFE11D48).withValues(alpha: 0.35),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.security_rounded,
-                        color: Colors.white,
-                        size: 36,
-                      ),
-                    ),
-                  ),
+                  // Brand logo
+                  const Center(child: AppLogo(size: 80)),
 
                   const SizedBox(height: 24),
 
@@ -136,7 +118,7 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                      color: Color(0xFF0F172A),
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -148,7 +130,7 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF94A3B8),
+                      color: Color(0xFF64748B),
                       height: 1.4,
                     ),
                   ),
@@ -159,7 +141,9 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.all(20),
-                        child: CircularProgressIndicator(color: Color(0xFFE11D48)),
+                        child: CircularProgressIndicator(
+                          color: Color(0xFFDC2626),
+                        ),
                       ),
                     )
                   else ...[
@@ -178,12 +162,12 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E293B),
+                          color: Color(0xFFFFFFFF),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isGranted
-                                ? const Color(0xFF10B981).withValues(alpha: 0.4)
-                                : const Color(0xFFFB7185).withValues(alpha: 0.5),
+                                ? Color(0xFF059669).withValues(alpha: 0.4)
+                                : Color(0xFFDC2626).withValues(alpha: 0.5),
                           ),
                         ),
                         child: Row(
@@ -193,13 +177,15 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: isGranted
-                                    ? const Color(0xFF064E3B).withValues(alpha: 0.5)
-                                    : const Color(0xFF881337).withValues(alpha: 0.4),
+                                    ? Color(0xFFECFDF5).withValues(alpha: 0.5)
+                                    : Color(0xFFFEF2F2).withValues(alpha: 0.4),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
                                 icon,
-                                color: isGranted ? const Color(0xFF34D399) : const Color(0xFFFDA4AF),
+                                color: isGranted
+                                    ? Color(0xFF059669)
+                                    : Color(0xFFB91C1C),
                                 size: 22,
                               ),
                             ),
@@ -209,34 +195,48 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         perm.title,
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                          color: Color(0xFF0F172A),
                                         ),
                                       ),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: isGranted
-                                              ? const Color(0xFF064E3B).withValues(alpha: 0.6)
-                                              : const Color(0xFF881337).withValues(alpha: 0.6),
-                                          borderRadius: BorderRadius.circular(6),
+                                              ? Color(0xFFECFDF5)
+                                                    .withValues(alpha: 0.6)
+                                              : Color(0xFFFEF2F2)
+                                                    .withValues(alpha: 0.6),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
                                           border: Border.all(
-                                            color: isGranted ? const Color(0xFF10B981) : const Color(0xFFFB7185),
+                                            color: isGranted
+                                                ? Color(0xFF059669)
+                                                : Color(0xFFDC2626),
                                           ),
                                         ),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Icon(
-                                              isGranted ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                                              isGranted
+                                                  ? Icons.check_circle_rounded
+                                                  : Icons.cancel_rounded,
                                               size: 12,
-                                              color: isGranted ? const Color(0xFF6EE7B7) : const Color(0xFFFDA4AF),
+                                              color: isGranted
+                                                  ? Color(0xFF059669)
+                                                  : Color(0xFFB91C1C),
                                             ),
                                             const SizedBox(width: 4),
                                             Text(
@@ -244,7 +244,9 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
                                               style: TextStyle(
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.bold,
-                                                color: isGranted ? const Color(0xFF6EE7B7) : const Color(0xFFFDA4AF),
+                                                color: isGranted
+                                                    ? Color(0xFF059669)
+                                                    : Color(0xFFB91C1C),
                                               ),
                                             ),
                                           ],
@@ -257,7 +259,7 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
                                     perm.description,
                                     style: const TextStyle(
                                       fontSize: 11,
-                                      color: Color(0xFF94A3B8),
+                                      color: Color(0xFF64748B),
                                       height: 1.3,
                                     ),
                                   ),
@@ -279,18 +281,28 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF0F172A),
+                                ),
                               )
                             : const Icon(Icons.verified_user_rounded, size: 18),
                         label: Text(
-                          _isRequesting ? 'Requesting Permissions...' : 'Grant Missing Permissions',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          _isRequesting
+                              ? 'Requesting Permissions...'
+                              : 'Grant Missing Permissions',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2563EB),
-                          foregroundColor: Colors.white,
+                          backgroundColor: Color(0xFF2563EB),
+                          foregroundColor: Color(0xFFFFFFFF),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
 
@@ -299,12 +311,20 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
                       OutlinedButton.icon(
                         onPressed: () => PermissionService.openSettings(),
                         icon: const Icon(Icons.settings_outlined, size: 18),
-                        label: const Text('Open App Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        label: const Text(
+                          'Open App Settings',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF60A5FA),
-                          side: const BorderSide(color: Color(0xFF3B82F6)),
+                          foregroundColor: Color(0xFF2563EB),
+                          side: const BorderSide(color: Color(0xFF2563EB)),
                           padding: const EdgeInsets.symmetric(vertical: 13),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ],
@@ -314,8 +334,18 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
                     // Secondary Re-check Button
                     TextButton.icon(
                       onPressed: _checkPermissions,
-                      icon: const Icon(Icons.refresh_rounded, size: 16, color: Color(0xFF94A3B8)),
-                      label: const Text('Re-check Status', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                      icon: const Icon(
+                        Icons.refresh_rounded,
+                        size: 16,
+                        color: Color(0xFF64748B),
+                      ),
+                      label: const Text(
+                        'Re-check Status',
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 16),
@@ -326,7 +356,13 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen> wit
                         onPressed: () async {
                           await FirebaseAuth.instance.signOut();
                         },
-                        child: const Text('Log Out & Exit', style: TextStyle(color: Color(0xFFFDA4AF), fontSize: 12)),
+                        child: const Text(
+                          'Log Out & Exit',
+                          style: TextStyle(
+                            color: Color(0xFFB91C1C),
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
                     ),
                   ],

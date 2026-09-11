@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+
 import '../models/category_model.dart';
 import '../services/api_service.dart';
 
@@ -6,7 +7,7 @@ class CategoryRepository {
   final ApiService _apiService;
 
   CategoryRepository({ApiService? apiService})
-      : _apiService = apiService ?? ApiService();
+    : _apiService = apiService ?? ApiService();
 
   /// Fetch all categories from backend
   Future<List<CategoryModel>> getCategories() async {
@@ -26,7 +27,9 @@ class CategoryRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error loading categories',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error loading categories',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -36,8 +39,10 @@ class CategoryRepository {
   /// Create category
   Future<CategoryModel> createCategory(Map<String, dynamic> payload) async {
     try {
-      final response =
-          await _apiService.client.post('/api/categories', data: payload);
+      final response = await _apiService.client.post(
+        '/api/categories',
+        data: payload,
+      );
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
@@ -50,7 +55,9 @@ class CategoryRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error creating category',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error creating category',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -59,10 +66,14 @@ class CategoryRepository {
 
   /// Update category
   Future<CategoryModel> updateCategory(
-      int id, Map<String, dynamic> payload) async {
+    int id,
+    Map<String, dynamic> payload,
+  ) async {
     try {
-      final response =
-          await _apiService.client.put('/api/categories/$id', data: payload);
+      final response = await _apiService.client.put(
+        '/api/categories/$id',
+        data: payload,
+      );
       if (response.statusCode == 200 && response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>
@@ -74,7 +85,9 @@ class CategoryRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error updating category',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error updating category',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -90,7 +103,9 @@ class CategoryRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error deleting category',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error deleting category',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');

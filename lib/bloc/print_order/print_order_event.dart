@@ -26,7 +26,14 @@ class FetchPrintOrders extends PrintOrderEvent {
   });
 
   @override
-  List<Object?> get props => [phone, vendorId, wingId, status, search, purchaseRequestId];
+  List<Object?> get props => [
+    phone,
+    vendorId,
+    wingId,
+    status,
+    search,
+    purchaseRequestId,
+  ];
 }
 
 class CreatePrintOrderEvent extends PrintOrderEvent {
@@ -54,16 +61,16 @@ class CreatePrintOrderEvent extends PrintOrderEvent {
 
   @override
   List<Object?> get props => [
-        vendorId,
-        purchaseRequestId,
-        wingId,
-        expectedDeliveryDate,
-        expectedDeliveryTime,
-        requesterRemarks,
-        printOrderRemarks,
-        phone,
-        items,
-      ];
+    vendorId,
+    purchaseRequestId,
+    wingId,
+    expectedDeliveryDate,
+    expectedDeliveryTime,
+    requesterRemarks,
+    printOrderRemarks,
+    phone,
+    items,
+  ];
 }
 
 class UpdatePrintOrderStatusEvent extends PrintOrderEvent {
@@ -84,17 +91,21 @@ class UpdatePrintOrderStatusEvent extends PrintOrderEvent {
   });
 
   @override
-  List<Object?> get props => [printOrderId, status, remarks, phone, fileBytes, fileName];
+  List<Object?> get props => [
+    printOrderId,
+    status,
+    remarks,
+    phone,
+    fileBytes,
+    fileName,
+  ];
 }
 
 class FetchDeliveryLogsEvent extends PrintOrderEvent {
   final String? status;
   final String? search;
 
-  const FetchDeliveryLogsEvent({
-    this.status,
-    this.search,
-  });
+  const FetchDeliveryLogsEvent({this.status, this.search});
 
   @override
   List<Object?> get props => [status, search];
@@ -119,12 +130,11 @@ class RecordDeliveryEvent extends PrintOrderEvent {
 
   @override
   List<Object?> get props => [
-        printOrderId,
-        challanNumber,
-        deliveryDate,
-        remarks,
-        phone,
-        items,
-      ];
+    printOrderId,
+    challanNumber,
+    deliveryDate,
+    remarks,
+    phone,
+    items,
+  ];
 }
-

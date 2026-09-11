@@ -49,13 +49,17 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
     super.dispose();
   }
 
-  List<PrintOrderDeliveryModel> _filterLogs(List<PrintOrderDeliveryModel> logs) {
+  List<PrintOrderDeliveryModel> _filterLogs(
+    List<PrintOrderDeliveryModel> logs,
+  ) {
     return logs.where((d) {
-      final matchesStatus = _selectedStatusFilter == 'all' ||
+      final matchesStatus =
+          _selectedStatusFilter == 'all' ||
           d.status.toLowerCase() == _selectedStatusFilter.toLowerCase();
 
       final q = _searchQuery.toLowerCase().trim();
-      final matchesQuery = q.isEmpty ||
+      final matchesQuery =
+          q.isEmpty ||
           d.challanNumber.toLowerCase().contains(q) ||
           d.deliveryNumber.toLowerCase().contains(q) ||
           (d.remarks?.toLowerCase().contains(q) ?? false) ||
@@ -90,14 +94,14 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('✓ ${state.message}'),
-              backgroundColor: const Color(0xFF10B981),
+              backgroundColor: Color(0xFF059669),
             ),
           );
         } else if (state is PrintOrderError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: const Color(0xFFEF4444),
+              backgroundColor: Color(0xFFDC2626),
             ),
           );
         }
@@ -116,7 +120,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
             // Top Bar with Action Button & Search
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: const Color(0xFF0B1120),
+              color: Color(0xFF0B1120),
               child: Column(
                 children: [
                   // Button on Top: + Update Delivery
@@ -134,8 +138,8 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981),
-                            foregroundColor: Colors.white,
+                            backgroundColor: Color(0xFF059669),
+                            foregroundColor: Color(0xFFFFFFFF),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -152,17 +156,29 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                   TextField(
                     controller: _searchController,
                     onChanged: (val) => setState(() => _searchQuery = val),
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    style: const TextStyle(
+                      color: Color(0xFF0F172A),
+                      fontSize: 13,
+                    ),
                     decoration: InputDecoration(
-                      hintText: 'Search Challan #, Delivery #, PO #, or vendor...',
-                      hintStyle:
-                          const TextStyle(color: Colors.white38, fontSize: 12),
-                      prefixIcon: const Icon(Icons.search_rounded,
-                          color: Colors.white54, size: 18),
+                      hintText:
+                          'Search Challan #, Delivery #, PO #, or vendor...',
+                      hintStyle: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 12,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: Color(0xFF64748B),
+                        size: 18,
+                      ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear,
-                                  color: Colors.white38, size: 16),
+                              icon: const Icon(
+                                Icons.clear,
+                                color: Color(0xFF64748B),
+                                size: 16,
+                              ),
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() => _searchQuery = '');
@@ -170,16 +186,18 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                             )
                           : null,
                       filled: true,
-                      fillColor: const Color(0xFF1E293B),
+                      fillColor: Color(0xFFFFFFFF),
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFF334155)),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFF334155)),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                       ),
                     ),
                   ),
@@ -195,13 +213,13 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                         _buildFilterChip(
                           'partially_received',
                           'Partially Received',
-                          color: const Color(0xFFF59E0B),
+                          color: Color(0xFFD97706),
                         ),
                         const SizedBox(width: 8),
                         _buildFilterChip(
                           'completed',
                           'Fully Received',
-                          color: const Color(0xFF10B981),
+                          color: Color(0xFF059669),
                         ),
                       ],
                     ),
@@ -214,7 +232,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async => _loadData(),
-                color: const Color(0xFF10B981),
+                color: Color(0xFF059669),
                 child: filtered.isEmpty
                     ? Center(
                         child: Column(
@@ -224,17 +242,20 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                               width: 60,
                               height: 60,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1E293B),
+                                color: Color(0xFFFFFFFF),
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              child: const Icon(Icons.inventory_2_outlined,
-                                  color: Colors.white38, size: 30),
+                              child: const Icon(
+                                Icons.inventory_2_outlined,
+                                color: Color(0xFF64748B),
+                                size: 30,
+                              ),
                             ),
                             const SizedBox(height: 14),
                             const Text(
                               'No Delivery Logs Found',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: Color(0xFF0F172A),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
                               ),
@@ -243,7 +264,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                             const Text(
                               'Click "+ Update Delivery" to receive products under a Challan.',
                               style: TextStyle(
-                                color: Colors.white54,
+                                color: Color(0xFF64748B),
                                 fontSize: 12,
                               ),
                             ),
@@ -253,7 +274,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, idx) {
                           return _buildDeliveryCard(filtered[idx]);
                         },
@@ -268,7 +289,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
 
   Widget _buildFilterChip(String key, String label, {Color? color}) {
     final isSelected = _selectedStatusFilter == key;
-    final activeColor = color ?? const Color(0xFF10B981);
+    final activeColor = color ?? Color(0xFF059669);
 
     return ChoiceChip(
       label: Text(
@@ -276,7 +297,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.bold,
-          color: isSelected ? Colors.white : Colors.white60,
+          color: isSelected ? Color(0xFF0F172A) : Color(0xFF64748B),
         ),
       ),
       selected: isSelected,
@@ -284,10 +305,8 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
         if (val) setState(() => _selectedStatusFilter = key);
       },
       selectedColor: activeColor,
-      backgroundColor: const Color(0xFF1E293B),
-      side: BorderSide(
-        color: isSelected ? activeColor : const Color(0xFF334155),
-      ),
+      backgroundColor: Color(0xFFFFFFFF),
+      side: BorderSide(color: isSelected ? activeColor : Color(0xFFE2E8F0)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       showCheckmark: false,
     );
@@ -295,18 +314,17 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
 
   Widget _buildDeliveryCard(PrintOrderDeliveryModel d) {
     final isPartial = d.status == 'partially_received';
-    final statusColor =
-        isPartial ? const Color(0xFFF59E0B) : const Color(0xFF10B981);
+    final statusColor = isPartial ? Color(0xFFD97706) : Color(0xFF059669);
     final statusLabel = isPartial ? 'Partially Received' : 'Fully Received';
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isPartial
-              ? const Color(0xFFF59E0B).withValues(alpha: 0.5)
-              : const Color(0xFF10B981).withValues(alpha: 0.5),
+              ? Color(0xFFD97706).withValues(alpha: 0.5)
+              : Color(0xFF059669).withValues(alpha: 0.5),
         ),
       ),
       clipBehavior: Clip.antiAlias,
@@ -315,10 +333,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Left color strip
-            Container(
-              width: 5,
-              color: statusColor,
-            ),
+            Container(width: 5, color: statusColor),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(14),
@@ -327,62 +342,77 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                   children: [
                     // Row 1: Challan Number + Status Chip
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0F172A),
-                                borderRadius: BorderRadius.circular(6),
-                                border:
-                                    Border.all(color: const Color(0xFF475569)),
-                              ),
-                              child: Text(
-                                d.deliveryNumber,
-                                style: const TextStyle(
-                                  color: Color(0xFF38BDF8),
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'monospace',
+                        Expanded(
+                          child: Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFF475569)),
+                                ),
+                                child: Text(
+                                  d.deliveryNumber,
+                                  style: const TextStyle(
+                                    color: Color(0xFF2563EB),
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'monospace',
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0F172A),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                    color: const Color(0xFF10B981)
-                                        .withValues(alpha: 0.4)),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.receipt_long_rounded,
-                                      size: 12, color: Color(0xFF34D399)),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Challan: ${d.challanNumber}',
-                                    style: const TextStyle(
-                                      color: Color(0xFF34D399),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'monospace',
-                                    ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: const Color(0xFF059669)
+                                        .withValues(alpha: 0.4),
                                   ),
-                                ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.receipt_long_rounded,
+                                      size: 12,
+                                      color: Color(0xFF059669),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Challan: ${d.challanNumber}',
+                                      style: const TextStyle(
+                                        color: Color(0xFF059669),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'monospace',
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: statusColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
@@ -403,9 +433,8 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
 
                     // Row 2: Linked PO + Vendor Name
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if (d.printOrder != null)
+                        if (d.printOrder != null) ...[
                           InkWell(
                             onTap: () {
                               Navigator.push(
@@ -420,20 +449,26 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0F172A),
+                                color: const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.print_rounded,
-                                      color: Color(0xFF818CF8), size: 12),
+                                  const Icon(
+                                    Icons.print_rounded,
+                                    color: Color(0xFF2563EB),
+                                    size: 12,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     d.printOrder!.poNumber,
                                     style: const TextStyle(
-                                      color: Color(0xFF818CF8),
+                                      color: Color(0xFF2563EB),
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
                                       fontFamily: 'monospace',
@@ -443,12 +478,19 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                               ),
                             ),
                           ),
-                        Text(
-                          d.printOrder?.vendor?.name ?? 'Vendor',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                          const SizedBox(width: 8),
+                        ],
+                        Expanded(
+                          child: Text(
+                            d.printOrder?.vendor?.name ?? 'Vendor',
+                            textAlign: TextAlign.end,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF0F172A),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ],
@@ -459,7 +501,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F172A),
+                        color: const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
@@ -469,20 +511,25 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                             padding: const EdgeInsets.symmetric(vertical: 2),
                             child: Row(
                               children: [
-                                const Icon(Icons.circle,
-                                    size: 6, color: Color(0xFF10B981)),
+                                const Icon(
+                                  Icons.circle,
+                                  size: 6,
+                                  color: Color(0xFF059669),
+                                ),
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
                                     it.productName,
                                     style: const TextStyle(
-                                        color: Colors.white70, fontSize: 11.5),
+                                      color: Color(0xFF475569),
+                                      fontSize: 11.5,
+                                    ),
                                   ),
                                 ),
                                 Text(
                                   '+${it.receivedQuantity} ',
                                   style: const TextStyle(
-                                    color: Color(0xFF34D399),
+                                    color: Color(0xFF059669),
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
                                   ),
@@ -490,7 +537,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                                 Text(
                                   '(Total ${it.totalReceivedToDate}/${it.orderedQuantity})',
                                   style: const TextStyle(
-                                    color: Colors.white38,
+                                    color: Color(0xFF64748B),
                                     fontSize: 10.5,
                                   ),
                                 ),
@@ -506,7 +553,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                       Text(
                         'Note: ${d.remarks}',
                         style: const TextStyle(
-                          color: Color(0xFFFCD34D),
+                          color: Color(0xFFD97706),
                           fontSize: 11,
                           fontStyle: FontStyle.italic,
                         ),
@@ -518,17 +565,29 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Wing: ${d.printOrder?.wing?.name ?? "General"}',
-                          style: const TextStyle(
-                              color: Colors.white38, fontSize: 10.5),
+                        Flexible(
+                          child: Text(
+                            'Wing: ${d.printOrder?.wing?.name ?? "General"}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF64748B),
+                              fontSize: 10.5,
+                            ),
+                          ),
                         ),
-                        Text(
-                          '${d.deliveryDate ?? ""} · By: ${d.receivedByUser?.name ?? "Admin"}',
-                          style: const TextStyle(
-                              color: Colors.white54,
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            '${d.deliveryDate ?? ""} · By: ${d.receivedByUser?.name ?? "Admin"}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF64748B),
                               fontSize: 11,
-                              fontWeight: FontWeight.w600),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ],
                     ),

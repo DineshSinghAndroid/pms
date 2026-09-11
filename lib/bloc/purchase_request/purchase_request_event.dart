@@ -74,7 +74,15 @@ class SubmitWorkEvent extends PurchaseRequestEvent {
   });
 
   @override
-  List<Object?> get props => [prId, remarks, artworkPath, artworkName, fileBytes, phone, designerId];
+  List<Object?> get props => [
+    prId,
+    remarks,
+    artworkPath,
+    artworkName,
+    fileBytes,
+    phone,
+    designerId,
+  ];
 }
 
 class ApprovePREvent extends PurchaseRequestEvent {
@@ -93,7 +101,11 @@ class RejectRevisionPREvent extends PurchaseRequestEvent {
   final String remarks;
   final String? phone;
 
-  const RejectRevisionPREvent({required this.prId, required this.remarks, this.phone});
+  const RejectRevisionPREvent({
+    required this.prId,
+    required this.remarks,
+    this.phone,
+  });
 
   @override
   List<Object?> get props => [prId, remarks, phone];

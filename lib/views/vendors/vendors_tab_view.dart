@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'vendor_list_section.dart';
 
 class VendorsTabView extends StatelessWidget {

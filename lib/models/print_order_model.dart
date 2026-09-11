@@ -59,7 +59,9 @@ class PrintOrderModel {
       vendorId: json['vendor_id'] is int
           ? json['vendor_id']
           : int.tryParse('${json['vendor_id']}') ?? 0,
-      wingId: json['wing_id'] != null ? int.tryParse('${json['wing_id']}') : null,
+      wingId: json['wing_id'] != null
+          ? int.tryParse('${json['wing_id']}')
+          : null,
       createdByUserId: json['created_by_user_id'] != null
           ? int.tryParse('${json['created_by_user_id']}')
           : null,
@@ -67,7 +69,7 @@ class PrintOrderModel {
       expectedDeliveryTime: json['expected_delivery_time']?.toString(),
       requesterRemarks: json['requester_remarks']?.toString(),
       printOrderRemarks: json['print_order_remarks']?.toString(),
-      status: json['status']?.toString() ?? 'pending_vendor',
+      status: json['status']?.toString() ?? 'in_production',
       acceptedAt: json['accepted_at'] != null
           ? DateTime.tryParse(json['accepted_at'].toString())
           : null,
@@ -89,20 +91,27 @@ class PrintOrderModel {
       wing: json['wing'] != null && json['wing'] is Map<String, dynamic>
           ? WingModel.fromJson(json['wing'])
           : null,
-      purchaseRequest: json['purchase_request'] != null &&
+      purchaseRequest:
+          json['purchase_request'] != null &&
               json['purchase_request'] is Map<String, dynamic>
           ? PurchaseRequestModel.fromJson(json['purchase_request'])
           : null,
       items: json['items'] != null && json['items'] is List
           ? (json['items'] as List)
-              .map((i) => PrintOrderItemModel.fromJson(i as Map<String, dynamic>))
-              .toList()
+                .map(
+                  (i) =>
+                      PrintOrderItemModel.fromJson(i as Map<String, dynamic>),
+                )
+                .toList()
           : [],
       activities: json['activities'] != null && json['activities'] is List
           ? (json['activities'] as List)
-              .map((a) =>
-                  PrintOrderActivityModel.fromJson(a as Map<String, dynamic>))
-              .toList()
+                .map(
+                  (a) => PrintOrderActivityModel.fromJson(
+                    a as Map<String, dynamic>,
+                  ),
+                )
+                .toList()
           : [],
     );
   }
@@ -124,6 +133,17 @@ class PrintOrderModel {
       'dispatched_at': dispatchedAt?.toIso8601String(),
       'completed_at': completedAt?.toIso8601String(),
     };
+  }
+
+  bool get isCompleted => status.toLowerCase() == 'completed';
+  bool get isCancelled => status.toLowerCase() == 'cancelled';
+  bool get isFullyReceived {
+    if (isCompleted) return true;
+    if (items.isNotEmpty &&
+        items.every((it) => it.receivedQuantity >= it.quantity)) {
+      return true;
+    }
+    return false;
   }
 }
 
@@ -214,7 +234,9 @@ class PrintOrderActivityModel {
       printOrderId: json['print_order_id'] is int
           ? json['print_order_id']
           : int.tryParse('${json['print_order_id']}') ?? 0,
-      userId: json['user_id'] != null ? int.tryParse('${json['user_id']}') : null,
+      userId: json['user_id'] != null
+          ? int.tryParse('${json['user_id']}')
+          : null,
       action: json['action']?.toString() ?? '',
       remarks: json['remarks']?.toString(),
       attachmentPath: json['attachment_path']?.toString(),

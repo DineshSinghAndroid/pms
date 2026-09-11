@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import '../../models/wing_model.dart';
 
 abstract class WingState extends Equatable {

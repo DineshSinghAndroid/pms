@@ -57,14 +57,14 @@ class VendorModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        mobile1,
-        mobile2,
-        email,
-        address,
-        isLoginAllowed,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    name,
+    mobile1,
+    mobile2,
+    email,
+    address,
+    isLoginAllowed,
+    createdAt,
+    updatedAt,
+  ];
 }

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../bloc/user/user_bloc.dart';
 import '../../bloc/user/user_event.dart';
 import '../../bloc/user/user_state.dart';
+import '../../bloc/wing/wing_bloc.dart';
+import '../../bloc/wing/wing_state.dart';
 import '../../models/user_model.dart';
+import '../../models/wing_model.dart';
 
 class UsersTabView extends StatefulWidget {
   final bool isSuperAdmin;
@@ -24,18 +28,20 @@ class _UsersTabViewState extends State<UsersTabView> {
     'Superadmin',
     'vendor',
     'manager',
-    'Digital Studio Emp',
+    'Digital Studio Incharge',
     'Designer',
     'Store Incharge',
+    'Wing Incharge',
   ];
 
   final List<String> _assignableRoles = [
     'Superadmin',
     'vendor',
     'manager',
-    'Digital Studio Emp',
+    'Digital Studio Incharge',
     'Designer',
     'Store Incharge',
+    'Wing Incharge',
   ];
 
   @override
@@ -45,6 +51,10 @@ class _UsersTabViewState extends State<UsersTabView> {
   }
 
   void _showUserForm(BuildContext context, {UserModel? user}) {
+    final wingState = context.read<WingBloc>().state;
+    final allWings = wingState is WingLoaded ? wingState.wings : <WingModel>[];
+    List<int> selectedWingIds = user?.assignedWings.map((w) => w.id).toList() ?? [];
+
     final nameCtrl = TextEditingController(text: user?.name ?? '');
     final phoneCtrl = TextEditingController(text: user?.phone ?? '');
     final emailCtrl = TextEditingController(text: user?.email ?? '');
@@ -54,21 +64,24 @@ class _UsersTabViewState extends State<UsersTabView> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: Color(0xFFFFFFFF),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (modalCtx) {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 24,
-                right: 24,
-                top: 24,
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-              ),
-              child: SingleChildScrollView(
+            return GestureDetector(
+              onTap: () => FocusScope.of(ctx).unfocus(),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 24,
+                  right: 24,
+                  top: 24,
+                  bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+                ),
+                child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -77,15 +90,21 @@ class _UsersTabViewState extends State<UsersTabView> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          user != null ? 'Edit System User' : 'Add New System User',
+                          user != null
+                              ? 'Edit System User'
+                              : 'Add New System User',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: Color(0xFF94A3B8), size: 20),
+                          icon: const Icon(
+                            Icons.close,
+                            color: Color(0xFF64748B),
+                            size: 20,
+                          ),
                           onPressed: () => Navigator.pop(ctx),
                         ),
                       ],
@@ -125,22 +144,35 @@ class _UsersTabViewState extends State<UsersTabView> {
                       children: [
                         const Text(
                           'Assigned Role *',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFCBD5E1)),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF475569),
+                          ),
                         ),
                         const SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0F172A),
+                            color: Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFF334155)),
+                            border: Border.all(color: Color(0xFFE2E8F0)),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
-                              value: _assignableRoles.contains(selectedRole) ? selectedRole : _assignableRoles.first,
+                              value: _assignableRoles.contains(selectedRole)
+                                  ? selectedRole
+                                  : _assignableRoles.first,
                               isExpanded: true,
-                              dropdownColor: const Color(0xFF1E293B),
-                              style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600),
+                              dropdownColor: Color(0xFFFFFFFF),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF0F172A),
+                                fontWeight: FontWeight.w600,
+                              ),
                               items: _assignableRoles.map((r) {
                                 return DropdownMenuItem(
                                   value: r,
@@ -159,21 +191,109 @@ class _UsersTabViewState extends State<UsersTabView> {
                         ),
                       ],
                     ),
+
+                    if (selectedRole == 'Wing Incharge') ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7ED),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFED7AA)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Assigned Wing(s) *',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF134E4A),
+                                  ),
+                                ),
+                                Text(
+                                  'Select 1 or more',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFF0D9488),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            if (allWings.isEmpty)
+                              const Text(
+                                'No wings loaded. Please refresh wings.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF64748B),
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              )
+                            else
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                children: allWings.map((w) {
+                                  final isSelected = selectedWingIds.contains(w.id);
+                                  return FilterChip(
+                                    label: Text(
+                                      w.name,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                        color: isSelected ? Colors.white : const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    selected: isSelected,
+                                    selectedColor: const Color(0xFF0D9488),
+                                    backgroundColor: Colors.white,
+                                    checkmarkColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      side: BorderSide(
+                                        color: isSelected ? const Color(0xFF0D9488) : const Color(0xFFCBD5E1),
+                                      ),
+                                    ),
+                                    onSelected: (selected) {
+                                      setModalState(() {
+                                        if (selected) {
+                                          selectedWingIds.add(w.id);
+                                        } else {
+                                          selectedWingIds.remove(w.id);
+                                        }
+                                      });
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     const SizedBox(height: 14),
 
                     // Account Active Checkbox
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F172A),
+                        color: Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF334155)),
+                        border: Border.all(color: Color(0xFFE2E8F0)),
                       ),
                       child: Row(
                         children: [
                           Checkbox(
                             value: isActive,
-                            activeColor: const Color(0xFF8B5CF6),
+                            activeColor: Color(0xFF2563EB),
                             onChanged: (val) {
                               setModalState(() {
                                 isActive = val ?? true;
@@ -189,12 +309,15 @@ class _UsersTabViewState extends State<UsersTabView> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: Color(0xFF0F172A),
                                   ),
                                 ),
                                 Text(
                                   'User can log into the PMS application',
-                                  style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFF64748B),
+                                  ),
                                 ),
                               ],
                             ),
@@ -214,14 +337,28 @@ class _UsersTabViewState extends State<UsersTabView> {
                         if (name.isEmpty || phone.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Please fill Full Name and Phone Number'),
-                              backgroundColor: Color(0xFFE11D48),
+                              content: Text(
+                                'Please fill Full Name and Phone Number',
+                              ),
+                              backgroundColor: Color(0xFFDC2626),
                             ),
                           );
                           return;
                         }
 
-                        final payload = {
+                        if (selectedRole == 'Wing Incharge' && selectedWingIds.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please select at least one assigned wing for the Wing Incharge.',
+                              ),
+                              backgroundColor: Color(0xFFDC2626),
+                            ),
+                          );
+                          return;
+                        }
+
+                        final payload = <String, dynamic>{
                           'name': name,
                           'phone': phone,
                           'email': email.isNotEmpty ? email : null,
@@ -229,40 +366,58 @@ class _UsersTabViewState extends State<UsersTabView> {
                           'is_active': isActive,
                         };
 
+                        if (selectedRole == 'Wing Incharge') {
+                          payload['wing_ids'] = selectedWingIds;
+                        }
+
                         if (user != null) {
                           context.read<UserBloc>().add(
-                                UpdateUserEvent(userId: user.id, payload: payload),
-                              );
+                            UpdateUserEvent(userId: user.id, payload: payload),
+                          );
                         } else {
-                          context.read<UserBloc>().add(CreateUserEvent(payload));
+                          context.read<UserBloc>().add(
+                            CreateUserEvent(payload),
+                          );
                         }
 
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(user != null ? '✓ User updated!' : '✓ User created!'),
-                            backgroundColor: const Color(0xFF059669),
+                            content: Text(
+                              user != null
+                                  ? '✓ User updated!'
+                                  : '✓ User created!',
+                            ),
+                            backgroundColor: Color(0xFF059669),
                             behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B5CF6),
-                        foregroundColor: Colors.white,
+                        backgroundColor: Color(0xFF2563EB),
+                        foregroundColor: Color(0xFFFFFFFF),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: Text(
                         user != null ? 'Save Changes' : 'Create User',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            );
-          },
+            ),
+          );
+        },
         );
       },
     );
@@ -273,7 +428,7 @@ class _UsersTabViewState extends State<UsersTabView> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Cannot delete the primary Superadmin account.'),
-          backgroundColor: Color(0xFFE11D48),
+          backgroundColor: Color(0xFFDC2626),
         ),
       );
       return;
@@ -283,17 +438,25 @@ class _UsersTabViewState extends State<UsersTabView> {
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Delete User', style: TextStyle(color: Colors.white, fontSize: 16)),
+          backgroundColor: Color(0xFFFFFFFF),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Delete User',
+            style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+          ),
           content: Text(
             'Are you sure you want to delete user "${user.name}"?',
-            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+            style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Cancel', style: TextStyle(color: Color(0xFF94A3B8))),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Color(0xFF64748B)),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -302,11 +465,14 @@ class _UsersTabViewState extends State<UsersTabView> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('✓ User deleted'),
-                    backgroundColor: Color(0xFFE11D48),
+                    backgroundColor: Color(0xFFDC2626),
                   ),
                 );
               },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE11D48), foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFDC2626),
+                foregroundColor: Color(0xFFFFFFFF),
+              ),
               child: const Text('Delete'),
             ),
           ],
@@ -327,28 +493,41 @@ class _UsersTabViewState extends State<UsersTabView> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFCBD5E1)),
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF475569),
+          ),
         ),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
           keyboardType: keyboardType,
-          style: const TextStyle(fontSize: 13, color: Colors.white),
+          style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
             prefixText: prefix,
-            prefixStyle: const TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold),
+            prefixStyle: const TextStyle(
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.bold,
+            ),
             filled: true,
-            fillColor: const Color(0xFF0F172A),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            fillColor: Color(0xFFF8FAFC),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF334155)),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 1.5),
+              borderSide: const BorderSide(
+                color: Color(0xFF2563EB),
+                width: 1.5,
+              ),
             ),
           ),
         ),
@@ -360,19 +539,21 @@ class _UsersTabViewState extends State<UsersTabView> {
     switch (role.trim().toLowerCase()) {
       case 'superadmin':
       case 'super admin':
-        return const Color(0xFFA855F7); // Purple
+        return Color(0xFF2563EB); // Purple
       case 'vendor':
-        return const Color(0xFF10B981); // Emerald
+        return Color(0xFF059669); // Emerald
       case 'manager':
-        return const Color(0xFF3B82F6); // Blue
-      case 'digital studio emp':
-        return const Color(0xFF06B6D4); // Cyan
+        return Color(0xFF2563EB); // Blue
+      case 'digital studio incharge':
+        return Color(0xFF0D9488); // Teal
       case 'designer':
-        return const Color(0xFFF59E0B); // Amber
+        return Color(0xFFD97706); // Amber
       case 'store incharge':
-        return const Color(0xFF6366F1); // Indigo
+        return Color(0xFF2563EB); // Indigo
+      case 'wing incharge':
+        return Color(0xFFEA580C); // Orange
       default:
-        return const Color(0xFF94A3B8);
+        return Color(0xFF64748B);
     }
   }
 
@@ -390,14 +571,18 @@ class _UsersTabViewState extends State<UsersTabView> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.people_alt_rounded, color: Color(0xFFA78BFA), size: 20),
+                  Icon(
+                    Icons.people_alt_rounded,
+                    color: Color(0xFF2563EB),
+                    size: 20,
+                  ),
                   SizedBox(width: 8),
                   Text(
                     'Users & Roles Directory',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
                 ],
@@ -408,11 +593,19 @@ class _UsersTabViewState extends State<UsersTabView> {
                   icon: const Icon(Icons.add, size: 14),
                   label: const Text('Add User'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B5CF6),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    backgroundColor: Color(0xFF2563EB),
+                    foregroundColor: Color(0xFFFFFFFF),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
             ],
@@ -426,14 +619,25 @@ class _UsersTabViewState extends State<UsersTabView> {
             onChanged: (val) {
               setState(() => _searchQuery = val.trim().toLowerCase());
             },
-            style: const TextStyle(fontSize: 13, color: Colors.white),
+            style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
             decoration: InputDecoration(
               hintText: 'Search users by name, phone or role...',
-              hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-              prefixIcon: const Icon(Icons.search, color: Color(0xFF64748B), size: 18),
+              hintStyle: const TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 13,
+              ),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: Color(0xFF64748B),
+                size: 18,
+              ),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, color: Color(0xFF64748B), size: 16),
+                      icon: const Icon(
+                        Icons.clear,
+                        color: Color(0xFF64748B),
+                        size: 16,
+                      ),
                       onPressed: () {
                         _searchController.clear();
                         setState(() => _searchQuery = '');
@@ -441,15 +645,21 @@ class _UsersTabViewState extends State<UsersTabView> {
                     )
                   : null,
               filled: true,
-              fillColor: const Color(0xFF1E293B),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              fillColor: Color(0xFFFFFFFF),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF334155)),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 1.5),
+                borderSide: const BorderSide(
+                  color: Color(0xFF2563EB),
+                  width: 1.5,
+                ),
               ),
             ),
           ),
@@ -472,15 +682,17 @@ class _UsersTabViewState extends State<UsersTabView> {
                     role,
                     style: TextStyle(
                       fontSize: 11,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                      color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
+                      color: isSelected ? Color(0xFF0F172A) : Color(0xFF64748B),
                     ),
                   ),
                   selected: isSelected,
-                  selectedColor: const Color(0xFF7C3AED),
-                  backgroundColor: const Color(0xFF1E293B),
+                  selectedColor: Color(0xFF2563EB),
+                  backgroundColor: Color(0xFFFFFFFF),
                   side: BorderSide(
-                    color: isSelected ? const Color(0xFF8B5CF6) : const Color(0xFF334155),
+                    color: isSelected ? Color(0xFF2563EB) : Color(0xFFE2E8F0),
                   ),
                   onSelected: (selected) {
                     setState(() {
@@ -501,12 +713,15 @@ class _UsersTabViewState extends State<UsersTabView> {
                 return Container(
                   height: 120,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
+                    color: Color(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF334155)),
+                    border: Border.all(color: Color(0xFFE2E8F0)),
                   ),
                   child: const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF8B5CF6), strokeWidth: 2.5),
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF2563EB),
+                      strokeWidth: 2.5,
+                    ),
                   ),
                 );
               }
@@ -515,16 +730,19 @@ class _UsersTabViewState extends State<UsersTabView> {
                 return Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4C0519).withValues(alpha: 0.3),
+                    color: Color(0xFFFEF2F2).withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE11D48)),
+                    border: Border.all(color: Color(0xFFDC2626)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Failed to load users: ${state.errorMessage}',
-                        style: const TextStyle(fontSize: 12, color: Color(0xFFFECDD3)),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFB91C1C),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
@@ -532,8 +750,8 @@ class _UsersTabViewState extends State<UsersTabView> {
                           context.read<UserBloc>().add(const FetchUsersEvent());
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFBE123C),
-                          foregroundColor: Colors.white,
+                          backgroundColor: Color(0xFFB91C1C),
+                          foregroundColor: Color(0xFFFFFFFF),
                           textStyle: const TextStyle(fontSize: 11),
                         ),
                         child: const Text('Retry'),
@@ -545,13 +763,16 @@ class _UsersTabViewState extends State<UsersTabView> {
 
               if (state is UserLoaded) {
                 final users = state.users.where((u) {
-                  final matchesQuery = _searchQuery.isEmpty ||
+                  final matchesQuery =
+                      _searchQuery.isEmpty ||
                       u.name.toLowerCase().contains(_searchQuery) ||
                       u.phone.toLowerCase().contains(_searchQuery) ||
-                      (u.email?.toLowerCase().contains(_searchQuery) ?? false) ||
+                      (u.email?.toLowerCase().contains(_searchQuery) ??
+                          false) ||
                       u.role.toLowerCase().contains(_searchQuery);
 
-                  final matchesRole = _selectedRoleFilter == 'All' ||
+                  final matchesRole =
+                      _selectedRoleFilter == 'All' ||
                       u.role.toLowerCase() == _selectedRoleFilter.toLowerCase();
 
                   return matchesQuery && matchesRole;
@@ -561,14 +782,17 @@ class _UsersTabViewState extends State<UsersTabView> {
                   return Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
+                      color: Color(0xFFFFFFFF),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF334155)),
+                      border: Border.all(color: Color(0xFFE2E8F0)),
                     ),
                     child: const Center(
                       child: Text(
                         'No matching users found.',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
                     ),
                   );
@@ -578,7 +802,8 @@ class _UsersTabViewState extends State<UsersTabView> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: users.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 10),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final user = users[index];
                     return _buildUserCard(context, user);
@@ -600,9 +825,9 @@ class _UsersTabViewState extends State<UsersTabView> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(color: Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -620,7 +845,11 @@ class _UsersTabViewState extends State<UsersTabView> {
                 child: Center(
                   child: Text(
                     user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: roleColor),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: roleColor,
+                    ),
                   ),
                 ),
               ),
@@ -631,16 +860,29 @@ class _UsersTabViewState extends State<UsersTabView> {
                   children: [
                     Text(
                       user.name,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
                     ),
                     const SizedBox(height: 2),
-                    Text('ID: #${user.id}', style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                    Text(
+                      'ID: #${user.id}',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
                   ],
                 ),
               ),
               // Role Badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3.5,
+                ),
                 decoration: BoxDecoration(
                   color: roleColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
@@ -653,7 +895,11 @@ class _UsersTabViewState extends State<UsersTabView> {
                     const SizedBox(width: 4),
                     Text(
                       user.role,
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: roleColor),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: roleColor,
+                      ),
                     ),
                   ],
                 ),
@@ -662,32 +908,45 @@ class _UsersTabViewState extends State<UsersTabView> {
           ),
 
           const SizedBox(height: 12),
-          const Divider(color: Color(0xFF334155), height: 1),
+          const Divider(color: Color(0xFFE2E8F0), height: 1),
           const SizedBox(height: 10),
 
           // Phone & Active toggle
           Row(
             children: [
-              const Icon(Icons.phone_iphone_rounded, color: Color(0xFF94A3B8), size: 14),
+              const Icon(
+                Icons.phone_iphone_rounded,
+                color: Color(0xFF64748B),
+                size: 14,
+              ),
               const SizedBox(width: 6),
               Text(
                 '+91 ${user.phone}',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFE2E8F0)),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFE2E8F0),
+                ),
               ),
               const Spacer(),
               InkWell(
                 onTap: widget.isSuperAdmin && user.phone != '7414055310'
                     ? () {
-                        context.read<UserBloc>().add(ToggleUserActiveEvent(user.id));
+                        context.read<UserBloc>().add(
+                          ToggleUserActiveEvent(user.id),
+                        );
                       }
                     : null,
                 borderRadius: BorderRadius.circular(6),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2.5,
+                  ),
                   decoration: BoxDecoration(
                     color: user.isActive
-                        ? const Color(0xFF065F46).withValues(alpha: 0.4)
-                        : const Color(0xFF4C0519).withValues(alpha: 0.4),
+                        ? Color(0xFFECFDF5).withValues(alpha: 0.4)
+                        : Color(0xFFFEF2F2).withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -695,7 +954,9 @@ class _UsersTabViewState extends State<UsersTabView> {
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
-                      color: user.isActive ? const Color(0xFF34D399) : const Color(0xFFFDA4AF),
+                      color: user.isActive
+                          ? Color(0xFF059669)
+                          : Color(0xFFB91C1C),
                     ),
                   ),
                 ),
@@ -707,16 +968,48 @@ class _UsersTabViewState extends State<UsersTabView> {
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.email_outlined, color: Color(0xFF94A3B8), size: 14),
+                const Icon(
+                  Icons.email_outlined,
+                  color: Color(0xFF64748B),
+                  size: 14,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     user.email!,
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
+            ),
+          ],
+          if (user.assignedWings.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: user.assignedWings.map((w) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDFA),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFF99F6E4)),
+                  ),
+                  child: Text(
+                    w.name,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0D9488),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
           ],
 
@@ -731,11 +1024,16 @@ class _UsersTabViewState extends State<UsersTabView> {
                   icon: const Icon(Icons.edit, size: 12),
                   label: const Text('Edit'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFA78BFA),
-                    side: const BorderSide(color: Color(0xFF8B5CF6)),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    foregroundColor: Color(0xFF2563EB),
+                    side: const BorderSide(color: Color(0xFF2563EB)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     textStyle: const TextStyle(fontSize: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
                 if (user.phone != '7414055310') ...[
@@ -745,11 +1043,16 @@ class _UsersTabViewState extends State<UsersTabView> {
                     icon: const Icon(Icons.delete_outline, size: 12),
                     label: const Text('Delete'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFFDA4AF),
-                      side: const BorderSide(color: Color(0xFFE11D48)),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      foregroundColor: Color(0xFFB91C1C),
+                      side: const BorderSide(color: Color(0xFFDC2626)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       textStyle: const TextStyle(fontSize: 11),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
                 ],

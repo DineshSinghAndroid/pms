@@ -52,18 +52,24 @@ class PrintOrderDeliveryModel {
       updatedAt: json['updated_at'] != null
           ? DateTime.tryParse(json['updated_at'].toString())
           : null,
-      printOrder: json['print_order'] != null && json['print_order'] is Map<String, dynamic>
+      printOrder:
+          json['print_order'] != null &&
+              json['print_order'] is Map<String, dynamic>
           ? PrintOrderModel.fromJson(json['print_order'])
           : null,
-      receivedByUser: json['received_by_user'] != null &&
+      receivedByUser:
+          json['received_by_user'] != null &&
               json['received_by_user'] is Map<String, dynamic>
           ? UserModel.fromJson(json['received_by_user'])
           : null,
       items: json['items'] != null && json['items'] is List
           ? (json['items'] as List)
-              .map((i) =>
-                  PrintOrderDeliveryItemModel.fromJson(i as Map<String, dynamic>))
-              .toList()
+                .map(
+                  (i) => PrintOrderDeliveryItemModel.fromJson(
+                    i as Map<String, dynamic>,
+                  ),
+                )
+                .toList()
           : [],
     );
   }

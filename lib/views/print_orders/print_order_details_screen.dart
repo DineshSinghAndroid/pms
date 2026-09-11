@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pms/bloc/print_order/print_order_bloc.dart';
-import 'package:pms/bloc/print_order/print_order_event.dart';
 import 'package:pms/bloc/print_order/print_order_state.dart';
 import 'package:pms/models/print_order_model.dart';
 import 'package:pms/models/user_model.dart';
+import 'package:pms/services/api_service.dart';
 import 'package:pms/views/delivery_logs/update_delivery_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -19,7 +19,8 @@ class PrintOrderDetailsScreen extends StatefulWidget {
   });
 
   @override
-  State<PrintOrderDetailsScreen> createState() => _PrintOrderDetailsScreenState();
+  State<PrintOrderDetailsScreen> createState() =>
+      _PrintOrderDetailsScreenState();
 }
 
 class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
@@ -31,43 +32,66 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
     _po = widget.printOrder;
   }
 
+  String get _role => (widget.userProfile?.role ?? '').toLowerCase();
+  String get _cleanPhone => (widget.userProfile?.phone ?? '')
+      .replaceAll(RegExp(r'^\+?91'), '')
+      .replaceAll(RegExp(r'\D'), '');
+
+  bool get isAssignedVendor {
+    final vendorPhone1 = (_po.vendor?.mobile1 ?? '')
+        .replaceAll(RegExp(r'^\+?91'), '')
+        .replaceAll(RegExp(r'\D'), '');
+    final vendorPhone2 = (_po.vendor?.mobile2 ?? '')
+        .replaceAll(RegExp(r'^\+?91'), '')
+        .replaceAll(RegExp(r'\D'), '');
+    return _role == 'vendor' ||
+        (_cleanPhone.isNotEmpty &&
+            (_cleanPhone == vendorPhone1 || _cleanPhone == vendorPhone2));
+  }
+
+  bool get isSuperAdmin =>
+      _role == 'superadmin' ||
+      _role == 'super admin' ||
+      _cleanPhone == '7414055310';
+
+  bool get isManager => _role == 'manager';
+
+  bool get canSeeVendorDetails =>
+      isSuperAdmin || isManager || isAssignedVendor;
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'accepted':
-        return const Color(0xFF3B82F6); // Blue
-      case 'in_production':
-        return const Color(0xFF6366F1); // Indigo
-      case 'dispatched':
-        return const Color(0xFFA855F7); // Purple
       case 'partially_received':
-        return const Color(0xFFF59E0B); // Amber
+        return const Color(0xFFD97706); // Amber
       case 'completed':
-        return const Color(0xFF10B981); // Emerald
+        return const Color(0xFF059669); // Emerald
       case 'cancelled':
-        return const Color(0xFFE11D48); // Rose
+        return const Color(0xFFDC2626); // Rose
+      case 'in_production':
+      case 'in_printing':
       case 'pending_vendor':
+      case 'accepted':
+      case 'dispatched':
       default:
-        return const Color(0xFFF59E0B); // Amber
+        return const Color(0xFF2563EB); // Blue
     }
   }
 
   String _getStatusLabel(String status) {
     switch (status.toLowerCase()) {
-      case 'accepted':
-        return 'Vendor Accepted';
-      case 'in_production':
-        return 'In Production';
-      case 'dispatched':
-        return 'Dispatched';
       case 'partially_received':
         return 'Partially Received';
       case 'completed':
         return 'Completed';
       case 'cancelled':
         return 'Cancelled';
+      case 'in_production':
+      case 'in_printing':
       case 'pending_vendor':
+      case 'accepted':
+      case 'dispatched':
       default:
-        return 'Pending Vendor';
+        return 'In Printing';
     }
   }
 
@@ -78,79 +102,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
     }
   }
 
-  void _showUpdateStatusDialog(String newStatus, String actionTitle) {
-    final remarksController = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          actionTitle,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Update status for ${_po.poNumber} to '${_getStatusLabel(newStatus)}'?",
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: remarksController,
-              maxLines: 2,
-              style: const TextStyle(color: Colors.white, fontSize: 13),
-              decoration: InputDecoration(
-                hintText: 'Optional remarks or note...',
-                hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
-                filled: true,
-                fillColor: const Color(0xFF0F172A),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF334155)),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(dialogCtx);
-              final phone = widget.userProfile?.phone;
-              context.read<PrintOrderBloc>().add(
-                    UpdatePrintOrderStatusEvent(
-                      printOrderId: _po.id,
-                      status: newStatus,
-                      remarks: remarksController.text.trim().isNotEmpty
-                          ? remarksController.text.trim()
-                          : null,
-                      phone: phone,
-                    ),
-                  );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _getStatusColor(newStatus),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Confirm', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,32 +115,32 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: const Color(0xFF10B981),
+              backgroundColor: Color(0xFF059669),
             ),
           );
         } else if (state is PrintOrderError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: const Color(0xFFEF4444),
+              backgroundColor: Color(0xFFDC2626),
             ),
           );
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: Color(0xFFF8FAFC),
         appBar: AppBar(
-          backgroundColor: const Color(0xFF1E293B),
+          backgroundColor: Color(0xFFFFFFFF),
           elevation: 0,
           title: Text(
             _po.poNumber,
             style: const TextStyle(
-              color: Colors.white,
+              color: Color(0xFF0F172A),
               fontWeight: FontWeight.bold,
               fontSize: 17,
             ),
           ),
-          iconTheme: const IconThemeData(color: Colors.white),
+          iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
           actions: [
             Container(
               margin: const EdgeInsets.only(right: 14),
@@ -246,12 +198,20 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
 
   Widget _buildVendorCard() {
     final v = _po.vendor;
+    final vendorName = canSeeVendorDetails
+        ? (v?.name ?? 'Assigned Vendor')
+        : 'XXXX (Printing Vendor)';
+    final vendorMobile = canSeeVendorDetails
+        ? (v?.mobile1 != null ? '+91 ${v!.mobile1}' : null)
+        : '+91 XXXXX XXXXX';
+    final vendorAddress = canSeeVendorDetails ? v?.address : 'XXXX';
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(color: Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,7 +222,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
               const Text(
                 'ASSIGNED PRINTING VENDOR',
                 style: TextStyle(
-                  color: Color(0xFF818CF8),
+                  color: Color(0xFF2563EB),
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -270,15 +230,18 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
               ),
               if (_po.purchaseRequest != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A),
+                    color: Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     'Linked PR: ${_po.purchaseRequest!.prNumber}',
                     style: const TextStyle(
-                      color: Color(0xFFFB7185),
+                      color: Color(0xFFDC2626),
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -293,11 +256,17 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                  color: Color(0xFF2563EB).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.4)),
+                  border: Border.all(
+                    color: Color(0xFF2563EB).withValues(alpha: 0.4),
+                  ),
                 ),
-                child: const Icon(Icons.print_rounded, color: Color(0xFF818CF8), size: 20),
+                child: const Icon(
+                  Icons.print_rounded,
+                  color: Color(0xFF2563EB),
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -305,43 +274,57 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      v?.name ?? 'Assigned Vendor',
+                      vendorName,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Color(0xFF0F172A),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
                     ),
-                    if (v?.mobile1 != null) ...[
+                    if (vendorMobile != null) ...[
                       const SizedBox(height: 2),
                       Text(
-                        '+91 ${v!.mobile1}',
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        vendorMobile,
+                        style: const TextStyle(
+                          color: Color(0xFF475569),
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ],
                 ),
               ),
-              if (v?.mobile1 != null)
+              if (canSeeVendorDetails && v?.mobile1 != null)
                 IconButton(
                   onPressed: () => _launchUrl('tel:+91${v!.mobile1}'),
-                  icon: const Icon(Icons.phone_rounded, color: Color(0xFF10B981), size: 20),
+                  icon: const Icon(
+                    Icons.phone_rounded,
+                    color: Color(0xFF059669),
+                    size: 20,
+                  ),
                   style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+                    backgroundColor: Color(0xFF059669).withValues(alpha: 0.15),
                   ),
                 ),
             ],
           ),
-          if (v?.address != null && v!.address!.isNotEmpty) ...[
-            const Divider(color: Color(0xFF334155), height: 20),
+          if (vendorAddress != null && vendorAddress.isNotEmpty) ...[
+            const Divider(color: Color(0xFFE2E8F0), height: 20),
             Row(
               children: [
-                const Icon(Icons.location_on_outlined, color: Colors.white38, size: 14),
+                const Icon(
+                  Icons.location_on_outlined,
+                  color: Color(0xFF64748B),
+                  size: 14,
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    v.address!,
-                    style: const TextStyle(color: Colors.white60, fontSize: 11),
+                    vendorAddress,
+                    style: const TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 11,
+                    ),
                   ),
                 ),
               ],
@@ -356,9 +339,9 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(color: Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,7 +349,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           const Text(
             'DELIVERY TARGET & SCHEDULE',
             style: TextStyle(
-              color: Color(0xFF94A3B8),
+              color: Color(0xFF64748B),
               fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
@@ -379,13 +362,15 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Target Wing / Branch',
-                        style: TextStyle(color: Colors.white38, fontSize: 10)),
+                    const Text(
+                      'Target Wing / Branch',
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 10),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       _po.wing?.name ?? 'General Wing',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Color(0xFF0F172A),
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -397,13 +382,15 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Expected Delivery',
-                        style: TextStyle(color: Colors.white38, fontSize: 10)),
+                    const Text(
+                      'Expected Delivery',
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 10),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       '${_po.expectedDeliveryDate ?? 'ASAP'} (${_po.expectedDeliveryTime ?? 'Anytime'})',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Color(0xFF0F172A),
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -415,13 +402,15 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           ),
           if (_po.requesterRemarks != null &&
               _po.requesterRemarks!.isNotEmpty) ...[
-            const Divider(color: Color(0xFF334155), height: 20),
-            const Text('Requester Remarks (Read-Only):',
-                style: TextStyle(color: Colors.white38, fontSize: 10)),
+            const Divider(color: Color(0xFFE2E8F0), height: 20),
+            const Text(
+              'Requester Remarks (Read-Only):',
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 10),
+            ),
             const SizedBox(height: 2),
             Text(
               _po.requesterRemarks!,
-              style: const TextStyle(color: Colors.white70, fontSize: 11),
+              style: const TextStyle(color: Color(0xFF475569), fontSize: 11),
             ),
           ],
         ],
@@ -433,21 +422,25 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF78350F).withValues(alpha: 0.25),
+        color: Color(0xFFFFF7ED).withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+        border: Border.all(color: Color(0xFFD97706).withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.info_outline_rounded, color: Color(0xFFFBBF24), size: 16),
+              Icon(
+                Icons.info_outline_rounded,
+                color: Color(0xFFD97706),
+                size: 16,
+              ),
               SizedBox(width: 6),
               Text(
                 'PRINT PRODUCTION INSTRUCTIONS',
                 style: TextStyle(
-                  color: Color(0xFFFBBF24),
+                  color: Color(0xFFD97706),
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -459,7 +452,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           Text(
             _po.printOrderRemarks!,
             style: const TextStyle(
-              color: Color(0xFFFEF3C7),
+              color: Color(0xFF92400E),
               fontSize: 12,
               height: 1.4,
             ),
@@ -473,9 +466,9 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(color: Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,7 +479,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
               const Text(
                 'PRINT ITEMS & PROOFS',
                 style: TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: Color(0xFF64748B),
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -495,12 +488,15 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  color: Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   '${_po.items.length} Products',
-                  style: const TextStyle(color: Colors.white70, fontSize: 10),
+                  style: const TextStyle(
+                    color: Color(0xFF475569),
+                    fontSize: 10,
+                  ),
                 ),
               ),
             ],
@@ -509,7 +505,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           if (_po.items.isEmpty)
             const Text(
               'No items attached.',
-              style: TextStyle(color: Colors.white38, fontSize: 12),
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
             )
           else
             ListView.separated(
@@ -517,7 +513,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _po.items.length,
               separatorBuilder: (context, index) =>
-                  const Divider(color: Color(0xFF334155), height: 16),
+                  const Divider(color: Color(0xFFE2E8F0), height: 16),
               itemBuilder: (context, idx) {
                 final it = _po.items[idx];
                 return Column(
@@ -530,14 +526,14 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                           width: 22,
                           height: 22,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                            color: Color(0xFF2563EB).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Center(
                             child: Text(
                               '${idx + 1}',
                               style: const TextStyle(
-                                color: Color(0xFF818CF8),
+                                color: Color(0xFF2563EB),
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -552,7 +548,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                               Text(
                                 it.productName,
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: Color(0xFF0F172A),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
                                 ),
@@ -562,13 +558,18 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 2),
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: it.receivedQuantity >= it.quantity
-                                          ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                                          ? Color(0xFF059669)
+                                                .withValues(alpha: 0.15)
                                           : (it.receivedQuantity > 0
-                                              ? const Color(0xFFF59E0B).withValues(alpha: 0.15)
-                                              : const Color(0xFF3B82F6).withValues(alpha: 0.15)),
+                                                ? Color(0xFFD97706)
+                                                      .withValues(alpha: 0.15)
+                                                : Color(0xFF2563EB)
+                                                      .withValues(alpha: 0.15)),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
@@ -576,22 +577,26 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                                           ? 'Received: ${it.receivedQuantity} / ${it.quantity}'
                                           : 'Qty: ${it.quantity}',
                                       style: TextStyle(
-                                        color: it.receivedQuantity >= it.quantity
-                                            ? const Color(0xFF34D399)
+                                        color:
+                                            it.receivedQuantity >= it.quantity
+                                            ? Color(0xFF059669)
                                             : (it.receivedQuantity > 0
-                                                ? const Color(0xFFFBBF24)
-                                                : const Color(0xFF93C5FD)),
+                                                  ? Color(0xFFD97706)
+                                                  : Color(0xFF2563EB)),
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ),
-                                  if (it.size != null && it.size!.isNotEmpty) ...[
+                                  if (it.size != null &&
+                                      it.size!.isNotEmpty) ...[
                                     const SizedBox(width: 8),
                                     Text(
                                       'Size: ${it.size}',
                                       style: const TextStyle(
-                                          color: Colors.white60, fontSize: 11),
+                                        color: Color(0xFF64748B),
+                                        fontSize: 11,
+                                      ),
                                     ),
                                   ],
                                 ],
@@ -608,29 +613,34 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                         onTap: () {
                           final fullUrl = it.attachmentPath!.startsWith('http')
                               ? it.attachmentPath!
-                              : 'http://192.168.1.146:8000/storage/${it.attachmentPath}';
+                              : '${ApiService.baseUrl}/storage/${it.attachmentPath}';
                           _launchUrl(fullUrl);
                         },
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0F172A),
+                            color: Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFF334155)),
+                            border: Border.all(color: Color(0xFFE2E8F0)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.download_rounded,
-                                  color: Color(0xFF38BDF8), size: 14),
+                              const Icon(
+                                Icons.download_rounded,
+                                color: Color(0xFF2563EB),
+                                size: 14,
+                              ),
                               const SizedBox(width: 6),
                               Flexible(
                                 child: Text(
                                   it.attachmentName ?? 'Download Print Proof',
                                   style: const TextStyle(
-                                    color: Color(0xFF38BDF8),
+                                    color: Color(0xFF2563EB),
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -655,9 +665,9 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF334155)),
+        border: Border.all(color: Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -665,7 +675,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           const Text(
             'PRODUCTION & DISPATCH AUDIT LOG',
             style: TextStyle(
-              color: Color(0xFF94A3B8),
+              color: Color(0xFF64748B),
               fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
@@ -675,7 +685,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           if (_po.activities.isEmpty)
             const Text(
               'No history recorded yet.',
-              style: TextStyle(color: Colors.white38, fontSize: 12),
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
             )
           else
             ListView.separated(
@@ -683,28 +693,41 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _po.activities.length,
               separatorBuilder: (context, index) =>
-                  const Divider(color: Color(0xFF334155), height: 12),
+                  const Divider(color: Color(0xFFE2E8F0), height: 12),
               itemBuilder: (context, idx) {
                 final act = _po.activities[idx];
-                final dateStr = act.createdAt != null
-                    ? '${act.createdAt!.day}/${act.createdAt!.month} ${act.createdAt!.hour.toString().padLeft(2, '0')}:${act.createdAt!.minute.toString().padLeft(2, '0')}'
-                    : '';
+                final String dateStr;
+                if (act.createdAt != null) {
+                  final dt = act.createdAt!.toLocal();
+                  final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+                  final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+                  final min = dt.minute.toString().padLeft(2, '0');
+                  dateStr = '${dt.day}/${dt.month} $hour:$min $ampm';
+                } else {
+                  dateStr = '';
+                }
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.circle, size: 8, color: Color(0xFF6366F1)),
+                    const Icon(Icons.circle, size: 8, color: Color(0xFF2563EB)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        act.remarks ?? act.action,
-                        style: const TextStyle(color: Colors.white70, fontSize: 11),
+                        _sanitizeActivityRemarks(act.remarks ?? act.action),
+                        style: const TextStyle(
+                          color: Color(0xFF475569),
+                          fontSize: 11,
+                        ),
                       ),
                     ),
                     if (dateStr.isNotEmpty) ...[
                       const SizedBox(width: 6),
                       Text(
                         dateStr,
-                        style: const TextStyle(color: Colors.white38, fontSize: 10),
+                        style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                   ],
@@ -716,53 +739,77 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
     );
   }
 
-  Widget? _buildBottomActionBar() {
-    final role = (widget.userProfile?.role ?? '').toLowerCase();
-    final isDesigner = role == 'designer';
-    final cleanPhone = (widget.userProfile?.phone ?? '')
-        .replaceAll(RegExp(r'^\+?91'), '')
-        .replaceAll(RegExp(r'\D'), '');
-    final vendorPhone1 = (_po.vendor?.mobile1 ?? '')
-        .replaceAll(RegExp(r'^\+?91'), '')
-        .replaceAll(RegExp(r'\D'), '');
-    final vendorPhone2 = (_po.vendor?.mobile2 ?? '')
-        .replaceAll(RegExp(r'^\+?91'), '')
-        .replaceAll(RegExp(r'\D'), '');
-    final isAssignedVendor = role == 'vendor' ||
-        (cleanPhone.isNotEmpty &&
-            (cleanPhone == vendorPhone1 || cleanPhone == vendorPhone2));
-    final isSuperAdmin = role == 'superadmin' ||
-        role == 'super admin' ||
-        cleanPhone == '7414055310';
+  String _sanitizeActivityRemarks(String remarks) {
+    if (canSeeVendorDetails) return remarks;
 
-    // 1. Designers must NEVER see or execute vendor order lifecycle actions
-    if (isDesigner) {
+    String sanitized = remarks;
+    if (_po.vendor?.name != null && _po.vendor!.name.isNotEmpty) {
+      final trimmed = _po.vendor!.name.trim();
+      if (trimmed.isNotEmpty && trimmed != 'XXXX' && !trimmed.contains('XXXX')) {
+        sanitized = sanitized.replaceAll(
+          RegExp(RegExp.escape(trimmed), caseSensitive: false),
+          'XXXX',
+        );
+      }
+    }
+
+    sanitized = sanitized.replaceAll(
+      RegExp(r"Vendor\s*['\x22][^'\x22]+['\x22]", caseSensitive: false),
+      "Vendor 'XXXX'",
+    );
+    sanitized = sanitized.replaceAll(
+      RegExp(r"dispatched to Vendor\s+[^\s,;]+(?:\s+[^\s,;]+)*\s+by", caseSensitive: false),
+      "dispatched to Vendor 'XXXX' by",
+    );
+    sanitized = sanitized.replaceAll(
+      RegExp(r"to\s+Vendor\s+[^,;\n\r]+\s+was cancelled", caseSensitive: false),
+      "to Printing Vendor was cancelled",
+    );
+    sanitized = sanitized.replaceAll(
+      RegExp(r"to\s+[^,;\n\r]+\s+was cancelled", caseSensitive: false),
+      "to Printing Vendor was cancelled",
+    );
+
+    return sanitized;
+  }
+
+  Widget? _buildBottomActionBar() {
+    final isStoreIncharge = _role == 'store incharge';
+    final canRecordDelivery = isSuperAdmin || isManager || isStoreIncharge;
+    final currentStatus = _po.status.toLowerCase();
+
+    // 1. If completed, show completed badge
+    if (currentStatus == 'completed') {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: const BoxDecoration(
-          color: Color(0xFF1E293B),
-          border: Border(top: BorderSide(color: Color(0xFF334155))),
+          color: Color(0xFFFFFFFF),
+          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
         ),
         child: SafeArea(
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F172A),
+              color: const Color(0xFFECFDF5),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFF334155)),
+              border: Border.all(color: const Color(0xFFA7F3D0)),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(Icons.info_outline_rounded,
-                    color: Color(0xFF38BDF8), size: 18),
-                const SizedBox(width: 10),
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: Color(0xFF059669),
+                  size: 20,
+                ),
+                SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Dispatched to ${_po.vendor?.name ?? "Vendor"}. Waiting for vendor production & delivery.',
-                    style: const TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w500),
+                    'Order Fully Received & Completed at Campus.',
+                    style: TextStyle(
+                      color: Color(0xFF065F46),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -772,156 +819,88 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
       );
     }
 
-    // 2. Only the assigned Vendor or Superadmin can change print order statuses
-    if (!isAssignedVendor && !isSuperAdmin) {
-      return null;
-    }
-
-    final currentStatus = _po.status.toLowerCase();
-
-    // 3. When order is Dispatched or Partially Received:
-    // VENDORS CANNOT mark as completed or received.
-    // ADMINS get the "Record / Update Delivery" button.
-    if (currentStatus == 'dispatched' || currentStatus == 'partially_received') {
-      if (!isSuperAdmin) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: const BoxDecoration(
-            color: Color(0xFF1E293B),
-            border: Border(top: BorderSide(color: Color(0xFF334155))),
-          ),
-          child: SafeArea(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: currentStatus == 'partially_received'
-                      ? const Color(0xFFF59E0B).withValues(alpha: 0.5)
-                      : const Color(0xFFA855F7).withValues(alpha: 0.5),
+    // 2. Can record delivery (Superadmin, Manager, Store Incharge)
+    if (canRecordDelivery) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: const BoxDecoration(
+          color: Color(0xFFFFFFFF),
+          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        ),
+        child: SafeArea(
+          child: ElevatedButton.icon(
+            onPressed: () async {
+              final res = await showDialog(
+                context: context,
+                builder: (_) => UpdateDeliveryDialog(
+                  printOrders: [_po],
+                  preselectedOrder: _po,
+                  userProfile: widget.userProfile,
                 ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    currentStatus == 'partially_received'
-                        ? Icons.pending_actions_rounded
-                        : Icons.local_shipping_outlined,
-                    color: currentStatus == 'partially_received'
-                        ? const Color(0xFFFBBF24)
-                        : const Color(0xFFC084FC),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      currentStatus == 'partially_received'
-                          ? 'Order is Partially Received by Admin. Remaining products are pending delivery verification.'
-                          : 'Material marked as Dispatched. Waiting for Admin / Store to verify delivery & record receipts.',
-                      style: const TextStyle(
-                        color: Color(0xFFE2E8F0),
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
+              );
+              if (res == true && mounted) {
+                Navigator.pop(context);
+              }
+            },
+            icon: const Icon(Icons.inventory_2_outlined, size: 18),
+            label: const Text(
+              'Record Delivery Receipt (Challan)',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF059669),
+              foregroundColor: const Color(0xFFFFFFFF),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-          ),
-        );
-      } else {
-        // Superadmin: Provide "Record / Update Delivery" button
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: const BoxDecoration(
-            color: Color(0xFF1E293B),
-            border: Border(top: BorderSide(color: Color(0xFF334155))),
-          ),
-          child: SafeArea(
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                final res = await showDialog(
-                  context: context,
-                  builder: (_) => UpdateDeliveryDialog(
-                    printOrders: [_po],
-                    preselectedOrder: _po,
-                    userProfile: widget.userProfile,
-                  ),
-                );
-                if (res == true && mounted) {
-                  Navigator.pop(context);
-                }
-              },
-              icon: const Icon(Icons.inventory_2_outlined, size: 18),
-              label: const Text(
-                'Record / Update Delivery (Challan)',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ),
-        );
-      }
-    }
-
-    String? nextStatus;
-    String? btnLabel;
-    Color btnColor = const Color(0xFF6366F1);
-    IconData btnIcon = Icons.check_circle_outline;
-
-    switch (currentStatus) {
-      case 'pending_vendor':
-        nextStatus = 'accepted';
-        btnLabel = 'Accept Print Order';
-        btnColor = const Color(0xFF3B82F6);
-        btnIcon = Icons.thumb_up_alt_outlined;
-        break;
-      case 'accepted':
-        nextStatus = 'in_production';
-        btnLabel = 'Start Production / Printing';
-        btnColor = const Color(0xFF6366F1);
-        btnIcon = Icons.precision_manufacturing_outlined;
-        break;
-      case 'in_production':
-        nextStatus = 'dispatched';
-        btnLabel = 'Dispatch Printed Material';
-        btnColor = const Color(0xFFA855F7);
-        btnIcon = Icons.local_shipping_outlined;
-        break;
-      default:
-        return null;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E293B),
-        border: Border(top: BorderSide(color: Color(0xFF334155))),
-      ),
-      child: SafeArea(
-        child: ElevatedButton.icon(
-          onPressed: () => _showUpdateStatusDialog(nextStatus!, btnLabel!),
-          icon: Icon(btnIcon, size: 18),
-          label: Text(
-            btnLabel,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: btnColor,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
-      ),
-    );
+      );
+    }
+
+    // 3. For Vendor: Show info banner
+    if (isAssignedVendor) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: const BoxDecoration(
+          color: Color(0xFFFFFFFF),
+          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        ),
+        child: SafeArea(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFBFDBFE)),
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.print_rounded,
+                  color: Color(0xFF2563EB),
+                  size: 20,
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Order is assigned for printing. Please print & deliver to campus.',
+                    style: TextStyle(
+                      color: Color(0xFF1E40AF),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return null;
   }
 }

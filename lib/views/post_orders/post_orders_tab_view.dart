@@ -39,13 +39,15 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
     final phone = widget.currentUser?.phone;
     if (widget.isDesigner && widget.currentUser != null) {
       context.read<PurchaseRequestBloc>().add(
-            FetchPurchaseRequestsEvent(
-              designerId: widget.currentUser!.id,
-              phone: phone,
-            ),
-          );
+        FetchPurchaseRequestsEvent(
+          designerId: widget.currentUser!.id,
+          phone: phone,
+        ),
+      );
     } else {
-      context.read<PurchaseRequestBloc>().add(const FetchPurchaseRequestsEvent());
+      context.read<PurchaseRequestBloc>().add(
+        const FetchPurchaseRequestsEvent(),
+      );
     }
   }
 
@@ -67,19 +69,25 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
         lower.endsWith('.webp');
   }
 
-  List<PurchaseRequestModel> _filterPostOrders(List<PurchaseRequestModel> allPRs) {
-    final postOrders = allPRs.where((pr) => pr.status == 'posted' || pr.isPosted).toList();
+  List<PurchaseRequestModel> _filterPostOrders(
+    List<PurchaseRequestModel> allPRs,
+  ) {
+    final postOrders = allPRs
+        .where((pr) => pr.status == 'posted' || pr.isPosted)
+        .toList();
 
     return postOrders.where((pr) {
       final q = _searchQuery.toLowerCase().trim();
-      final matchesSearch = q.isEmpty ||
+      final matchesSearch =
+          q.isEmpty ||
           pr.prNumber.toLowerCase().contains(q) ||
           (pr.wing?.name.toLowerCase().contains(q) ?? false) ||
           (pr.assignedDesigner?.name.toLowerCase().contains(q) ?? false) ||
           (pr.postRemarks?.toLowerCase().contains(q) ?? false) ||
           pr.items.any((it) => it.productName.toLowerCase().contains(q));
 
-      final matchesWing = _selectedWingId == null || pr.wingId == _selectedWingId;
+      final matchesWing =
+          _selectedWingId == null || pr.wingId == _selectedWingId;
 
       return matchesSearch && matchesWing;
     }).toList();
@@ -89,43 +97,51 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: Color(0xFFFFFFFF),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
-            Icon(Icons.cancel_outlined, color: Color(0xFFFDA4AF), size: 20),
+            Icon(Icons.cancel_outlined, color: Color(0xFFB91C1C), size: 20),
             SizedBox(width: 8),
-            Text('Cancel Post Request', style: TextStyle(color: Colors.white, fontSize: 16)),
+            Text(
+              'Cancel Post Request',
+              style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+            ),
           ],
         ),
         content: Text(
           'Are you sure you want to cancel the post request for ${pr.prNumber}? Status will revert to Approved and move back to the Purchase Requests screen.',
-          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+          style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('No, Keep Posted', style: TextStyle(color: Colors.white54)),
+            child: const Text(
+              'No, Keep Posted',
+              style: TextStyle(color: Color(0xFF64748B)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(dialogCtx);
               context.read<PurchaseRequestBloc>().add(
-                    CancelPostPREvent(
-                      prId: pr.id,
-                      phone: widget.currentUser?.phone,
-                    ),
-                  );
+                CancelPostPREvent(
+                  prId: pr.id,
+                  phone: widget.currentUser?.phone,
+                ),
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('✓ Post request for ${pr.prNumber} cancelled. Status reverted to Approved.'),
-                  backgroundColor: const Color(0xFFE11D48),
+                  content: Text(
+                    '✓ Post request for ${pr.prNumber} cancelled. Status reverted to Approved.',
+                  ),
+                  backgroundColor: Color(0xFFDC2626),
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE11D48),
-              foregroundColor: Colors.white,
+              backgroundColor: Color(0xFFDC2626),
+              foregroundColor: Color(0xFFFFFFFF),
             ),
             child: const Text('Cancel Post'),
           ),
@@ -138,7 +154,9 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
   Widget build(BuildContext context) {
     return BlocBuilder<PurchaseRequestBloc, PurchaseRequestState>(
       builder: (context, state) {
-        final allRequests = state is PurchaseRequestLoaded ? state.requests : <PurchaseRequestModel>[];
+        final allRequests = state is PurchaseRequestLoaded
+            ? state.requests
+            : <PurchaseRequestModel>[];
         final filteredOrders = _filterPostOrders(allRequests);
 
         // Collect unique wings for filter chips
@@ -154,24 +172,39 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
             // Top Search Bar
             Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              color: const Color(0xFF1E293B),
+              color: Color(0xFFFFFFFF),
               child: Column(
                 children: [
                   TextField(
                     controller: _searchCtrl,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    style: const TextStyle(
+                      color: Color(0xFF0F172A),
+                      fontSize: 13,
+                    ),
                     onChanged: (val) {
                       setState(() {
                         _searchQuery = val;
                       });
                     },
                     decoration: InputDecoration(
-                      hintText: 'Search PR #, wing, product, or post remarks...',
-                      hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                      prefixIcon: const Icon(Icons.search, color: Color(0xFF94A3B8), size: 18),
+                      hintText:
+                          'Search PR #, wing, product, or post remarks...',
+                      hintStyle: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 12,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Color(0xFF64748B),
+                        size: 18,
+                      ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear, color: Colors.white54, size: 16),
+                              icon: const Icon(
+                                Icons.clear,
+                                color: Color(0xFF64748B),
+                                size: 16,
+                              ),
                               onPressed: () {
                                 _searchCtrl.clear();
                                 setState(() {
@@ -181,19 +214,25 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                             )
                           : null,
                       filled: true,
-                      fillColor: const Color(0xFF0F172A),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      fillColor: Color(0xFFF8FAFC),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF334155)),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF334155)),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFA855F7), width: 1.5),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF2563EB),
+                          width: 1.5,
+                        ),
                       ),
                     ),
                   ),
@@ -205,7 +244,9 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                       child: Row(
                         children: [
                           _buildWingChip('All Wings', null),
-                          ...wingMap.entries.map((w) => _buildWingChip(w.value, w.key)),
+                          ...wingMap.entries.map(
+                            (w) => _buildWingChip(w.value, w.key),
+                          ),
                         ],
                       ),
                     ),
@@ -217,7 +258,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
             // Post Orders List / Empty State
             Expanded(
               child: RefreshIndicator(
-                color: const Color(0xFFA855F7),
+                color: Color(0xFF2563EB),
                 onRefresh: () async {
                   _loadPostOrders();
                   await Future.delayed(const Duration(milliseconds: 600));
@@ -235,21 +276,34 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                                   width: 64,
                                   height: 64,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF581C87).withValues(alpha: 0.2),
+                                    color: Color(0xFFF5F3FF)
+                                        .withValues(alpha: 0.2),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.campaign_outlined, color: Color(0xFFA855F7), size: 32),
+                                  child: const Icon(
+                                    Icons.campaign_outlined,
+                                    color: Color(0xFF2563EB),
+                                    size: 32,
+                                  ),
                                 ),
                                 const SizedBox(height: 16),
                                 const Text(
                                   'No Post Orders Found',
-                                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    color: Color(0xFF0F172A),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                                 const SizedBox(height: 6),
                                 const Text(
                                   'Approve a Purchase Request and tap "Post It" to forward artwork for digital & social publishing.',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, height: 1.4),
+                                  style: TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontSize: 12,
+                                    height: 1.4,
+                                  ),
                                 ),
                               ],
                             ),
@@ -257,7 +311,10 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                         itemCount: filteredOrders.length,
                         itemBuilder: (context, index) {
                           final pr = filteredOrders[index];
@@ -286,16 +343,16 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF7C3AED) : const Color(0xFF0F172A),
+            color: isSelected ? Color(0xFF2563EB) : Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected ? const Color(0xFFA855F7) : const Color(0xFF334155),
+              color: isSelected ? Color(0xFF2563EB) : Color(0xFFE2E8F0),
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+              color: isSelected ? Color(0xFF0F172A) : Color(0xFF64748B),
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             ),
@@ -308,14 +365,15 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
   Widget _buildPostOrderCard(BuildContext context, PurchaseRequestModel pr) {
     final artworkUrl = _getAttachmentUrl(pr.artworkFilePath);
     final isImg = _isImage(pr.artworkFilePath);
-    final posterName = pr.postedByUser?.name ?? pr.assignedDesigner?.name ?? 'Admin';
+    final posterName =
+        pr.postedByUser?.name ?? pr.assignedDesigner?.name ?? 'Admin';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFA855F7).withValues(alpha: 0.35)),
+        border: Border.all(color: Color(0xFF2563EB).withValues(alpha: 0.35)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -342,7 +400,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
             );
           },
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(7),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -350,57 +408,86 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF581C87).withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFA855F7)),
-                          ),
-                          child: Text(
-                            pr.prNumber,
-                            style: const TextStyle(
-                              color: Color(0xFFE9D5FF),
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                        ),
-                        if (pr.wing != null) ...[
-                          const SizedBox(width: 8),
+                    Expanded(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0F172A),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFF334155)),
+                              color: Color(0xFFF5F3FF).withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Color(0xFF2563EB)),
                             ),
                             child: Text(
-                              pr.wing!.name,
-                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5, fontWeight: FontWeight.w600),
+                              pr.prNumber,
+                              style: const TextStyle(
+                                color: Color(0xFF2563EB),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'monospace',
+                              ),
                             ),
                           ),
+                          if (pr.wing != null) ...[
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Color(0xFFE2E8F0)),
+                                ),
+                                child: Text(
+                                  pr.wing!.name,
+                                  style: const TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF581C87).withValues(alpha: 0.4),
+                        color: Color(0xFFF5F3FF).withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFA855F7)),
+                        border: Border.all(color: Color(0xFF2563EB)),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.campaign_rounded, size: 12, color: Color(0xFFD8B4FE)),
+                          Icon(
+                            Icons.campaign_rounded,
+                            size: 12,
+                            color: Color(0xFF475569),
+                          ),
                           SizedBox(width: 4),
                           Text(
                             'Posted ✓',
-                            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFFD8B4FE)),
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF475569),
+                            ),
                           ),
                         ],
                       ),
@@ -415,23 +502,33 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Artwork Thumbnail Preview
-                    if (pr.artworkFilePath != null && pr.artworkFilePath!.isNotEmpty) ...[
+                    if (pr.artworkFilePath != null &&
+                        pr.artworkFilePath!.isNotEmpty) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: Container(
                           width: 58,
                           height: 58,
-                          color: const Color(0xFF0F172A),
+                          color: Color(0xFFF8FAFC),
                           child: isImg
                               ? Image.network(
                                   artworkUrl,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => const Center(
-                                    child: Icon(Icons.broken_image_rounded, color: Colors.white38, size: 20),
-                                  ),
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Center(
+                                        child: Icon(
+                                          Icons.broken_image_rounded,
+                                          color: Color(0xFF64748B),
+                                          size: 20,
+                                        ),
+                                      ),
                                 )
                               : const Center(
-                                  child: Icon(Icons.picture_as_pdf_rounded, color: Color(0xFFF43F5E), size: 28),
+                                  child: Icon(
+                                    Icons.picture_as_pdf_rounded,
+                                    color: Color(0xFFDC2626),
+                                    size: 28,
+                                  ),
                                 ),
                         ),
                       ),
@@ -443,13 +540,15 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ...pr.items.take(2).map(
+                          ...pr.items
+                              .take(2)
+                              .map(
                                 (it) => Padding(
                                   padding: const EdgeInsets.only(bottom: 3),
                                   child: Text(
                                     '• ${it.productName} (Qty: ${it.quantity}${it.size != null ? ', ${it.size}' : ''})',
                                     style: const TextStyle(
-                                      color: Colors.white,
+                                      color: Color(0xFF0F172A),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -461,13 +560,22 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                           if (pr.items.length > 2)
                             Text(
                               '+${pr.items.length - 2} more item(s)',
-                              style: const TextStyle(color: Color(0xFFA855F7), fontSize: 11, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                color: Color(0xFF2563EB),
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          if (pr.postRemarks != null && pr.postRemarks!.isNotEmpty) ...[
+                          if (pr.postRemarks != null &&
+                              pr.postRemarks!.isNotEmpty) ...[
                             const SizedBox(height: 4),
                             Text(
                               'Remarks: ${pr.postRemarks!}',
-                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontStyle: FontStyle.italic),
+                              style: const TextStyle(
+                                color: Color(0xFF64748B),
+                                fontSize: 11,
+                                fontStyle: FontStyle.italic,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -480,7 +588,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
 
                 const SizedBox(height: 12),
 
-                const Divider(height: 1, color: Color(0xFF334155)),
+                const Divider(height: 1, color: Color(0xFFE2E8F0)),
 
                 const SizedBox(height: 10),
 
@@ -493,7 +601,11 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                         pr.postedAt != null
                             ? 'Posted by $posterName on ${pr.postedAt!.day.toString().padLeft(2, '0')}/${pr.postedAt!.month.toString().padLeft(2, '0')}'
                             : 'Posted by $posterName',
-                        style: const TextStyle(color: Color(0xFF64748B), fontSize: 10.5, fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w500,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -503,25 +615,44 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                         InkWell(
                           onTap: () => _confirmCancelPost(context, pr),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF881337).withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFFFB7185).withValues(alpha: 0.5)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 5,
                             ),
-                            child: const Text('Cancel Post', style: TextStyle(fontSize: 10, color: Color(0xFFFDA4AF), fontWeight: FontWeight.bold)),
+                            decoration: BoxDecoration(
+                              color: Color(0xFFFEF2F2).withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: Color(0xFFDC2626).withValues(alpha: 0.5),
+                              ),
+                            ),
+                            child: const Text(
+                              'Cancel Post',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Color(0xFFB91C1C),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF7C3AED),
+                            color: Color(0xFF2563EB),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text(
                             'View Details',
-                            style: TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: Color(0xFF0F172A),
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],

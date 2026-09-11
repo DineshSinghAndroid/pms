@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import '../../models/purchase_request_model.dart';
 
 abstract class PurchaseRequestState extends Equatable {

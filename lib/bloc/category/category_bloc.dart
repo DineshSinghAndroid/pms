@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../repositories/category_repository.dart';
 import 'category_event.dart';
 import 'category_state.dart';
@@ -23,8 +24,9 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
       final categories = await repository.getCategories();
       emit(CategoryLoaded(categories: categories));
     } catch (e) {
-      emit(CategoryError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        CategoryError(errorMessage: e.toString().replaceAll('Exception: ', '')),
+      );
     }
   }
 
@@ -36,8 +38,9 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
       final categories = await repository.getCategories();
       emit(CategoryLoaded(categories: categories));
     } catch (e) {
-      emit(CategoryError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        CategoryError(errorMessage: e.toString().replaceAll('Exception: ', '')),
+      );
     }
   }
 
@@ -50,8 +53,9 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
       final categories = await repository.getCategories();
       emit(CategoryLoaded(categories: categories));
     } catch (e) {
-      emit(CategoryError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        CategoryError(errorMessage: e.toString().replaceAll('Exception: ', '')),
+      );
     }
   }
 
@@ -64,8 +68,9 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
       final categories = await repository.getCategories();
       emit(CategoryLoaded(categories: categories));
     } catch (e) {
-      emit(CategoryError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        CategoryError(errorMessage: e.toString().replaceAll('Exception: ', '')),
+      );
     }
   }
 
@@ -78,8 +83,9 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
       final categories = await repository.getCategories();
       emit(CategoryLoaded(categories: categories));
     } catch (e) {
-      emit(CategoryError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        CategoryError(errorMessage: e.toString().replaceAll('Exception: ', '')),
+      );
     }
   }
 }

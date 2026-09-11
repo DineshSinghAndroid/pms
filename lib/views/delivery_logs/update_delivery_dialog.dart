@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pms/bloc/print_order/print_order_bloc.dart';
 import 'package:pms/bloc/print_order/print_order_event.dart';
-import 'package:pms/bloc/print_order/print_order_state.dart';
 import 'package:pms/models/print_order_model.dart';
 import 'package:pms/models/user_model.dart';
+import 'package:pms/services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UpdateDeliveryDialog extends StatefulWidget {
@@ -57,8 +57,9 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
       _selectedPO = po;
       _itemControllers.clear();
       for (var it in po.items) {
-        final remaining = (it.quantity - it.receivedQuantity).clamp(0, it.quantity);
-        _itemControllers[it.id] = TextEditingController(text: remaining.toString());
+        _itemControllers[it.id] = TextEditingController(
+          text: '',
+        );
       }
     });
   }
@@ -72,7 +73,9 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
 
   List<PrintOrderModel> get _filteredPOs {
     final q = _searchPOController.text.toLowerCase().trim();
-    final activeList = widget.printOrders.where((p) => p.status != 'cancelled').toList();
+    final activeList = widget.printOrders
+        .where((p) => !p.isCancelled && !p.isFullyReceived)
+        .toList();
     if (q.isEmpty) return activeList;
     return activeList.where((p) {
       return p.poNumber.toLowerCase().contains(q) ||
@@ -87,7 +90,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select a Print Order first.'),
-          backgroundColor: Color(0xFFEF4444),
+          backgroundColor: Color(0xFFDC2626),
         ),
       );
       return;
@@ -98,7 +101,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Challan Number is required.'),
-          backgroundColor: Color(0xFFEF4444),
+          backgroundColor: Color(0xFFDC2626),
         ),
       );
       return;
@@ -110,10 +113,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
     for (var it in _selectedPO!.items) {
       final ctrl = _itemControllers[it.id];
       final qty = int.tryParse(ctrl?.text.trim() ?? '') ?? 0;
-      itemsPayload.add({
-        'id': it.id,
-        'received_quantity': qty,
-      });
+      itemsPayload.add({'id': it.id, 'received_quantity': qty});
       totalNewQty += qty;
     }
 
@@ -121,27 +121,28 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter at least 1 received item quantity.'),
-          backgroundColor: Color(0xFFEF4444),
+          backgroundColor: Color(0xFFDC2626),
         ),
       );
       return;
     }
 
     final phone = widget.userProfile?.phone;
-    final dateStr = '${_deliveryDate.year.toString().padLeft(4, '0')}-${_deliveryDate.month.toString().padLeft(2, '0')}-${_deliveryDate.day.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${_deliveryDate.year.toString().padLeft(4, '0')}-${_deliveryDate.month.toString().padLeft(2, '0')}-${_deliveryDate.day.toString().padLeft(2, '0')}';
 
     context.read<PrintOrderBloc>().add(
-          RecordDeliveryEvent(
-            printOrderId: _selectedPO!.id,
-            challanNumber: challan,
-            deliveryDate: dateStr,
-            remarks: _remarksController.text.trim().isNotEmpty
-                ? _remarksController.text.trim()
-                : null,
-            phone: phone,
-            items: itemsPayload,
-          ),
-        );
+      RecordDeliveryEvent(
+        printOrderId: _selectedPO!.id,
+        challanNumber: challan,
+        deliveryDate: dateStr,
+        remarks: _remarksController.text.trim().isNotEmpty
+            ? _remarksController.text.trim()
+            : null,
+        phone: phone,
+        items: itemsPayload,
+      ),
+    );
 
     Navigator.pop(context, true);
   }
@@ -149,7 +150,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: Color(0xFFFFFFFF),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Container(
@@ -160,9 +161,9 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: const BoxDecoration(
-                color: Color(0xFF0F172A),
+                color: Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                border: Border(bottom: BorderSide(color: Color(0xFF334155))),
+                border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
               ),
               child: Row(
                 children: [
@@ -170,12 +171,15 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                      color: Color(0xFF059669).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFF10B981)),
+                      border: Border.all(color: Color(0xFF059669)),
                     ),
-                    child: const Icon(Icons.inventory_2_outlined,
-                        color: Color(0xFF34D399), size: 20),
+                    child: const Icon(
+                      Icons.inventory_2_outlined,
+                      color: Color(0xFF059669),
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
@@ -187,14 +191,14 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
                         Text(
                           'Log product shipment quantities & Challan number',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF94A3B8),
+                            color: Color(0xFF64748B),
                           ),
                         ),
                       ],
@@ -202,8 +206,11 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded,
-                        color: Colors.white60, size: 20),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Color(0xFF64748B),
+                      size: 20,
+                    ),
                   ),
                 ],
               ),
@@ -220,7 +227,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                     const Text(
                       '1. SELECT PRINT ORDER (PO) *',
                       style: TextStyle(
-                        color: Color(0xFF818CF8),
+                        color: Color(0xFF2563EB),
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
@@ -233,24 +240,38 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                       TextField(
                         controller: _searchPOController,
                         onChanged: (_) => setState(() {}),
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontSize: 13,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Search by PO #, vendor, or wing...',
-                          hintStyle:
-                              const TextStyle(color: Colors.white38, fontSize: 12),
-                          prefixIcon: const Icon(Icons.search_rounded,
-                              color: Colors.white54, size: 18),
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 12,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            color: Color(0xFF64748B),
+                            size: 18,
+                          ),
                           filled: true,
-                          fillColor: const Color(0xFF0F172A),
+                          fillColor: Color(0xFFF8FAFC),
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFF334155)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE2E8F0),
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFF334155)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE2E8F0),
+                            ),
                           ),
                         ),
                       ),
@@ -258,22 +279,35 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                       Container(
                         constraints: const BoxConstraints(maxHeight: 180),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F172A),
+                          color: Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFF334155)),
+                          border: Border.all(color: Color(0xFFE2E8F0)),
                         ),
                         child: _filteredPOs.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Text('No matching Print Orders found.',
-                                    style: TextStyle(
-                                        color: Colors.white38, fontSize: 12)),
+                            ? Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Center(
+                                  child: Text(
+                                    _searchPOController.text.trim().isNotEmpty
+                                        ? 'No matching Print Orders found.'
+                                        : (widget.printOrders.any((p) => p.isFullyReceived)
+                                            ? 'All Print Orders are fully received!'
+                                            : 'No Print Orders available to receive.'),
+                                    style: const TextStyle(
+                                      color: Color(0xFF64748B),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
                               )
                             : ListView.separated(
                                 shrinkWrap: true,
                                 itemCount: _filteredPOs.length,
-                                separatorBuilder: (_, __) => const Divider(
-                                    color: Color(0xFF1E293B), height: 1),
+                                separatorBuilder: (_, _) => const Divider(
+                                  color: Color(0xFFFFFFFF),
+                                  height: 1,
+                                ),
                                 itemBuilder: (context, idx) {
                                   final po = _filteredPOs[idx];
                                   return ListTile(
@@ -281,7 +315,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                     title: Text(
                                       '${po.poNumber} · ${po.vendor?.name ?? "Vendor"}',
                                       style: const TextStyle(
-                                        color: Colors.white,
+                                        color: Color(0xFF0F172A),
                                         fontWeight: FontWeight.bold,
                                         fontSize: 12.5,
                                       ),
@@ -289,13 +323,13 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                     subtitle: Text(
                                       '${po.wing?.name ?? "Wing"} · ${po.items.length} Products · Status: ${po.status}',
                                       style: const TextStyle(
-                                        color: Colors.white54,
+                                        color: Color(0xFF64748B),
                                         fontSize: 11,
                                       ),
                                     ),
                                     trailing: const Icon(
                                       Icons.chevron_right_rounded,
-                                      color: Color(0xFF38BDF8),
+                                      color: Color(0xFF2563EB),
                                       size: 18,
                                     ),
                                     onTap: () => _selectPO(po),
@@ -308,9 +342,9 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F172A),
+                          color: Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF3B82F6)),
+                          border: Border.all(color: Color(0xFF2563EB)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,47 +352,62 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF1E293B),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                            color: const Color(0xFF475569)),
-                                      ),
-                                      child: Text(
-                                        _selectedPO!.poNumber,
-                                        style: const TextStyle(
-                                          color: Color(0xFF2DD4BF),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: 'monospace',
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFFFFFFFF),
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(
+                                            color: Color(0xFF475569),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          _selectedPO!.poNumber,
+                                          style: const TextStyle(
+                                            color: Color(0xFF059669),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: 'monospace',
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      _selectedPO!.vendor?.name ?? 'Vendor',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          _selectedPO!.vendor?.name ?? 'Vendor',
+                                          style: const TextStyle(
+                                            color: Color(0xFF0F172A),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
+                                const SizedBox(width: 8),
                                 TextButton(
-                                  onPressed: () => setState(() => _selectedPO = null),
+                                  onPressed: () =>
+                                      setState(() => _selectedPO = null),
                                   style: TextButton.styleFrom(
                                     padding: EdgeInsets.zero,
                                     minimumSize: const Size(50, 28),
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                   ),
-                                  child: const Text('Change PO',
-                                      style: TextStyle(
-                                          color: Color(0xFF38BDF8), fontSize: 11)),
+                                  child: const Text(
+                                    'Change PO',
+                                    style: TextStyle(
+                                      color: Color(0xFF2563EB),
+                                      fontSize: 11,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -366,7 +415,9 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                             Text(
                               'Target Wing: ${_selectedPO!.wing?.name ?? "General Wing"} · Delivery: ${_selectedPO!.expectedDeliveryDate ?? "ASAP"}',
                               style: const TextStyle(
-                                  color: Colors.white54, fontSize: 11),
+                                color: Color(0xFF64748B),
+                                fontSize: 11,
+                              ),
                             ),
                             if (_selectedPO!.printOrderRemarks != null &&
                                 _selectedPO!.printOrderRemarks!.isNotEmpty) ...[
@@ -374,7 +425,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                               Text(
                                 'Order Note: ${_selectedPO!.printOrderRemarks}',
                                 style: const TextStyle(
-                                  color: Color(0xFFFCD34D),
+                                  color: Color(0xFFD97706),
                                   fontSize: 11,
                                   fontStyle: FontStyle.italic,
                                 ),
@@ -392,7 +443,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                       const Text(
                         '2. PRODUCTS & QUANTITIES RECEIVED *',
                         style: TextStyle(
-                          color: Color(0xFF818CF8),
+                          color: Color(0xFF2563EB),
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.5,
@@ -404,7 +455,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: _selectedPO!.items.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, idx) {
                           final it = _selectedPO!.items[idx];
                           final ctrl = _itemControllers[it.id];
@@ -412,9 +463,9 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                           return Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0F172A),
+                              color: Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF334155)),
+                              border: Border.all(color: Color(0xFFE2E8F0)),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -429,7 +480,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                           Text(
                                             '#${idx + 1}. ${it.productName}',
                                             style: const TextStyle(
-                                              color: Colors.white,
+                                              color: Color(0xFF0F172A),
                                               fontWeight: FontWeight.bold,
                                               fontSize: 13,
                                             ),
@@ -438,7 +489,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                           Text(
                                             'Size: ${it.size ?? "Standard"} · Ordered: ${it.quantity} · Already Recv: ${it.receivedQuantity}',
                                             style: const TextStyle(
-                                              color: Colors.white54,
+                                              color: Color(0xFF64748B),
                                               fontSize: 11,
                                             ),
                                           ),
@@ -449,22 +500,27 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                         it.attachmentPath!.isNotEmpty)
                                       IconButton(
                                         onPressed: () {
-                                          final fullUrl = it.attachmentPath!
-                                                  .startsWith('http')
+                                          final fullUrl =
+                                              it.attachmentPath!.startsWith(
+                                                'http',
+                                              )
                                               ? it.attachmentPath!
-                                              : 'http://192.168.1.146:8000/storage/${it.attachmentPath}';
+                                              : '${ApiService.baseUrl}/storage/${it.attachmentPath}';
                                           _launchUrl(fullUrl);
                                         },
                                         tooltip: 'Download Proof',
                                         icon: const Icon(
-                                            Icons.download_rounded,
-                                            color: Color(0xFF38BDF8),
-                                            size: 18),
+                                          Icons.download_rounded,
+                                          color: Color(0xFF2563EB),
+                                          size: 18,
+                                        ),
                                       ),
                                   ],
                                 ),
                                 const Divider(
-                                    color: Color(0xFF1E293B), height: 16),
+                                  color: Color(0xFFFFFFFF),
+                                  height: 16,
+                                ),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
@@ -472,7 +528,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                     const Text(
                                       'Qty Received Now:',
                                       style: TextStyle(
-                                        color: Colors.white70,
+                                        color: Color(0xFF475569),
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -487,27 +543,31 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                             keyboardType: TextInputType.number,
                                             textAlign: TextAlign.center,
                                             style: const TextStyle(
-                                              color: Colors.white,
+                                              color: Color(0xFF0F172A),
                                               fontWeight: FontWeight.bold,
                                               fontSize: 13,
                                             ),
                                             decoration: InputDecoration(
                                               filled: true,
-                                              fillColor: const Color(0xFF1E293B),
+                                              fillColor: Color(0xFFFFFFFF),
                                               contentPadding:
                                                   const EdgeInsets.symmetric(
-                                                      horizontal: 8, vertical: 8),
+                                                    horizontal: 8,
+                                                    vertical: 8,
+                                                  ),
                                               border: OutlineInputBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(8),
                                                 borderSide: const BorderSide(
-                                                    color: Color(0xFF334155)),
+                                                  color: Color(0xFFE2E8F0),
+                                                ),
                                               ),
                                               enabledBorder: OutlineInputBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(8),
                                                 borderSide: const BorderSide(
-                                                    color: Color(0xFF334155)),
+                                                  color: Color(0xFFE2E8F0),
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -516,7 +576,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                         Text(
                                           '/ ${it.quantity}',
                                           style: const TextStyle(
-                                            color: Color(0xFF94A3B8),
+                                            color: Color(0xFF64748B),
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -537,7 +597,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                       const Text(
                         '3. DELIVERY DETAILS',
                         style: TextStyle(
-                          color: Color(0xFF818CF8),
+                          color: Color(0xFF2563EB),
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.5,
@@ -549,29 +609,34 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                       TextField(
                         controller: _challanController,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: Color(0xFF0F172A),
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
                         decoration: InputDecoration(
                           labelText: 'Challan Number *',
                           labelStyle: const TextStyle(
-                              color: Color(0xFF34D399),
-                              fontWeight: FontWeight.bold),
+                            color: Color(0xFF059669),
+                            fontWeight: FontWeight.bold,
+                          ),
                           hintText: 'e.g. CH-2026-9812',
-                          hintStyle:
-                              const TextStyle(color: Colors.white38, fontSize: 12),
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 12,
+                          ),
                           filled: true,
-                          fillColor: const Color(0xFF0F172A),
+                          fillColor: Color(0xFFF8FAFC),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Color(0xFF334155)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE2E8F0),
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Color(0xFF334155)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE2E8F0),
+                            ),
                           ),
                         ),
                       ),
@@ -593,11 +658,13 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                         borderRadius: BorderRadius.circular(10),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0F172A),
+                            color: Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFF334155)),
+                            border: Border.all(color: Color(0xFFE2E8F0)),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -605,22 +672,29 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Delivery Date',
-                                      style: TextStyle(
-                                          color: Colors.white54, fontSize: 10)),
+                                  const Text(
+                                    'Delivery Date',
+                                    style: TextStyle(
+                                      color: Color(0xFF64748B),
+                                      fontSize: 10,
+                                    ),
+                                  ),
                                   const SizedBox(height: 2),
                                   Text(
                                     '${_deliveryDate.day}/${_deliveryDate.month}/${_deliveryDate.year}',
                                     style: const TextStyle(
-                                      color: Colors.white,
+                                      color: Color(0xFF0F172A),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
                                     ),
                                   ),
                                 ],
                               ),
-                              const Icon(Icons.calendar_today_rounded,
-                                  color: Color(0xFF818CF8), size: 18),
+                              const Icon(
+                                Icons.calendar_today_rounded,
+                                color: Color(0xFF2563EB),
+                                size: 18,
+                              ),
                             ],
                           ),
                         ),
@@ -631,26 +705,34 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                       TextField(
                         controller: _remarksController,
                         maxLines: 2,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontSize: 13,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Remark / Delivery Note',
-                          labelStyle:
-                              const TextStyle(color: Colors.white70, fontSize: 12),
-                          hintText:
-                              'e.g. Received partial 200 copies in good condition at gate...',
-                          hintStyle:
-                              const TextStyle(color: Colors.white38, fontSize: 12),
+                          labelStyle: const TextStyle(
+                            color: Color(0xFF475569),
+                            fontSize: 12,
+                          ),
+                          hintText: 'e.g. Received partial 200 copies in good condition at gate...',
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 12,
+                          ),
                           filled: true,
-                          fillColor: const Color(0xFF0F172A),
+                          fillColor: Color(0xFFF8FAFC),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Color(0xFF334155)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE2E8F0),
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                const BorderSide(color: Color(0xFF334155)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE2E8F0),
+                            ),
                           ),
                         ),
                       ),
@@ -664,30 +746,39 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: const BoxDecoration(
-                color: Color(0xFF0F172A),
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-                border: Border(top: BorderSide(color: Color(0xFF334155))),
+                color: Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(20),
+                ),
+                border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel',
-                        style: TextStyle(color: Colors.white54)),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: Color(0xFF64748B)),
+                    ),
                   ),
                   ElevatedButton.icon(
                     onPressed: _submitDelivery,
                     icon: const Icon(Icons.check_circle_rounded, size: 18),
-                    label: const Text('Save & Record Delivery',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    label: const Text(
+                      'Save & Record Delivery',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
-                      foregroundColor: Colors.white,
+                      backgroundColor: Color(0xFF059669),
+                      foregroundColor: Color(0xFFFFFFFF),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 12),
+                        horizontal: 18,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ],

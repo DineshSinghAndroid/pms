@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../repositories/wing_repository.dart';
 import 'wing_event.dart';
 import 'wing_state.dart';
@@ -23,8 +24,7 @@ class WingBloc extends Bloc<WingEvent, WingState> {
       final wings = await repository.getWings();
       emit(WingLoaded(wings: wings));
     } catch (e) {
-      emit(WingError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(WingError(errorMessage: e.toString().replaceAll('Exception: ', '')));
     }
   }
 
@@ -36,8 +36,7 @@ class WingBloc extends Bloc<WingEvent, WingState> {
       final wings = await repository.getWings();
       emit(WingLoaded(wings: wings));
     } catch (e) {
-      emit(WingError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(WingError(errorMessage: e.toString().replaceAll('Exception: ', '')));
     }
   }
 
@@ -50,8 +49,7 @@ class WingBloc extends Bloc<WingEvent, WingState> {
       final wings = await repository.getWings();
       emit(WingLoaded(wings: wings));
     } catch (e) {
-      emit(WingError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(WingError(errorMessage: e.toString().replaceAll('Exception: ', '')));
     }
   }
 
@@ -64,8 +62,7 @@ class WingBloc extends Bloc<WingEvent, WingState> {
       final wings = await repository.getWings();
       emit(WingLoaded(wings: wings));
     } catch (e) {
-      emit(WingError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(WingError(errorMessage: e.toString().replaceAll('Exception: ', '')));
     }
   }
 
@@ -78,8 +75,7 @@ class WingBloc extends Bloc<WingEvent, WingState> {
       final wings = await repository.getWings();
       emit(WingLoaded(wings: wings));
     } catch (e) {
-      emit(WingError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(WingError(errorMessage: e.toString().replaceAll('Exception: ', '')));
     }
   }
 }

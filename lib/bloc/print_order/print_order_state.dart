@@ -5,6 +5,9 @@ import 'package:pms/models/print_order_model.dart';
 abstract class PrintOrderState extends Equatable {
   const PrintOrderState();
 
+  List<PrintOrderModel> get printOrdersList => const [];
+  List<PrintOrderDeliveryModel> get deliveriesList => const [];
+
   @override
   List<Object?> get props => [];
 }
@@ -15,12 +18,23 @@ class PrintOrderLoading extends PrintOrderState {}
 
 class PrintOrderLoaded extends PrintOrderState {
   final List<PrintOrderModel> printOrders;
+  final List<PrintOrderDeliveryModel> deliveries;
   final String? successMessage;
 
-  const PrintOrderLoaded({required this.printOrders, this.successMessage});
+  const PrintOrderLoaded({
+    required this.printOrders,
+    this.deliveries = const [],
+    this.successMessage,
+  });
 
   @override
-  List<Object?> get props => [printOrders, successMessage];
+  List<PrintOrderModel> get printOrdersList => printOrders;
+
+  @override
+  List<PrintOrderDeliveryModel> get deliveriesList => deliveries;
+
+  @override
+  List<Object?> get props => [printOrders, deliveries, successMessage];
 }
 
 class PrintOrderError extends PrintOrderState {
@@ -36,7 +50,10 @@ class PrintOrderActionSuccess extends PrintOrderState {
   final String message;
   final PrintOrderModel printOrder;
 
-  const PrintOrderActionSuccess({required this.message, required this.printOrder});
+  const PrintOrderActionSuccess({
+    required this.message,
+    required this.printOrder,
+  });
 
   @override
   List<Object?> get props => [message, printOrder];
@@ -44,12 +61,23 @@ class PrintOrderActionSuccess extends PrintOrderState {
 
 class DeliveryLogsLoaded extends PrintOrderState {
   final List<PrintOrderDeliveryModel> deliveries;
+  final List<PrintOrderModel> printOrders;
   final String? successMessage;
 
-  const DeliveryLogsLoaded({required this.deliveries, this.successMessage});
+  const DeliveryLogsLoaded({
+    required this.deliveries,
+    this.printOrders = const [],
+    this.successMessage,
+  });
 
   @override
-  List<Object?> get props => [deliveries, successMessage];
+  List<PrintOrderModel> get printOrdersList => printOrders;
+
+  @override
+  List<PrintOrderDeliveryModel> get deliveriesList => deliveries;
+
+  @override
+  List<Object?> get props => [deliveries, printOrders, successMessage];
 }
 
 class DeliveryRecordedSuccess extends PrintOrderState {
@@ -68,4 +96,3 @@ class DeliveryRecordedSuccess extends PrintOrderState {
   @override
   List<Object?> get props => [message, delivery, printOrder, isCompleted];
 }
-

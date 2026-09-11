@@ -1,12 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../repositories/purchase_request_repository.dart';
 import 'purchase_request_event.dart';
 import 'purchase_request_state.dart';
 
-class PurchaseRequestBloc extends Bloc<PurchaseRequestEvent, PurchaseRequestState> {
+class PurchaseRequestBloc
+    extends Bloc<PurchaseRequestEvent, PurchaseRequestState> {
   final PurchaseRequestRepository repository;
 
-  PurchaseRequestBloc({required this.repository}) : super(const PurchaseRequestInitial()) {
+  PurchaseRequestBloc({required this.repository})
+    : super(const PurchaseRequestInitial()) {
     on<FetchPurchaseRequestsEvent>(_onFetchPurchaseRequests);
     on<CreatePurchaseRequestEvent>(_onCreatePurchaseRequest);
     on<AssignDesignerEvent>(_onAssignDesigner);
@@ -68,7 +71,12 @@ class PurchaseRequestBloc extends Bloc<PurchaseRequestEvent, PurchaseRequestStat
   ) async {
     try {
       await repository.startWork(event.prId, phone: event.phone);
-      add(FetchPurchaseRequestsEvent(designerId: event.designerId, phone: event.phone));
+      add(
+        FetchPurchaseRequestsEvent(
+          designerId: event.designerId,
+          phone: event.phone,
+        ),
+      );
     } catch (e) {
       emit(PurchaseRequestError(errorMessage: e.toString()));
     }
@@ -87,7 +95,12 @@ class PurchaseRequestBloc extends Bloc<PurchaseRequestEvent, PurchaseRequestStat
         fileBytes: event.fileBytes,
         phone: event.phone,
       );
-      add(FetchPurchaseRequestsEvent(designerId: event.designerId, phone: event.phone));
+      add(
+        FetchPurchaseRequestsEvent(
+          designerId: event.designerId,
+          phone: event.phone,
+        ),
+      );
     } catch (e) {
       emit(PurchaseRequestError(errorMessage: e.toString()));
     }
@@ -98,7 +111,11 @@ class PurchaseRequestBloc extends Bloc<PurchaseRequestEvent, PurchaseRequestStat
     Emitter<PurchaseRequestState> emit,
   ) async {
     try {
-      await repository.approvePR(event.prId, remarks: event.remarks, phone: event.phone);
+      await repository.approvePR(
+        event.prId,
+        remarks: event.remarks,
+        phone: event.phone,
+      );
       add(FetchPurchaseRequestsEvent(phone: event.phone));
     } catch (e) {
       emit(PurchaseRequestError(errorMessage: e.toString()));
@@ -110,7 +127,11 @@ class PurchaseRequestBloc extends Bloc<PurchaseRequestEvent, PurchaseRequestStat
     Emitter<PurchaseRequestState> emit,
   ) async {
     try {
-      await repository.rejectRevisionPR(event.prId, remarks: event.remarks, phone: event.phone);
+      await repository.rejectRevisionPR(
+        event.prId,
+        remarks: event.remarks,
+        phone: event.phone,
+      );
       add(FetchPurchaseRequestsEvent(phone: event.phone));
     } catch (e) {
       emit(PurchaseRequestError(errorMessage: e.toString()));
@@ -122,7 +143,11 @@ class PurchaseRequestBloc extends Bloc<PurchaseRequestEvent, PurchaseRequestStat
     Emitter<PurchaseRequestState> emit,
   ) async {
     try {
-      await repository.postIt(event.prId, remarks: event.remarks, phone: event.phone);
+      await repository.postIt(
+        event.prId,
+        remarks: event.remarks,
+        phone: event.phone,
+      );
       add(FetchPurchaseRequestsEvent(phone: event.phone));
     } catch (e) {
       emit(PurchaseRequestError(errorMessage: e.toString()));

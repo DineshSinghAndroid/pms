@@ -4,13 +4,17 @@ import 'package:flutter/foundation.dart';
 class ApiService {
   late final Dio _dio;
 
-  // Base URL: Supports Local Network IP (192.168.1.102 for physical iPhone & Simulator), or 127.0.0.1 for Web
+  // Base URL: Supports Local Network IP (192.168.1.9 for physical iPhone & Simulator), or dynamic host for Web
   static String get baseUrl {
     if (kIsWeb) {
-      return 'http://127.0.0.1:8000';
+      final host = Uri.base.host;
+      if (host.isNotEmpty && host != '0.0.0.0') {
+        return 'http://$host:8000';
+      }
+      return 'http://192.168.1.9:8000';
     }
     // Mac IP on local network for physical iPhone
-    return 'http://192.168.1.146:8000';
+    return 'http://192.168.1.9:8000';
   }
 
   ApiService() {
@@ -19,9 +23,7 @@ class ApiService {
         baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 30),
-        headers: {
-          'Accept': 'application/json',
-        },
+        headers: {'Accept': 'application/json'},
       ),
     );
 

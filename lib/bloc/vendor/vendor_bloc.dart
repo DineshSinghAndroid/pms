@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../repositories/vendor_repository.dart';
 import 'vendor_event.dart';
 import 'vendor_state.dart';
@@ -24,8 +25,9 @@ class VendorBloc extends Bloc<VendorEvent, VendorState> {
       final vendors = await repository.getVendors();
       emit(VendorLoaded(vendors: vendors));
     } catch (e) {
-      emit(VendorError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        VendorError(errorMessage: e.toString().replaceAll('Exception: ', '')),
+      );
     }
   }
 
@@ -37,8 +39,9 @@ class VendorBloc extends Bloc<VendorEvent, VendorState> {
       final vendors = await repository.getVendors();
       emit(VendorLoaded(vendors: vendors));
     } catch (e) {
-      emit(VendorError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        VendorError(errorMessage: e.toString().replaceAll('Exception: ', '')),
+      );
     }
   }
 
@@ -51,8 +54,9 @@ class VendorBloc extends Bloc<VendorEvent, VendorState> {
       final vendors = await repository.getVendors();
       emit(VendorLoaded(vendors: vendors));
     } catch (e) {
-      emit(VendorError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        VendorError(errorMessage: e.toString().replaceAll('Exception: ', '')),
+      );
     }
   }
 
@@ -65,8 +69,9 @@ class VendorBloc extends Bloc<VendorEvent, VendorState> {
       final vendors = await repository.getVendors();
       emit(VendorLoaded(vendors: vendors));
     } catch (e) {
-      emit(VendorError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        VendorError(errorMessage: e.toString().replaceAll('Exception: ', '')),
+      );
     }
   }
 
@@ -79,8 +84,9 @@ class VendorBloc extends Bloc<VendorEvent, VendorState> {
       final vendors = await repository.getVendors();
       emit(VendorLoaded(vendors: vendors));
     } catch (e) {
-      emit(VendorError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        VendorError(errorMessage: e.toString().replaceAll('Exception: ', '')),
+      );
     }
   }
 
@@ -91,15 +97,17 @@ class VendorBloc extends Bloc<VendorEvent, VendorState> {
     if (state is VendorLoaded) {
       final currentList = (state as VendorLoaded).vendors;
       try {
-        final updatedVendor =
-            await repository.toggleVendorLogin(event.vendorId);
+        final updatedVendor = await repository.toggleVendorLogin(
+          event.vendorId,
+        );
         final updatedList = currentList.map((v) {
           return v.id == updatedVendor.id ? updatedVendor : v;
         }).toList();
         emit(VendorLoaded(vendors: updatedList));
       } catch (e) {
-        emit(VendorError(
-            errorMessage: e.toString().replaceAll('Exception: ', '')));
+        emit(
+          VendorError(errorMessage: e.toString().replaceAll('Exception: ', '')),
+        );
       }
     }
   }

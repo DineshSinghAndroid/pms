@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 
@@ -6,7 +7,7 @@ class UserRepository {
   final ApiService _apiService;
 
   UserRepository({ApiService? apiService})
-      : _apiService = apiService ?? ApiService();
+    : _apiService = apiService ?? ApiService();
 
   /// Fetch all users from PMS Admin backend
   Future<List<UserModel>> getUsers() async {
@@ -26,7 +27,9 @@ class UserRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error connecting to PMS Admin',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error connecting to PMS Admin',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -36,8 +39,10 @@ class UserRepository {
   /// Create a new user
   Future<UserModel> createUser(Map<String, dynamic> payload) async {
     try {
-      final response =
-          await _apiService.client.post('/api/users', data: payload);
+      final response = await _apiService.client.post(
+        '/api/users',
+        data: payload,
+      );
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
@@ -50,7 +55,9 @@ class UserRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error creating user',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error creating user',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -60,8 +67,10 @@ class UserRepository {
   /// Update an existing user
   Future<UserModel> updateUser(int userId, Map<String, dynamic> payload) async {
     try {
-      final response =
-          await _apiService.client.put('/api/users/$userId', data: payload);
+      final response = await _apiService.client.put(
+        '/api/users/$userId',
+        data: payload,
+      );
       if (response.statusCode == 200 && response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>
@@ -73,7 +82,9 @@ class UserRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error updating user',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error updating user',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -89,7 +100,9 @@ class UserRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error deleting user',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error deleting user',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -99,8 +112,9 @@ class UserRepository {
   /// Toggle user active status
   Future<UserModel> toggleUserActive(int userId) async {
     try {
-      final response =
-          await _apiService.client.post('/api/users/$userId/toggle-active');
+      final response = await _apiService.client.post(
+        '/api/users/$userId/toggle-active',
+      );
       if (response.statusCode == 200 && response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>
@@ -112,7 +126,9 @@ class UserRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error toggling status',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error toggling status',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -149,4 +165,3 @@ class UserRepository {
     }
   }
 }
-

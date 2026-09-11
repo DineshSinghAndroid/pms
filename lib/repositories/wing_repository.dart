@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+
 import '../models/wing_model.dart';
 import '../services/api_service.dart';
 
@@ -6,7 +7,7 @@ class WingRepository {
   final ApiService _apiService;
 
   WingRepository({ApiService? apiService})
-      : _apiService = apiService ?? ApiService();
+    : _apiService = apiService ?? ApiService();
 
   /// Fetch all institute wings
   Future<List<WingModel>> getWings() async {
@@ -26,7 +27,9 @@ class WingRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error loading wings',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error loading wings',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -36,8 +39,10 @@ class WingRepository {
   /// Create wing
   Future<WingModel> createWing(Map<String, dynamic> payload) async {
     try {
-      final response =
-          await _apiService.client.post('/api/wings', data: payload);
+      final response = await _apiService.client.post(
+        '/api/wings',
+        data: payload,
+      );
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
@@ -50,7 +55,9 @@ class WingRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error creating wing',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error creating wing',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -60,8 +67,10 @@ class WingRepository {
   /// Update wing
   Future<WingModel> updateWing(int id, Map<String, dynamic> payload) async {
     try {
-      final response =
-          await _apiService.client.put('/api/wings/$id', data: payload);
+      final response = await _apiService.client.put(
+        '/api/wings/$id',
+        data: payload,
+      );
       if (response.statusCode == 200 && response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>
@@ -73,7 +82,9 @@ class WingRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error updating wing',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error updating wing',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -89,7 +100,9 @@ class WingRepository {
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error deleting wing',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error deleting wing',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');

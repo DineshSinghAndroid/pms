@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
+
 import '../models/purchase_request_model.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
@@ -8,7 +10,7 @@ class PurchaseRequestRepository {
   final ApiService _apiService;
 
   PurchaseRequestRepository({ApiService? apiService})
-      : _apiService = apiService ?? ApiService();
+    : _apiService = apiService ?? ApiService();
 
   Future<List<PurchaseRequestModel>> getPurchaseRequests({
     int? designerId,
@@ -35,13 +37,18 @@ class PurchaseRequestRepository {
 
         final List<dynamic> dataList = body['data'] as List<dynamic>? ?? [];
         return dataList
-            .map((item) => PurchaseRequestModel.fromJson(item as Map<String, dynamic>))
+            .map(
+              (item) =>
+                  PurchaseRequestModel.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
       }
       return [];
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error loading purchase requests',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error loading purchase requests',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -50,18 +57,24 @@ class PurchaseRequestRepository {
 
   Future<PurchaseRequestModel> getPurchaseRequestDetails(int prId) async {
     try {
-      final response = await _apiService.client.get('/api/purchase-requests/$prId');
+      final response = await _apiService.client.get(
+        '/api/purchase-requests/$prId',
+      );
       if (response.statusCode == 200 && response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>
             : Map<String, dynamic>.from(response.data as Map);
 
-        return PurchaseRequestModel.fromJson(body['data'] as Map<String, dynamic>);
+        return PurchaseRequestModel.fromJson(
+          body['data'] as Map<String, dynamic>,
+        );
       }
       throw Exception('Failed to load PR details: ${response.statusCode}');
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error loading PR details',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error loading PR details',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -84,31 +97,42 @@ class PurchaseRequestRepository {
       return [];
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error loading designers',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error loading designers',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
   }
 
-  Future<PurchaseRequestModel> createPurchaseRequest(Map<String, dynamic> payload) async {
+  Future<PurchaseRequestModel> createPurchaseRequest(
+    Map<String, dynamic> payload,
+  ) async {
     try {
       final response = await _apiService.client.post(
         '/api/purchase-requests',
         data: payload,
       );
 
-      if ((response.statusCode == 200 || response.statusCode == 201) && response.data != null) {
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>
             : Map<String, dynamic>.from(response.data as Map);
 
-        return PurchaseRequestModel.fromJson(body['data'] as Map<String, dynamic>);
+        return PurchaseRequestModel.fromJson(
+          body['data'] as Map<String, dynamic>,
+        );
       }
-      throw Exception('Failed to create purchase request: ${response.statusCode}');
+      throw Exception(
+        'Failed to create purchase request: ${response.statusCode}',
+      );
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error creating purchase request',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error creating purchase request',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -127,12 +151,16 @@ class PurchaseRequestRepository {
             ? response.data as Map<String, dynamic>
             : Map<String, dynamic>.from(response.data as Map);
 
-        return PurchaseRequestModel.fromJson(body['data'] as Map<String, dynamic>);
+        return PurchaseRequestModel.fromJson(
+          body['data'] as Map<String, dynamic>,
+        );
       }
       throw Exception('Failed to assign designer: ${response.statusCode}');
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error assigning designer',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error assigning designer',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -151,12 +179,16 @@ class PurchaseRequestRepository {
             ? response.data as Map<String, dynamic>
             : Map<String, dynamic>.from(response.data as Map);
 
-        return PurchaseRequestModel.fromJson(body['data'] as Map<String, dynamic>);
+        return PurchaseRequestModel.fromJson(
+          body['data'] as Map<String, dynamic>,
+        );
       }
       throw Exception('Failed to start work: ${response.statusCode}');
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error starting work',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error starting work',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -205,19 +237,27 @@ class PurchaseRequestRepository {
             ? response.data as Map<String, dynamic>
             : Map<String, dynamic>.from(response.data as Map);
 
-        return PurchaseRequestModel.fromJson(body['data'] as Map<String, dynamic>);
+        return PurchaseRequestModel.fromJson(
+          body['data'] as Map<String, dynamic>,
+        );
       }
       throw Exception('Failed to submit work: ${response.statusCode}');
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error submitting work',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error submitting work',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
   }
 
-  Future<PurchaseRequestModel> approvePR(int prId, {String? remarks, String? phone}) async {
+  Future<PurchaseRequestModel> approvePR(
+    int prId, {
+    String? remarks,
+    String? phone,
+  }) async {
     try {
       final response = await _apiService.client.post(
         '/api/purchase-requests/$prId/approve',
@@ -229,12 +269,16 @@ class PurchaseRequestRepository {
             ? response.data as Map<String, dynamic>
             : Map<String, dynamic>.from(response.data as Map);
 
-        return PurchaseRequestModel.fromJson(body['data'] as Map<String, dynamic>);
+        return PurchaseRequestModel.fromJson(
+          body['data'] as Map<String, dynamic>,
+        );
       }
       throw Exception('Failed to approve PR: ${response.statusCode}');
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error approving PR',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error approving PR',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -257,19 +301,27 @@ class PurchaseRequestRepository {
             ? response.data as Map<String, dynamic>
             : Map<String, dynamic>.from(response.data as Map);
 
-        return PurchaseRequestModel.fromJson(body['data'] as Map<String, dynamic>);
+        return PurchaseRequestModel.fromJson(
+          body['data'] as Map<String, dynamic>,
+        );
       }
       throw Exception('Failed to reject PR: ${response.statusCode}');
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error rejecting PR',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error rejecting PR',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
   }
 
-  Future<PurchaseRequestModel> postIt(int prId, {String? remarks, String? phone}) async {
+  Future<PurchaseRequestModel> postIt(
+    int prId, {
+    String? remarks,
+    String? phone,
+  }) async {
     try {
       final response = await _apiService.client.post(
         '/api/purchase-requests/$prId/post-it',
@@ -281,12 +333,16 @@ class PurchaseRequestRepository {
             ? response.data as Map<String, dynamic>
             : Map<String, dynamic>.from(response.data as Map);
 
-        return PurchaseRequestModel.fromJson(body['data'] as Map<String, dynamic>);
+        return PurchaseRequestModel.fromJson(
+          body['data'] as Map<String, dynamic>,
+        );
       }
       throw Exception('Failed to submit post request: ${response.statusCode}');
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error submitting post request',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error submitting post request',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -305,12 +361,16 @@ class PurchaseRequestRepository {
             ? response.data as Map<String, dynamic>
             : Map<String, dynamic>.from(response.data as Map);
 
-        return PurchaseRequestModel.fromJson(body['data'] as Map<String, dynamic>);
+        return PurchaseRequestModel.fromJson(
+          body['data'] as Map<String, dynamic>,
+        );
       }
       throw Exception('Failed to cancel post request: ${response.statusCode}');
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error cancelling post request',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error cancelling post request',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -329,12 +389,16 @@ class PurchaseRequestRepository {
             ? response.data as Map<String, dynamic>
             : Map<String, dynamic>.from(response.data as Map);
 
-        return PurchaseRequestModel.fromJson(body['data'] as Map<String, dynamic>);
+        return PurchaseRequestModel.fromJson(
+          body['data'] as Map<String, dynamic>,
+        );
       }
       throw Exception('Failed to cancel print order: ${response.statusCode}');
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error cancelling print order',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error cancelling print order',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');
@@ -343,13 +407,19 @@ class PurchaseRequestRepository {
 
   Future<void> deletePurchaseRequest(int prId) async {
     try {
-      final response = await _apiService.client.delete('/api/purchase-requests/$prId');
+      final response = await _apiService.client.delete(
+        '/api/purchase-requests/$prId',
+      );
       if (response.statusCode != 200) {
-        throw Exception('Failed to delete purchase request: ${response.statusCode}');
+        throw Exception(
+          'Failed to delete purchase request: ${response.statusCode}',
+        );
       }
     } on DioException catch (e) {
       throw Exception(
-        e.response?.data?['message'] ?? e.message ?? 'Network error deleting purchase request',
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error deleting purchase request',
       );
     } catch (e) {
       throw Exception('Unexpected error: $e');

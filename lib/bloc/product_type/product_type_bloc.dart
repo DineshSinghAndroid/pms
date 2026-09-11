@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../repositories/product_type_repository.dart';
 import 'product_type_event.dart';
 import 'product_type_state.dart';
@@ -7,7 +8,7 @@ class ProductTypeBloc extends Bloc<ProductTypeEvent, ProductTypeState> {
   final ProductTypeRepository repository;
 
   ProductTypeBloc({required this.repository})
-      : super(const ProductTypeInitial()) {
+    : super(const ProductTypeInitial()) {
     on<FetchProductTypesEvent>(_onFetchProductTypes);
     on<RefreshProductTypesEvent>(_onRefreshProductTypes);
     on<CreateProductTypeEvent>(_onCreateProductType);
@@ -21,12 +22,16 @@ class ProductTypeBloc extends Bloc<ProductTypeEvent, ProductTypeState> {
   ) async {
     emit(const ProductTypeLoading());
     try {
-      final types =
-          await repository.getProductTypes(categoryId: event.categoryId);
+      final types = await repository.getProductTypes(
+        categoryId: event.categoryId,
+      );
       emit(ProductTypeLoaded(productTypes: types));
     } catch (e) {
-      emit(ProductTypeError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        ProductTypeError(
+          errorMessage: e.toString().replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
@@ -35,12 +40,16 @@ class ProductTypeBloc extends Bloc<ProductTypeEvent, ProductTypeState> {
     Emitter<ProductTypeState> emit,
   ) async {
     try {
-      final types =
-          await repository.getProductTypes(categoryId: event.categoryId);
+      final types = await repository.getProductTypes(
+        categoryId: event.categoryId,
+      );
       emit(ProductTypeLoaded(productTypes: types));
     } catch (e) {
-      emit(ProductTypeError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        ProductTypeError(
+          errorMessage: e.toString().replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
@@ -53,8 +62,11 @@ class ProductTypeBloc extends Bloc<ProductTypeEvent, ProductTypeState> {
       final types = await repository.getProductTypes();
       emit(ProductTypeLoaded(productTypes: types));
     } catch (e) {
-      emit(ProductTypeError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        ProductTypeError(
+          errorMessage: e.toString().replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
@@ -63,13 +75,15 @@ class ProductTypeBloc extends Bloc<ProductTypeEvent, ProductTypeState> {
     Emitter<ProductTypeState> emit,
   ) async {
     try {
-      await repository.updateProductType(
-          event.productTypeId, event.payload);
+      await repository.updateProductType(event.productTypeId, event.payload);
       final types = await repository.getProductTypes();
       emit(ProductTypeLoaded(productTypes: types));
     } catch (e) {
-      emit(ProductTypeError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        ProductTypeError(
+          errorMessage: e.toString().replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 
@@ -82,8 +96,11 @@ class ProductTypeBloc extends Bloc<ProductTypeEvent, ProductTypeState> {
       final types = await repository.getProductTypes();
       emit(ProductTypeLoaded(productTypes: types));
     } catch (e) {
-      emit(ProductTypeError(
-          errorMessage: e.toString().replaceAll('Exception: ', '')));
+      emit(
+        ProductTypeError(
+          errorMessage: e.toString().replaceAll('Exception: ', ''),
+        ),
+      );
     }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../services/api_service.dart';
 
 class SettingsTabView extends StatelessWidget {
@@ -14,15 +15,14 @@ class SettingsTabView extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(Icons.settings_outlined,
-                  color: Color(0xFF94A3B8), size: 20),
+              Icon(Icons.settings_outlined, color: Color(0xFF64748B), size: 20),
               SizedBox(width: 8),
               Text(
                 'System Settings & Connection',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: Color(0xFF0F172A),
                 ),
               ),
             ],
@@ -31,21 +31,21 @@ class SettingsTabView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
+              color: Color(0xFFFFFFFF),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF334155)),
+              border: Border.all(color: Color(0xFFE2E8F0)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildInfoRow('Application', 'PMS Admin Mobile'),
-                const Divider(color: Color(0xFF334155), height: 20),
+                const Divider(color: Color(0xFFE2E8F0), height: 20),
                 _buildInfoRow('Organization', 'Prince Eduhub'),
-                const Divider(color: Color(0xFF334155), height: 20),
+                const Divider(color: Color(0xFFE2E8F0), height: 20),
                 _buildInfoRow('Backend Base URL', ApiService.baseUrl),
-                const Divider(color: Color(0xFF334155), height: 20),
+                const Divider(color: Color(0xFFE2E8F0), height: 20),
                 _buildInfoRow('State Management', 'BLoC (flutter_bloc 9.x)'),
-                const Divider(color: Color(0xFF334155), height: 20),
+                const Divider(color: Color(0xFFE2E8F0), height: 20),
                 _buildInfoRow('Network Client', 'Dio HTTP 5.x'),
               ],
             ),
@@ -64,7 +64,7 @@ class SettingsTabView extends StatelessWidget {
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF94A3B8),
+            color: Color(0xFF64748B),
           ),
         ),
         Flexible(
@@ -73,7 +73,7 @@ class SettingsTabView extends StatelessWidget {
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Color(0xFF0F172A),
             ),
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,

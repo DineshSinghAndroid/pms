@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import 'print_order_model.dart';
 import 'product_type_model.dart';
 import 'user_model.dart';
@@ -59,16 +60,16 @@ class PurchaseRequestActivityModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        purchaseRequestId,
-        userId,
-        action,
-        remarks,
-        attachmentPath,
-        attachmentName,
-        user,
-        createdAt,
-      ];
+    id,
+    purchaseRequestId,
+    userId,
+    action,
+    remarks,
+    attachmentPath,
+    attachmentName,
+    user,
+    createdAt,
+  ];
 }
 
 class PurchaseRequestItemModel extends Equatable {
@@ -106,8 +107,12 @@ class PurchaseRequestItemModel extends Equatable {
       size: json['size'] as String?,
       attachmentPath: json['attachment_path'] as String?,
       attachmentName: json['attachment_name'] as String?,
-      productType: json['product_type'] != null && json['product_type'] is Map<String, dynamic>
-          ? ProductTypeModel.fromJson(json['product_type'] as Map<String, dynamic>)
+      productType:
+          json['product_type'] != null &&
+              json['product_type'] is Map<String, dynamic>
+          ? ProductTypeModel.fromJson(
+              json['product_type'] as Map<String, dynamic>,
+            )
           : null,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
@@ -130,17 +135,17 @@ class PurchaseRequestItemModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        purchaseRequestId,
-        productTypeId,
-        productName,
-        quantity,
-        size,
-        attachmentPath,
-        attachmentName,
-        productType,
-        createdAt,
-      ];
+    id,
+    purchaseRequestId,
+    productTypeId,
+    productName,
+    quantity,
+    size,
+    attachmentPath,
+    attachmentName,
+    productType,
+    createdAt,
+  ];
 }
 
 class PurchaseRequestModel extends Equatable {
@@ -221,7 +226,10 @@ class PurchaseRequestModel extends Equatable {
     List<PurchaseRequestItemModel> itemsList = [];
     if (rawItems is List) {
       itemsList = rawItems
-          .map((it) => PurchaseRequestItemModel.fromJson(it as Map<String, dynamic>))
+          .map(
+            (it) =>
+                PurchaseRequestItemModel.fromJson(it as Map<String, dynamic>),
+          )
           .toList();
     }
 
@@ -229,7 +237,11 @@ class PurchaseRequestModel extends Equatable {
     List<PurchaseRequestActivityModel> activitiesList = [];
     if (rawActivities is List) {
       activitiesList = rawActivities
-          .map((act) => PurchaseRequestActivityModel.fromJson(act as Map<String, dynamic>))
+          .map(
+            (act) => PurchaseRequestActivityModel.fromJson(
+              act as Map<String, dynamic>,
+            ),
+          )
           .toList();
     }
 
@@ -242,10 +254,15 @@ class PurchaseRequestModel extends Equatable {
     }
 
     PrintOrderModel? activePO;
-    if (json['active_print_order'] != null && json['active_print_order'] is Map<String, dynamic>) {
-      activePO = PrintOrderModel.fromJson(json['active_print_order'] as Map<String, dynamic>);
+    if (json['active_print_order'] != null &&
+        json['active_print_order'] is Map<String, dynamic>) {
+      activePO = PrintOrderModel.fromJson(
+        json['active_print_order'] as Map<String, dynamic>,
+      );
     } else if (printOrdersList.isNotEmpty) {
-      activePO = printOrdersList.where((po) => po.status != 'cancelled').firstOrNull;
+      activePO = printOrdersList
+          .where((po) => po.status != 'cancelled')
+          .firstOrNull;
     }
 
     return PurchaseRequestModel(
@@ -279,7 +296,9 @@ class PurchaseRequestModel extends Equatable {
           : null,
       postedByUserId: json['posted_by_user_id'] as int?,
       postRemarks: json['post_remarks'] as String?,
-      postedByUser: json['posted_by_user'] != null && json['posted_by_user'] is Map<String, dynamic>
+      postedByUser:
+          json['posted_by_user'] != null &&
+              json['posted_by_user'] is Map<String, dynamic>
           ? UserModel.fromJson(json['posted_by_user'] as Map<String, dynamic>)
           : null,
       activePrintOrder: activePO,
@@ -288,16 +307,28 @@ class PurchaseRequestModel extends Equatable {
       wing: json['wing'] != null && json['wing'] is Map<String, dynamic>
           ? WingModel.fromJson(json['wing'] as Map<String, dynamic>)
           : null,
-      assignedDesigner: json['assigned_designer'] != null && json['assigned_designer'] is Map<String, dynamic>
-          ? UserModel.fromJson(json['assigned_designer'] as Map<String, dynamic>)
+      assignedDesigner:
+          json['assigned_designer'] != null &&
+              json['assigned_designer'] is Map<String, dynamic>
+          ? UserModel.fromJson(
+              json['assigned_designer'] as Map<String, dynamic>,
+            )
           : null,
-      createdByUser: json['created_by_user'] != null && json['created_by_user'] is Map<String, dynamic>
+      createdByUser:
+          json['created_by_user'] != null &&
+              json['created_by_user'] is Map<String, dynamic>
           ? UserModel.fromJson(json['created_by_user'] as Map<String, dynamic>)
           : null,
-      workStartedByUser: json['work_started_by_user'] != null && json['work_started_by_user'] is Map<String, dynamic>
-          ? UserModel.fromJson(json['work_started_by_user'] as Map<String, dynamic>)
+      workStartedByUser:
+          json['work_started_by_user'] != null &&
+              json['work_started_by_user'] is Map<String, dynamic>
+          ? UserModel.fromJson(
+              json['work_started_by_user'] as Map<String, dynamic>,
+            )
           : null,
-      approvedByUser: json['approved_by_user'] != null && json['approved_by_user'] is Map<String, dynamic>
+      approvedByUser:
+          json['approved_by_user'] != null &&
+              json['approved_by_user'] is Map<String, dynamic>
           ? UserModel.fromJson(json['approved_by_user'] as Map<String, dynamic>)
           : null,
       items: itemsList,
@@ -340,39 +371,39 @@ class PurchaseRequestModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        prNumber,
-        wingId,
-        assignedDesignerId,
-        createdByUserId,
-        expectedDeliveryDate,
-        expectedDeliveryTime,
-        status,
-        workStartedAt,
-        workStartedByUserId,
-        submittedAt,
-        artworkFilePath,
-        artworkFileName,
-        designerSubmissionRemarks,
-        approvedAt,
-        approvedByUserId,
-        adminReviewRemarks,
-        revisionCount,
-        isPosted,
-        postedAt,
-        postedByUserId,
-        postRemarks,
-        postedByUser,
-        activePrintOrder,
-        printOrders,
-        remarks,
-        wing,
-        assignedDesigner,
-        createdByUser,
-        workStartedByUser,
-        approvedByUser,
-        items,
-        activities,
-        createdAt,
-      ];
+    id,
+    prNumber,
+    wingId,
+    assignedDesignerId,
+    createdByUserId,
+    expectedDeliveryDate,
+    expectedDeliveryTime,
+    status,
+    workStartedAt,
+    workStartedByUserId,
+    submittedAt,
+    artworkFilePath,
+    artworkFileName,
+    designerSubmissionRemarks,
+    approvedAt,
+    approvedByUserId,
+    adminReviewRemarks,
+    revisionCount,
+    isPosted,
+    postedAt,
+    postedByUserId,
+    postRemarks,
+    postedByUser,
+    activePrintOrder,
+    printOrders,
+    remarks,
+    wing,
+    assignedDesigner,
+    createdByUser,
+    workStartedByUser,
+    approvedByUser,
+    items,
+    activities,
+    createdAt,
+  ];
 }
