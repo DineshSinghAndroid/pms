@@ -39,6 +39,7 @@ import '../settings/settings_tab_view.dart';
 import '../users/users_tab_view.dart';
 import '../vendors/vendors_tab_view.dart';
 import '../wings/wings_tab_view.dart';
+import '../legal/legal_doc_tab_view.dart';
 import '../../repositories/notification_repository.dart';
 import '../../services/notification_service.dart';
 import '../../widgets/app_logo.dart';
@@ -193,13 +194,20 @@ class _HomeScreenState extends State<HomeScreen> {
       context.read<CategoryBloc>().add(const RefreshCategoriesEvent());
       context.read<ProductTypeBloc>().add(const RefreshProductTypesEvent());
       context.read<WingBloc>().add(const RefreshWingsEvent());
-      context.read<VendorBloc>().add(const RefreshVendorsEvent());
-      context.read<UserBloc>().add(const RefreshUsersEvent());
       context.read<PrintOrderBloc>().add(FetchPrintOrders(phone: cleanPhone));
-      context.read<PrintOrderBloc>().add(const FetchDeliveryLogsEvent());
-      context.read<PaymentBloc>().add(const FetchPaymentsEvent());
-      context.read<PaymentBloc>().add(const FetchEligiblePaymentItemsEvent());
-      context.read<NewsTrackingBloc>().add(FetchNewsTrackingDataEvent(phone: cleanPhone));
+
+      if (isSuperAdmin || isManager) {
+        context.read<VendorBloc>().add(const RefreshVendorsEvent());
+        context.read<PaymentBloc>().add(const FetchPaymentsEvent());
+        context.read<PaymentBloc>().add(const FetchEligiblePaymentItemsEvent());
+        context.read<NewsTrackingBloc>().add(FetchNewsTrackingDataEvent(phone: cleanPhone));
+      }
+      if (isSuperAdmin) {
+        context.read<UserBloc>().add(const RefreshUsersEvent());
+      }
+      if (isSuperAdmin || isManager || isStoreIncharge) {
+        context.read<PrintOrderBloc>().add(const FetchDeliveryLogsEvent());
+      }
     } else if (isDesigner) {
       context.read<PurchaseRequestBloc>().add(
         FetchPurchaseRequestsEvent(
@@ -394,6 +402,10 @@ class _HomeScreenState extends State<HomeScreen> {
               );
       case NavMenu.settings:
         return const SettingsTabView();
+      case NavMenu.privacyPolicy:
+        return const LegalDocTabView(type: LegalDocType.privacyPolicy);
+      case NavMenu.termsAndConditions:
+        return const LegalDocTabView(type: LegalDocType.termsAndConditions);
     }
   }
 

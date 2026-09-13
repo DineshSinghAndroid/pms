@@ -4,17 +4,11 @@ import 'package:flutter/foundation.dart';
 class ApiService {
   late final Dio _dio;
 
-  // Base URL: Supports Local Network IP (192.168.1.9 for physical iPhone & Simulator), or dynamic host for Web
+  // Base URL: Live Production Server
+  static const String liveServerUrl = 'https://pms.bytscop.com';
+
   static String get baseUrl {
-    if (kIsWeb) {
-      final host = Uri.base.host;
-      if (host.isNotEmpty && host != '0.0.0.0') {
-        return 'http://$host:8000';
-      }
-      return 'http://192.168.1.9:8000';
-    }
-    // Mac IP on local network for physical iPhone
-    return 'http://192.168.1.9:8000';
+    return liveServerUrl;
   }
 
   ApiService() {

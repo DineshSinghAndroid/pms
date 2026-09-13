@@ -37,7 +37,7 @@ class _AssignAssetsToCrewState extends State<AssignAssetsToCrew> {
 
                 return ListView.builder(
                   itemBuilder: (context, index) {
-                    Text("Select Asset to assign to crew");
+                    return const Text("Select Asset to assign to crew");
                   },
                 );
               },

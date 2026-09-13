@@ -24,6 +24,7 @@ import '../../bloc/news_tracking/news_tracking_bloc.dart';
 import '../../bloc/news_tracking/news_tracking_state.dart';
 import '../../models/user_model.dart';
 import '../../widgets/app_logo.dart';
+import '../legal/delete_account_dialog.dart';
 
 enum NavMenu {
   dashboard,
@@ -40,6 +41,8 @@ enum NavMenu {
   wings,
   users,
   settings,
+  privacyPolicy,
+  termsAndConditions,
 }
 
 class SideMenuDrawer extends StatefulWidget {
@@ -422,6 +425,50 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                     menu: NavMenu.settings,
                     icon: Icons.settings_outlined,
                     label: 'Settings',
+                  ),
+                  _buildMenuItem(
+                    menu: NavMenu.privacyPolicy,
+                    icon: Icons.privacy_tip_outlined,
+                    label: 'Privacy Policy',
+                  ),
+                  _buildMenuItem(
+                    menu: NavMenu.termsAndConditions,
+                    icon: Icons.description_outlined,
+                    label: 'Terms & Conditions',
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: InkWell(
+                      onTap: () => DeleteAccountDialog.show(
+                        context,
+                        user: widget.user,
+                        userProfile: widget.userProfile,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.person_remove_outlined,
+                              size: 18,
+                              color: Color(0xFFDC2626),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Delete Account',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFFDC2626),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
