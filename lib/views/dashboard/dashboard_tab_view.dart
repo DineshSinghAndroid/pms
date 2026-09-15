@@ -19,6 +19,7 @@ import '../../models/user_model.dart';
 import '../layout/side_menu_drawer.dart';
 import '../print_orders/print_order_details_screen.dart';
 import '../purchase_requests/pr_details_screen.dart';
+import '../../theme/pms_theme.dart';
 
 class DashboardTabView extends StatelessWidget {
   final bool isSuperAdmin;
@@ -127,7 +128,7 @@ class DashboardTabView extends StatelessWidget {
     final phone = userProfile?.phone ?? userPhone;
 
     return RefreshIndicator(
-      color: const Color(0xFF2563EB),
+      color: PmsTheme.primary,
       onRefresh: () => _handleRefresh(context),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -164,7 +165,7 @@ class DashboardTabView extends StatelessWidget {
 
   // ================= 1. HEADER BANNER =================
   Widget _buildHeaderBanner(String phone) {
-    Color badgeColor = const Color(0xFF2563EB); // Blue
+    Color badgeColor = PmsTheme.primary; // Blue
     IconData badgeIcon = Icons.admin_panel_settings_rounded;
 
     if (_isDesigner) {
@@ -174,13 +175,13 @@ class DashboardTabView extends StatelessWidget {
       badgeColor = const Color(0xFF0891B2);
       badgeIcon = Icons.inventory_2_rounded;
     } else if (_isWingIncharge) {
-      badgeColor = const Color(0xFF7C3AED);
+      badgeColor = PmsTheme.secondary;
       badgeIcon = Icons.apartment_rounded;
     } else if (_isVendor) {
       badgeColor = const Color(0xFF059669);
       badgeIcon = Icons.print_rounded;
     } else if (_isDigitalStudioIncharge) {
-      badgeColor = const Color(0xFF2563EB);
+      badgeColor = PmsTheme.primary;
       badgeIcon = Icons.palette_rounded;
     } else if (_isDigitalStudioEmployee) {
       badgeColor = const Color(0xFF8B5CF6);
@@ -190,14 +191,14 @@ class DashboardTabView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: PmsTheme.glassBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -223,7 +224,7 @@ class DashboardTabView extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
+                    color: PmsTheme.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -233,7 +234,7 @@ class DashboardTabView extends StatelessWidget {
                   'Logged in as $phone',
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF64748B),
+                    color: PmsTheme.textSecondary,
                   ),
                 ),
               ],
@@ -273,33 +274,42 @@ class DashboardTabView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Quick Action Shortcuts Bar
+        // Unique shortcuts — these modules are not duplicated in the cards below
         Row(
           children: [
             Expanded(
               child: _buildQuickActionButton(
-                label: '+ New PR',
-                icon: Icons.add_circle_outline,
-                color: const Color(0xFF2563EB),
-                onTap: () => onNavigate?.call(NavMenu.purchaseRequests),
+                label: 'Users',
+                icon: Icons.people_alt_outlined,
+                color: PmsTheme.primary,
+                onTap: () => onNavigate?.call(NavMenu.users),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: _buildQuickActionButton(
-                label: 'Delivery Logs',
+                label: 'Products',
                 icon: Icons.inventory_2_outlined,
-                color: const Color(0xFF0891B2),
-                onTap: () => onNavigate?.call(NavMenu.deliveryLogs),
+                color: PmsTheme.teal,
+                onTap: () => onNavigate?.call(NavMenu.productTypes),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: _buildQuickActionButton(
-                label: 'Add Payment',
-                icon: Icons.payments_outlined,
+                label: 'Studio',
+                icon: Icons.videocam_outlined,
+                color: PmsTheme.secondary,
+                onTap: () => onNavigate?.call(NavMenu.digitalStudio),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildQuickActionButton(
+                label: 'Vendors',
+                icon: Icons.storefront_outlined,
                 color: const Color(0xFF059669),
-                onTap: () => onNavigate?.call(NavMenu.payments),
+                onTap: () => onNavigate?.call(NavMenu.vendors),
               ),
             ),
           ],
@@ -311,14 +321,14 @@ class DashboardTabView extends StatelessWidget {
         const Row(
           children: [
             Icon(Icons.dashboard_customize_rounded,
-                color: Color(0xFF2563EB), size: 18),
+                color: PmsTheme.primary, size: 18),
             SizedBox(width: 8),
             Text(
               'Key Operations & Tracking',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: PmsTheme.textPrimary,
               ),
             ),
           ],
@@ -339,7 +349,7 @@ class DashboardTabView extends StatelessWidget {
                     count: '$count',
                     subtitle: 'Multi-Product Requisitions',
                     icon: Icons.assignment_outlined,
-                    color: const Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                     onTap: () => onNavigate?.call(NavMenu.purchaseRequests),
                   );
                 },
@@ -355,7 +365,7 @@ class DashboardTabView extends StatelessWidget {
                     count: '$count',
                     subtitle: 'Dispatched to Presses',
                     icon: Icons.print_rounded,
-                    color: const Color(0xFF7C3AED),
+                    color: PmsTheme.secondary,
                     onTap: () => onNavigate?.call(NavMenu.printOrders),
                   );
                 },
@@ -470,7 +480,7 @@ class DashboardTabView extends StatelessWidget {
               count: '$count',
               subtitle: 'Original Item Requisitions & Specs',
               icon: Icons.assignment_outlined,
-              color: const Color(0xFF2563EB),
+              color: PmsTheme.primary,
               onTap: () => onNavigate?.call(NavMenu.purchaseRequests),
             );
           },
@@ -520,29 +530,10 @@ class DashboardTabView extends StatelessWidget {
               count: '$count',
               subtitle: 'Requisitions for $wingName',
               icon: Icons.assignment_outlined,
-              color: const Color(0xFF2563EB),
+              color: PmsTheme.primary,
               onTap: () => onNavigate?.call(NavMenu.purchaseRequests),
             );
           },
-        ),
-
-        const SizedBox(height: 20),
-
-        ElevatedButton.icon(
-          onPressed: () => onNavigate?.call(NavMenu.purchaseRequests),
-          icon: const Icon(Icons.add_shopping_cart_rounded),
-          label: const Text(
-            '+ Create Purchase Request',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2563EB),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
         ),
 
         const SizedBox(height: 24),
@@ -565,7 +556,7 @@ class DashboardTabView extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: PmsTheme.textPrimary,
               ),
             ),
           ],
@@ -616,7 +607,7 @@ class DashboardTabView extends StatelessWidget {
                         title: 'Assigned (New)',
                         count: '$assignedCount',
                         icon: Icons.assignment_ind_rounded,
-                        color: const Color(0xFF2563EB),
+                        color: PmsTheme.primary,
                         onTap: () =>
                             onNavigate?.call(NavMenu.purchaseRequests),
                       ),
@@ -627,7 +618,7 @@ class DashboardTabView extends StatelessWidget {
                         title: 'In Progress',
                         count: '$inProgressCount',
                         icon: Icons.draw_rounded,
-                        color: const Color(0xFF2563EB),
+                        color: PmsTheme.primary,
                         onTap: () =>
                             onNavigate?.call(NavMenu.purchaseRequests),
                       ),
@@ -642,7 +633,7 @@ class DashboardTabView extends StatelessWidget {
                         title: 'Under Review',
                         count: '$underReviewCount',
                         icon: Icons.hourglass_top_rounded,
-                        color: const Color(0xFF7C3AED),
+                        color: PmsTheme.secondary,
                         onTap: () =>
                             onNavigate?.call(NavMenu.purchaseRequests),
                       ),
@@ -687,7 +678,7 @@ class DashboardTabView extends StatelessWidget {
                     count: '$count',
                     subtitle: 'Press Production',
                     icon: Icons.print_rounded,
-                    color: const Color(0xFF7C3AED),
+                    color: PmsTheme.secondary,
                     onTap: () => onNavigate?.call(NavMenu.printOrders),
                   );
                 },
@@ -731,10 +722,10 @@ class DashboardTabView extends StatelessWidget {
           children: [
             Expanded(
               child: _buildQuickActionButton(
-                label: 'Post Orders (Digital Publishing)',
-                icon: Icons.campaign_rounded,
-                color: const Color(0xFFD97706),
-                onTap: () => onNavigate?.call(NavMenu.postOrders),
+                label: 'Digital Studio',
+                icon: Icons.videocam_outlined,
+                color: PmsTheme.primary,
+                onTap: () => onNavigate?.call(NavMenu.digitalStudio),
               ),
             ),
           ],
@@ -769,7 +760,7 @@ class DashboardTabView extends StatelessWidget {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(32),
-              child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
+              child: CircularProgressIndicator(color: PmsTheme.primaryDark),
             ),
           );
         }
@@ -810,12 +801,12 @@ class DashboardTabView extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: isTodayBooked ? const Color(0xFF10B981) : const Color(0xFF8B5CF6),
+                      color: isTodayBooked ? PmsTheme.success : const Color(0xFF8B5CF6),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       isTodayBooked ? Icons.event_available_rounded : Icons.beach_access_rounded,
-                      color: Colors.white,
+                      
                       size: 22,
                     ),
                   ),
@@ -858,7 +849,7 @@ class DashboardTabView extends StatelessWidget {
                   child: _buildQuickActionButton(
                     label: 'Open Studio Calendar & Duty Schedule',
                     icon: Icons.calendar_month_rounded,
-                    color: const Color(0xFF1E3A8A),
+                    color: PmsTheme.primaryDark,
                     onTap: () => onNavigate?.call(NavMenu.digitalStudio),
                   ),
                 ),
@@ -875,7 +866,7 @@ class DashboardTabView extends StatelessWidget {
                     count: '${myShoots.length}',
                     subtitle: 'Allotted Events',
                     icon: Icons.videocam_rounded,
-                    color: const Color(0xFF1E3A8A),
+                    color: PmsTheme.primaryDark,
                     onTap: () => onNavigate?.call(NavMenu.digitalStudio),
                   ),
                 ),
@@ -897,14 +888,14 @@ class DashboardTabView extends StatelessWidget {
             // Assigned Events List Header
             const Row(
               children: [
-                Icon(Icons.event_note_rounded, color: Color(0xFF1E3A8A), size: 18),
+                Icon(Icons.event_note_rounded, color: PmsTheme.primaryDark, size: 18),
                 SizedBox(width: 8),
                 Text(
                   'Your Upcoming Assigned Shoots',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
+                    color: PmsTheme.textPrimary,
                   ),
                 ),
               ],
@@ -915,19 +906,19 @@ class DashboardTabView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: PmsTheme.glassSurface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: PmsTheme.glassBorder),
                 ),
                 child: const Center(
                   child: Column(
                     children: [
-                      Icon(Icons.event_busy_rounded, size: 36, color: Color(0xFF94A3B8)),
+                      Icon(Icons.event_busy_rounded, size: 36, color: PmsTheme.textMuted),
                       SizedBox(height: 8),
                       Text(
                         'No upcoming shoots currently assigned to you.',
                         style: TextStyle(
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -949,7 +940,7 @@ class DashboardTabView extends StatelessWidget {
                       margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: PmsTheme.glassSurface,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: const Color(0xFFC7D2FE)),
                       ),
@@ -964,7 +955,7 @@ class DashboardTabView extends StatelessWidget {
                             ),
                             child: const Icon(
                               Icons.videocam_rounded,
-                              color: Color(0xFF1E3A8A),
+                              color: PmsTheme.primaryDark,
                               size: 20,
                             ),
                           ),
@@ -994,7 +985,7 @@ class DashboardTabView extends StatelessWidget {
                                     Text(
                                       req.requestNumber,
                                       style: const TextStyle(
-                                        color: Color(0xFF64748B),
+                                        color: PmsTheme.textSecondary,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 11,
                                       ),
@@ -1005,7 +996,7 @@ class DashboardTabView extends StatelessWidget {
                                 Text(
                                   req.eventName,
                                   style: const TextStyle(
-                                    color: Color(0xFF0F172A),
+                                    color: PmsTheme.textPrimary,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
@@ -1014,7 +1005,7 @@ class DashboardTabView extends StatelessWidget {
                                 Text(
                                   'Reporting: $sTime - $eTime',
                                   style: const TextStyle(
-                                    color: Color(0xFF475569),
+                                    color: PmsTheme.textSecondary,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -1024,7 +1015,7 @@ class DashboardTabView extends StatelessWidget {
                           ),
                           const Icon(
                             Icons.chevron_right_rounded,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             size: 20,
                           ),
                         ],
@@ -1055,7 +1046,7 @@ class DashboardTabView extends StatelessWidget {
                     count: '$count',
                     subtitle: 'Production Orders',
                     icon: Icons.print_rounded,
-                    color: const Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                     onTap: () => onNavigate?.call(NavMenu.printOrders),
                   );
                 },
@@ -1085,14 +1076,14 @@ class DashboardTabView extends StatelessWidget {
 
         const Row(
           children: [
-            Icon(Icons.print_rounded, color: Color(0xFF2563EB), size: 18),
+            Icon(Icons.print_rounded, color: PmsTheme.primary, size: 18),
             SizedBox(width: 8),
             Text(
               'Your Assigned Print Production Orders',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: PmsTheme.textPrimary,
               ),
             ),
           ],
@@ -1105,7 +1096,7 @@ class DashboardTabView extends StatelessWidget {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(24),
-                  child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+                  child: CircularProgressIndicator(color: PmsTheme.primary),
                 ),
               );
             }
@@ -1115,15 +1106,15 @@ class DashboardTabView extends StatelessWidget {
                 return Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: PmsTheme.glassSurface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: PmsTheme.glassBorder),
                   ),
                   child: const Center(
                     child: Text(
                       'No Print Orders Assigned Yet',
                       style: TextStyle(
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -1150,9 +1141,9 @@ class DashboardTabView extends StatelessWidget {
                       margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: PmsTheme.glassSurface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: PmsTheme.glassBorder),
                       ),
                       child: Row(
                         children: [
@@ -1160,12 +1151,12 @@ class DashboardTabView extends StatelessWidget {
                             width: 38,
                             height: 38,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                              color: PmsTheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Icon(
                               Icons.print_rounded,
-                              color: Color(0xFF2563EB),
+                              color: PmsTheme.primary,
                               size: 18,
                             ),
                           ),
@@ -1177,7 +1168,7 @@ class DashboardTabView extends StatelessWidget {
                                 Text(
                                   po.poNumber,
                                   style: const TextStyle(
-                                    color: Color(0xFF0F172A),
+                                    color: PmsTheme.textPrimary,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
                                     fontFamily: 'monospace',
@@ -1187,7 +1178,7 @@ class DashboardTabView extends StatelessWidget {
                                 Text(
                                   '${po.items.length} item(s) · ${po.wing?.name ?? 'Wing'}',
                                   style: const TextStyle(
-                                    color: Color(0xFF64748B),
+                                    color: PmsTheme.textSecondary,
                                     fontSize: 11,
                                   ),
                                 ),
@@ -1204,7 +1195,7 @@ class DashboardTabView extends StatelessWidget {
                                   ? const Color(0xFF059669).withValues(alpha: 0.12)
                                   : (po.status.toLowerCase() == 'partially_received'
                                       ? const Color(0xFFD97706).withValues(alpha: 0.12)
-                                      : const Color(0xFF2563EB).withValues(alpha: 0.12)),
+                                      : PmsTheme.primary.withValues(alpha: 0.12)),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -1220,14 +1211,14 @@ class DashboardTabView extends StatelessWidget {
                                     ? const Color(0xFF059669)
                                     : (po.status.toLowerCase() == 'partially_received'
                                         ? const Color(0xFFD97706)
-                                        : const Color(0xFF2563EB)),
+                                        : PmsTheme.primary),
                               ),
                             ),
                           ),
                           const SizedBox(width: 4),
                           const Icon(
                             Icons.chevron_right_rounded,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             size: 20,
                           ),
                         ],
@@ -1263,16 +1254,10 @@ class DashboardTabView extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            color: PmsTheme.glassSurface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: PmsTheme.glassBorder),
+            boxShadow: PmsTheme.glassShadow,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1296,7 +1281,7 @@ class DashboardTabView extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 19,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -1315,13 +1300,13 @@ class DashboardTabView extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: PmsTheme.textPrimary,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                style: const TextStyle(fontSize: 10.5, color: PmsTheme.textSecondary),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
@@ -1384,7 +1369,7 @@ class DashboardTabView extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: PmsTheme.glassSurface,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: color.withValues(alpha: 0.35)),
           ),
@@ -1406,7 +1391,7 @@ class DashboardTabView extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF475569),
+                    color: PmsTheme.textSecondary,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1439,7 +1424,7 @@ class DashboardTabView extends StatelessWidget {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(24),
-              child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+              child: CircularProgressIndicator(color: PmsTheme.primary),
             ),
           );
         }
@@ -1456,15 +1441,15 @@ class DashboardTabView extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: PmsTheme.glassSurface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: PmsTheme.glassBorder),
               ),
               child: const Center(
                 child: Text(
                   'No recent purchase requests found.',
                   style: TextStyle(
-                    color: Color(0xFF64748B),
+                    color: PmsTheme.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -1486,7 +1471,7 @@ class DashboardTabView extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                     ),
                   ),
                   TextButton(
@@ -1496,7 +1481,7 @@ class DashboardTabView extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF2563EB),
+                        color: PmsTheme.primary,
                       ),
                     ),
                   ),
@@ -1508,19 +1493,19 @@ class DashboardTabView extends StatelessWidget {
                 String statusLabel = 'Pending';
 
                 if (pr.status == 'assigned_to_designer') {
-                  statusColor = const Color(0xFF2563EB);
+                  statusColor = PmsTheme.primary;
                   statusLabel = 'Assigned';
                 } else if (pr.status == 'in_progress') {
-                  statusColor = const Color(0xFF2563EB);
+                  statusColor = PmsTheme.primary;
                   statusLabel = 'In Progress';
                 } else if (pr.status == 'submitted_for_approval') {
-                  statusColor = const Color(0xFF7C3AED);
+                  statusColor = PmsTheme.secondary;
                   statusLabel = 'Under Review';
                 } else if (pr.status == 'approved') {
                   statusColor = const Color(0xFF059669);
                   statusLabel = 'Approved';
                 } else if (pr.status == 'sent_to_print') {
-                  statusColor = const Color(0xFF2563EB);
+                  statusColor = PmsTheme.primary;
                   statusLabel = 'In Print';
                 } else if (pr.status == 'posted') {
                   statusColor = const Color(0xFFD97706);
@@ -1550,9 +1535,9 @@ class DashboardTabView extends StatelessWidget {
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: PmsTheme.glassSurface,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: PmsTheme.glassBorder),
                       ),
                       child: Row(
                         children: [
@@ -1562,7 +1547,7 @@ class DashboardTabView extends StatelessWidget {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
+                              color: PmsTheme.bgSoft,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -1571,7 +1556,7 @@ class DashboardTabView extends StatelessWidget {
                                 fontSize: 11,
                                 fontFamily: 'monospace',
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F172A),
+                                color: PmsTheme.textPrimary,
                               ),
                             ),
                           ),
@@ -1585,14 +1570,14 @@ class DashboardTabView extends StatelessWidget {
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0F172A),
+                                    color: PmsTheme.textPrimary,
                                   ),
                                 ),
                                 Text(
                                   '${pr.items.length} item(s) · ${pr.expectedDeliveryDate ?? 'N/A'}',
                                   style: const TextStyle(
                                     fontSize: 10.5,
-                                    color: Color(0xFF64748B),
+                                    color: PmsTheme.textSecondary,
                                   ),
                                 ),
                               ],

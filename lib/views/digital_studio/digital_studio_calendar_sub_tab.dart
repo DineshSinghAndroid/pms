@@ -7,6 +7,7 @@ import '../../bloc/digital_studio/digital_studio_event.dart';
 import '../../bloc/digital_studio/digital_studio_state.dart';
 import '../../models/digital_studio_crew_request_model.dart';
 import '../../models/user_model.dart';
+import '../../theme/pms_theme.dart';
 
 class DigitalStudioCalendarSubTab extends StatefulWidget {
   final UserModel? currentUser;
@@ -204,9 +205,9 @@ class _DigitalStudioCalendarSubTabState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PmsTheme.glassSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: PmsTheme.glassBorder),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -222,7 +223,7 @@ class _DigitalStudioCalendarSubTabState
               Icon(
                 _isDigitalStudioEmployee ? Icons.event_note_rounded : Icons.tune_rounded,
                 size: 18,
-                color: const Color(0xFF1E3A8A),
+                color: PmsTheme.primaryDark,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -231,7 +232,7 @@ class _DigitalStudioCalendarSubTabState
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
+                    color: PmsTheme.textPrimary,
                   ),
                 ),
               ),
@@ -247,7 +248,7 @@ class _DigitalStudioCalendarSubTabState
                   },
                   style: TextButton.styleFrom(
                     visualDensity: VisualDensity.compact,
-                    foregroundColor: const Color(0xFFEF4444),
+                    foregroundColor: PmsTheme.error,
                   ),
                   child: const Text('Reset', style: TextStyle(fontSize: 11)),
                 ),
@@ -255,7 +256,7 @@ class _DigitalStudioCalendarSubTabState
                 onPressed: _jumpToToday,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFEEF2FF),
-                  foregroundColor: const Color(0xFF1E3A8A),
+                  foregroundColor: PmsTheme.primaryDark,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   shape: RoundedRectangleBorder(
@@ -277,15 +278,15 @@ class _DigitalStudioCalendarSubTabState
                     height: 38,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: PmsTheme.background,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: PmsTheme.glassBorder),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedStatusFilter,
                         isExpanded: true,
-                        icon: const Icon(Icons.arrow_drop_down, size: 18, color: Color(0xFF64748B)),
+                        icon: const Icon(Icons.arrow_drop_down, size: 18, color: PmsTheme.textSecondary),
                         items: const [
                           DropdownMenuItem(
                             value: 'all',
@@ -297,11 +298,11 @@ class _DigitalStudioCalendarSubTabState
                           ),
                           DropdownMenuItem(
                             value: 'in_progress',
-                            child: Text('🔵 In Progress', style: TextStyle(fontSize: 12, color: Color(0xFF2563EB))),
+                            child: Text('🔵 In Progress', style: TextStyle(fontSize: 12, color: PmsTheme.primary)),
                           ),
                           DropdownMenuItem(
                             value: 'completed',
-                            child: Text('⚪ Completed', style: TextStyle(fontSize: 12, color: Color(0xFF475569))),
+                            child: Text('⚪ Completed', style: TextStyle(fontSize: 12, color: PmsTheme.textSecondary)),
                           ),
                         ],
                         onChanged: (val) {
@@ -325,16 +326,16 @@ class _DigitalStudioCalendarSubTabState
                     height: 38,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: PmsTheme.background,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: PmsTheme.glassBorder),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<int?>(
                         value: _selectedEmployeeId,
                         isExpanded: true,
-                        icon: const Icon(Icons.arrow_drop_down, size: 18, color: Color(0xFF64748B)),
-                        hint: const Text('All Crew Staff', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                        icon: const Icon(Icons.arrow_drop_down, size: 18, color: PmsTheme.textSecondary),
+                        hint: const Text('All Crew Staff', style: TextStyle(fontSize: 12, color: PmsTheme.textSecondary)),
                         items: [
                           const DropdownMenuItem<int?>(
                             value: null,
@@ -368,15 +369,15 @@ class _DigitalStudioCalendarSubTabState
                     height: 38,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: PmsTheme.background,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: PmsTheme.glassBorder),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedStatusFilter,
                         isExpanded: true,
-                        icon: const Icon(Icons.arrow_drop_down, size: 18, color: Color(0xFF64748B)),
+                        icon: const Icon(Icons.arrow_drop_down, size: 18, color: PmsTheme.textSecondary),
                         items: const [
                           DropdownMenuItem(
                             value: 'all',
@@ -392,11 +393,11 @@ class _DigitalStudioCalendarSubTabState
                           ),
                           DropdownMenuItem(
                             value: 'in_progress',
-                            child: Text('🔵 In Progress', style: TextStyle(fontSize: 12, color: Color(0xFF2563EB))),
+                            child: Text('🔵 In Progress', style: TextStyle(fontSize: 12, color: PmsTheme.primary)),
                           ),
                           DropdownMenuItem(
                             value: 'completed',
-                            child: Text('⚪ Completed', style: TextStyle(fontSize: 12, color: Color(0xFF475569))),
+                            child: Text('⚪ Completed', style: TextStyle(fontSize: 12, color: PmsTheme.textSecondary)),
                           ),
                         ],
                         onChanged: (val) {
@@ -434,9 +435,9 @@ class _DigitalStudioCalendarSubTabState
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PmsTheme.glassSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: PmsTheme.glassBorder),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -450,7 +451,7 @@ class _DigitalStudioCalendarSubTabState
         children: [
           // Deep Blue Header (< Month Year >)
           Container(
-            color: const Color(0xFF1E3A8A), // Deep Blue as in reference image
+            color: PmsTheme.primaryDark, // Deep Blue as in reference image
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -482,7 +483,7 @@ class _DigitalStudioCalendarSubTabState
 
           // Days of Week Header Row: M T W T F S S
           Container(
-            color: Colors.white,
+            color: PmsTheme.glassSurface,
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Row(
               children: const [
@@ -496,7 +497,7 @@ class _DigitalStudioCalendarSubTabState
               ],
             ),
           ),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+          const Divider(height: 1, thickness: 1, color: PmsTheme.bgSoft),
 
           // 7-Column Month Days Grid
           GridView.builder(
@@ -588,14 +589,14 @@ class _DigitalStudioCalendarSubTabState
     required bool hasCompleted,
     required bool isEmpBooked,
   }) {
-    Color textColor = const Color(0xFF0F172A);
+    Color textColor = PmsTheme.textPrimary;
     FontWeight fontWeight = FontWeight.w600;
 
     if (!isCurrentMonth) {
       textColor = const Color(0xFFCBD5E1);
       fontWeight = FontWeight.w400;
     } else if (isToday) {
-      textColor = const Color(0xFF1D4ED8);
+      textColor = PmsTheme.primaryDark;
       fontWeight = FontWeight.w900;
     }
 
@@ -619,10 +620,10 @@ class _DigitalStudioCalendarSubTabState
         margin: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF1E3A8A)
+              ? PmsTheme.primaryDark
               : (isToday
                   ? const Color(0xFFEEF2FF)
-                  : (isSelected ? const Color(0xFFF1F5F9) : Colors.transparent)),
+                  : (isSelected ? PmsTheme.bgSoft : Colors.transparent)),
           borderRadius: BorderRadius.circular(10),
           border: isToday && !isSelected
               ? Border.all(color: const Color(0xFF93C5FD), width: 1.5)
@@ -650,12 +651,12 @@ class _DigitalStudioCalendarSubTabState
                 children: [
                   if (hasPending)
                     _buildStatusDot(
-                      color: isSelected ? Colors.amberAccent : const Color(0xFFEF4444),
+                      color: isSelected ? Colors.amberAccent : PmsTheme.error,
                       tooltip: 'Needs Attention / Pending Allotment',
                     ),
                   if (hasAllotted)
                     _buildStatusDot(
-                      color: isSelected ? Colors.greenAccent : const Color(0xFF10B981),
+                      color: isSelected ? Colors.greenAccent : PmsTheme.success,
                       tooltip: 'Confirmed Allotment / Booked',
                     ),
                   if (hasInProgress)
@@ -670,7 +671,7 @@ class _DigitalStudioCalendarSubTabState
                     ),
                   if (hasCompleted && !hasPending && !hasAllotted && !hasInProgress)
                     _buildStatusDot(
-                      color: isSelected ? Colors.white70 : const Color(0xFF94A3B8),
+                      color: isSelected ? Colors.white70 : PmsTheme.textMuted,
                       tooltip: 'Completed',
                     ),
                 ],
@@ -709,33 +710,33 @@ class _DigitalStudioCalendarSubTabState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: PmsTheme.background,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: PmsTheme.glassBorder),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: _isDigitalStudioEmployee
               ? [
-                  _buildLegendItem(const Color(0xFF10B981), 'Shoot Scheduled (Booked)'),
+                  _buildLegendItem(PmsTheme.success, 'Shoot Scheduled (Booked)'),
                   const SizedBox(width: 12),
                   _buildLegendItem(const Color(0xFF3B82F6), 'In Progress'),
                   const SizedBox(width: 12),
                   _buildLegendItem(const Color(0xFF8B5CF6), 'Duty Booked'),
                   const SizedBox(width: 12),
-                  _buildLegendItem(const Color(0xFF94A3B8), 'Completed'),
+                  _buildLegendItem(PmsTheme.textMuted, 'Completed'),
                 ]
               : [
-                  _buildLegendItem(const Color(0xFFEF4444), 'Needs Attention (Pending)'),
+                  _buildLegendItem(PmsTheme.error, 'Needs Attention (Pending)'),
                   const SizedBox(width: 12),
-                  _buildLegendItem(const Color(0xFF10B981), 'Allotted / Booked'),
+                  _buildLegendItem(PmsTheme.success, 'Allotted / Booked'),
                   const SizedBox(width: 12),
                   _buildLegendItem(const Color(0xFF3B82F6), 'In Progress'),
                   const SizedBox(width: 12),
                   _buildLegendItem(const Color(0xFF8B5CF6), 'Staff Booked'),
                   const SizedBox(width: 12),
-                  _buildLegendItem(const Color(0xFF94A3B8), 'Completed'),
+                  _buildLegendItem(PmsTheme.textMuted, 'Completed'),
                 ],
         ),
       ),
@@ -757,7 +758,7 @@ class _DigitalStudioCalendarSubTabState
           style: const TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF475569),
+            color: PmsTheme.textSecondary,
           ),
         ),
       ],
@@ -796,7 +797,7 @@ class _DigitalStudioCalendarSubTabState
             Container(
               padding: const EdgeInsets.all(8),
               decoration: const BoxDecoration(
-                color: Color(0xFF10B981),
+                color: PmsTheme.success,
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.event_available_rounded, color: Colors.white, size: 20),
@@ -911,7 +912,7 @@ class _DigitalStudioCalendarSubTabState
 
     return Row(
       children: [
-        const Icon(Icons.event_note_rounded, size: 20, color: Color(0xFF1E3A8A)),
+        const Icon(Icons.event_note_rounded, size: 20, color: PmsTheme.primaryDark),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -922,12 +923,12 @@ class _DigitalStudioCalendarSubTabState
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: PmsTheme.textPrimary,
                 ),
               ),
               const Text(
                 'Schedule and allotted crew for this day',
-                style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                style: TextStyle(fontSize: 11, color: PmsTheme.textSecondary),
               ),
             ],
           ),
@@ -935,7 +936,7 @@ class _DigitalStudioCalendarSubTabState
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: count > 0 ? const Color(0xFF1E3A8A) : const Color(0xFFE2E8F0),
+            color: count > 0 ? PmsTheme.primaryDark : PmsTheme.glassBorder,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
@@ -943,7 +944,7 @@ class _DigitalStudioCalendarSubTabState
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: count > 0 ? Colors.white : const Color(0xFF64748B),
+              color: count > 0 ? Colors.white : PmsTheme.textSecondary,
             ),
           ),
         ),
@@ -956,9 +957,9 @@ class _DigitalStudioCalendarSubTabState
       padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
       margin: const EdgeInsets.only(top: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PmsTheme.glassSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: PmsTheme.glassBorder),
       ),
       child: Center(
         child: Column(
@@ -977,7 +978,7 @@ class _DigitalStudioCalendarSubTabState
             Text(
               'No studio crew requests or bookings found for ${DateFormat('dd MMM yyyy').format(_selectedDate)}.',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              style: const TextStyle(fontSize: 12, color: PmsTheme.textSecondary),
             ),
           ],
         ),
@@ -1003,11 +1004,11 @@ class _DigitalStudioCalendarSubTabState
       statusLabel = '🔴 Needs Attention (Pending)';
     } else if (event.isInProgress) {
       statusBg = const Color(0xFFDBEAFE);
-      statusColor = const Color(0xFF1D4ED8);
+      statusColor = PmsTheme.primaryDark;
       statusLabel = '🔵 In Progress';
     } else if (event.isCompleted) {
-      statusBg = const Color(0xFFF1F5F9);
-      statusColor = const Color(0xFF475569);
+      statusBg = PmsTheme.bgSoft;
+      statusColor = PmsTheme.textSecondary;
       statusLabel = '⚪ Completed';
     } else if (event.isCancelled) {
       statusBg = const Color(0xFFFEE2E2);
@@ -1028,12 +1029,12 @@ class _DigitalStudioCalendarSubTabState
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PmsTheme.glassSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isCurrentUserAllotted
               ? const Color(0xFF818CF8)
-              : (event.isPending ? const Color(0xFFFCA5A5) : const Color(0xFFE2E8F0)),
+              : (event.isPending ? const Color(0xFFFCA5A5) : PmsTheme.glassBorder),
           width: isCurrentUserAllotted || event.isPending ? 1.5 : 1.0,
         ),
         boxShadow: [
@@ -1069,7 +1070,7 @@ class _DigitalStudioCalendarSubTabState
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E3A8A),
+                            color: PmsTheme.primaryDark,
                           ),
                         ),
                       ),
@@ -1080,7 +1081,7 @@ class _DigitalStudioCalendarSubTabState
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                       ),
                     ),
                   ],
@@ -1112,7 +1113,7 @@ class _DigitalStudioCalendarSubTabState
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
+              color: PmsTheme.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -1120,7 +1121,7 @@ class _DigitalStudioCalendarSubTabState
           // Time range
           Row(
             children: [
-              const Icon(Icons.access_time_rounded, size: 15, color: Color(0xFF64748B)),
+              const Icon(Icons.access_time_rounded, size: 15, color: PmsTheme.textSecondary),
               const SizedBox(width: 6),
               Text(
                 '$startStr  -  $endStr',
@@ -1133,7 +1134,7 @@ class _DigitalStudioCalendarSubTabState
             ],
           ),
           const SizedBox(height: 10),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const Divider(height: 1, color: PmsTheme.bgSoft),
           const SizedBox(height: 10),
 
           // Allotted Crew Members
@@ -1143,7 +1144,7 @@ class _DigitalStudioCalendarSubTabState
               children: [
                 const Padding(
                   padding: EdgeInsets.only(top: 2),
-                  child: Icon(Icons.groups_outlined, size: 16, color: Color(0xFF64748B)),
+                  child: Icon(Icons.groups_outlined, size: 16, color: PmsTheme.textSecondary),
                 ),
                 const SizedBox(width: 6),
                 Expanded(
@@ -1164,7 +1165,7 @@ class _DigitalStudioCalendarSubTabState
                             return Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: isMe ? const Color(0xFFEDE9FE) : const Color(0xFFF1F5F9),
+                                color: isMe ? const Color(0xFFEDE9FE) : PmsTheme.bgSoft,
                                 borderRadius: BorderRadius.circular(6),
                                 border: isMe ? Border.all(color: const Color(0xFFC4B5FD)) : null,
                               ),
@@ -1185,7 +1186,7 @@ class _DigitalStudioCalendarSubTabState
           else
             Row(
               children: [
-                const Icon(Icons.assignment_ind_outlined, size: 16, color: Color(0xFF7C3AED)),
+                const Icon(Icons.assignment_ind_outlined, size: 16, color: PmsTheme.secondary),
                 const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1214,7 +1215,7 @@ class _DigitalStudioCalendarSubTabState
               children: [
                 const Padding(
                   padding: EdgeInsets.only(top: 2),
-                  child: Icon(Icons.videocam_outlined, size: 16, color: Color(0xFF64748B)),
+                  child: Icon(Icons.videocam_outlined, size: 16, color: PmsTheme.textSecondary),
                 ),
                 const SizedBox(width: 6),
                 Expanded(
@@ -1225,16 +1226,16 @@ class _DigitalStudioCalendarSubTabState
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: PmsTheme.background,
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: PmsTheme.glassBorder),
                         ),
                         child: Text(
                           '📷 ${asset.name} (${asset.assetCode})',
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
-                            color: Color(0xFF475569),
+                            color: PmsTheme.textSecondary,
                           ),
                         ),
                       );
@@ -1280,6 +1281,8 @@ class _DigitalStudioCalendarSubTabState
     final selectedEmpIds = <int>{...req.allottedEmployees.map((e) => e.id)};
     final selectedAssetIds = <int>{...req.allottedAssets.map((a) => a.id)};
     final remarksCtrl = TextEditingController(text: req.remarks ?? '');
+    String crewQuery = '';
+    String assetQuery = '';
 
     final availableAssets = state.availableAssets;
     final allCrew = state.crewMembers;
@@ -1288,6 +1291,18 @@ class _DigitalStudioCalendarSubTabState
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
+          final visibleCrew = allCrew.where((c) {
+            if (crewQuery.isEmpty) return true;
+            return c.name.toLowerCase().contains(crewQuery) ||
+                c.role.toLowerCase().contains(crewQuery);
+          }).toList();
+          final visibleAssets = availableAssets.where((a) {
+            if (assetQuery.isEmpty) return true;
+            return a.name.toLowerCase().contains(assetQuery) ||
+                a.assetCode.toLowerCase().contains(assetQuery) ||
+                a.category.toLowerCase().contains(assetQuery);
+          }).toList();
+
           return AlertDialog(
             title: Text(
               'Allot Crew for ${req.eventName}',
@@ -1300,26 +1315,37 @@ class _DigitalStudioCalendarSubTabState
                 children: [
                   Text(
                     'Time: ${DateFormat('dd MMM, hh:mm a').format(req.reportingDateTime)} - ${DateFormat('hh:mm a').format(req.eventEndTime)}',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                    style: const TextStyle(fontSize: 12, color: PmsTheme.textSecondary, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 14),
 
                   // Select Crew Members
                   const Text('Select Crew Staff *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
+                  TextField(
+                    onChanged: (val) => setModalState(
+                      () => crewQuery = val.trim().toLowerCase(),
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: 'Search crew by name...',
+                      prefixIcon: Icon(Icons.search_rounded, size: 18),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: PmsTheme.glassBorder),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Column(
-                      children: allCrew.map((c) {
+                      children: visibleCrew.map((c) {
                         final isChecked = selectedEmpIds.contains(c.id);
                         return CheckboxListTile(
                           dense: true,
                           value: isChecked,
                           title: Text(c.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                          subtitle: Text(c.role, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          subtitle: Text(c.role, style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary)),
                           onChanged: (val) {
                             setModalState(() {
                               if (val == true) {
@@ -1338,22 +1364,35 @@ class _DigitalStudioCalendarSubTabState
                   // Select Assets
                   const Text('Select Studio Equipment (Optional)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
+                  TextField(
+                    onChanged: (val) => setModalState(
+                      () => assetQuery = val.trim().toLowerCase(),
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: 'Search equipment by name or code...',
+                      prefixIcon: Icon(Icons.search_rounded, size: 18),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   if (availableAssets.isEmpty)
                     const Text('No available equipment in studio inventory.', style: TextStyle(fontSize: 12, color: Colors.grey))
+                  else if (visibleAssets.isEmpty)
+                    const Text('No equipment matches your search.', style: TextStyle(fontSize: 12, color: Colors.grey))
                   else
                     Container(
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: PmsTheme.glassBorder),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
-                        children: availableAssets.map((a) {
+                        children: visibleAssets.map((a) {
                           final isChecked = selectedAssetIds.contains(a.id);
                           return CheckboxListTile(
                             dense: true,
                             value: isChecked,
                             title: Text(a.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                            subtitle: Text('${a.category} · ${a.assetCode}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                            subtitle: Text('${a.category} · ${a.assetCode}', style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary)),
                             onChanged: (val) {
                               setModalState(() {
                                 if (val == true) {
@@ -1395,8 +1434,11 @@ class _DigitalStudioCalendarSubTabState
                       );
                   Navigator.pop(ctx);
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E3A8A)),
-                child: const Text('Confirm Allotment', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(backgroundColor: PmsTheme.primaryDark),
+                child: const Text(
+                  'Confirm Allotment',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           );
@@ -1419,7 +1461,7 @@ class _WeekdayHeader extends StatelessWidget {
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF64748B),
+            color: PmsTheme.textSecondary,
           ),
         ),
       ),

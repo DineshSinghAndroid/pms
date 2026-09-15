@@ -5,6 +5,7 @@ import '../../bloc/wing/wing_bloc.dart';
 import '../../bloc/wing/wing_event.dart';
 import '../../bloc/wing/wing_state.dart';
 import '../../models/wing_model.dart';
+import '../../theme/pms_theme.dart';
 
 class WingsTabView extends StatefulWidget {
   final bool isSuperAdmin;
@@ -33,9 +34,9 @@ class _WingsTabViewState extends State<WingsTabView> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: PmsTheme.glassSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (modalCtx) {
         return Padding(
@@ -60,13 +61,13 @@ class _WingsTabViewState extends State<WingsTabView> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     IconButton(
                       icon: const Icon(
                         Icons.close,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         size: 20,
                       ),
                       onPressed: () => Navigator.pop(modalCtx),
@@ -179,24 +180,24 @@ class _WingsTabViewState extends State<WingsTabView> {
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          backgroundColor: Color(0xFFFFFFFF),
+          backgroundColor: PmsTheme.glassSurface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           title: const Text(
             'Delete Wing',
-            style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+            style: TextStyle(color: PmsTheme.textPrimary, fontSize: 16),
           ),
           content: Text(
             'Are you sure you want to delete "${wing.name}"?',
-            style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+            style: const TextStyle(color: PmsTheme.textSecondary, fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx),
               child: const Text(
                 'Cancel',
-                style: TextStyle(color: Color(0xFF64748B)),
+                style: TextStyle(color: PmsTheme.textSecondary),
               ),
             ),
             ElevatedButton(
@@ -235,25 +236,25 @@ class _WingsTabViewState extends State<WingsTabView> {
           style: const TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF475569),
+            color: PmsTheme.textSecondary,
           ),
         ),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
-          style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+          style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+            hintStyle: const TextStyle(color: PmsTheme.textSecondary, fontSize: 12),
             filled: true,
-            fillColor: Color(0xFFF8FAFC),
+            fillColor: PmsTheme.background,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 10,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              borderSide: const BorderSide(color: PmsTheme.glassBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -301,7 +302,7 @@ class _WingsTabViewState extends State<WingsTabView> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                     ),
                   ),
                 ],
@@ -338,23 +339,23 @@ class _WingsTabViewState extends State<WingsTabView> {
             onChanged: (val) {
               setState(() => _searchQuery = val.trim().toLowerCase());
             },
-            style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+            style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary),
             decoration: InputDecoration(
               hintText: 'Search wings by name, code or location...',
               hintStyle: const TextStyle(
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
                 fontSize: 13,
               ),
               prefixIcon: const Icon(
                 Icons.search,
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
                 size: 18,
               ),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
                       icon: const Icon(
                         Icons.clear,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         size: 16,
                       ),
                       onPressed: () {
@@ -371,7 +372,7 @@ class _WingsTabViewState extends State<WingsTabView> {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                borderSide: const BorderSide(color: PmsTheme.glassBorder),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -392,9 +393,10 @@ class _WingsTabViewState extends State<WingsTabView> {
                 return Container(
                   height: 120,
                   decoration: BoxDecoration(
-                    color: Color(0xFFFFFFFF),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                   ),
                   child: const Center(
                     child: CircularProgressIndicator(
@@ -453,16 +455,17 @@ class _WingsTabViewState extends State<WingsTabView> {
                   return Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFFFFFF),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                     ),
                     child: const Center(
                       child: Text(
                         'No wings found.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                         ),
                       ),
                     ),
@@ -495,9 +498,10 @@ class _WingsTabViewState extends State<WingsTabView> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -529,7 +533,7 @@ class _WingsTabViewState extends State<WingsTabView> {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     if (wing.location != null && wing.location!.isNotEmpty) ...[
@@ -539,7 +543,7 @@ class _WingsTabViewState extends State<WingsTabView> {
                           const Icon(
                             Icons.location_on_outlined,
                             size: 12,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
@@ -547,7 +551,7 @@ class _WingsTabViewState extends State<WingsTabView> {
                               wing.location!,
                               style: const TextStyle(
                                 fontSize: 11,
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),

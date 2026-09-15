@@ -8,6 +8,7 @@ import 'package:pms/models/print_order_model.dart';
 import 'package:pms/models/user_model.dart';
 import 'package:pms/views/delivery_logs/update_delivery_dialog.dart';
 import 'package:pms/views/print_orders/print_order_details_screen.dart';
+import 'package:pms/theme/pms_theme.dart';
 
 class DeliveryLogsTabView extends StatefulWidget {
   final UserModel? userProfile;
@@ -157,26 +158,26 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                     controller: _searchController,
                     onChanged: (val) => setState(() => _searchQuery = val),
                     style: const TextStyle(
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                       fontSize: 13,
                     ),
                     decoration: InputDecoration(
                       hintText:
                           'Search Challan #, Delivery #, PO #, or vendor...',
                       hintStyle: const TextStyle(
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         fontSize: 12,
                       ),
                       prefixIcon: const Icon(
                         Icons.search_rounded,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         size: 18,
                       ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
                               icon: const Icon(
                                 Icons.clear,
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                                 size: 16,
                               ),
                               onPressed: () {
@@ -193,11 +194,11 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: const BorderSide(color: PmsTheme.glassBorder),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: const BorderSide(color: PmsTheme.glassBorder),
                       ),
                     ),
                   ),
@@ -242,12 +243,12 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                               width: 60,
                               height: 60,
                               decoration: BoxDecoration(
-                                color: Color(0xFFFFFFFF),
+                                color: PmsTheme.glassSurface,
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: const Icon(
                                 Icons.inventory_2_outlined,
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                                 size: 30,
                               ),
                             ),
@@ -255,7 +256,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                             const Text(
                               'No Delivery Logs Found',
                               style: TextStyle(
-                                color: Color(0xFF0F172A),
+                                color: PmsTheme.textPrimary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
                               ),
@@ -264,7 +265,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                             const Text(
                               'Click "+ Update Delivery" to receive products under a Challan.',
                               style: TextStyle(
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                                 fontSize: 12,
                               ),
                             ),
@@ -297,17 +298,17 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.bold,
-          color: isSelected ? Color(0xFF0F172A) : Color(0xFF64748B),
+          color: isSelected ? activeColor : PmsTheme.textSecondary,
         ),
       ),
       selected: isSelected,
       onSelected: (val) {
         if (val) setState(() => _selectedStatusFilter = key);
       },
-      selectedColor: activeColor,
-      backgroundColor: Color(0xFFFFFFFF),
-      side: BorderSide(color: isSelected ? activeColor : Color(0xFFE2E8F0)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      selectedColor: activeColor.withValues(alpha: 0.16),
+      backgroundColor: PmsTheme.glassSurface,
+      side: BorderSide(color: isSelected ? activeColor : PmsTheme.glassBorder),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       showCheckmark: false,
     );
   }
@@ -319,7 +320,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Color(0xFFFFFFFF),
+        color: PmsTheme.glassSurface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isPartial
@@ -356,14 +357,14 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
+                                  color: PmsTheme.background,
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFF475569)),
+                                  border: Border.all(color: PmsTheme.textSecondary),
                                 ),
                                 child: Text(
                                   d.deliveryNumber,
                                   style: const TextStyle(
-                                    color: Color(0xFF2563EB),
+                                    color: PmsTheme.primary,
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.bold,
                                     fontFamily: 'monospace',
@@ -376,7 +377,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
+                                  color: PmsTheme.background,
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
                                     color: const Color(0xFF059669)
@@ -453,7 +454,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF8FAFC),
+                                color: PmsTheme.background,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
@@ -461,14 +462,14 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                                 children: [
                                   const Icon(
                                     Icons.print_rounded,
-                                    color: Color(0xFF2563EB),
+                                    color: PmsTheme.primary,
                                     size: 12,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     d.printOrder!.poNumber,
                                     style: const TextStyle(
-                                      color: Color(0xFF2563EB),
+                                      color: PmsTheme.primary,
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
                                       fontFamily: 'monospace',
@@ -487,7 +488,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Color(0xFF0F172A),
+                              color: PmsTheme.textPrimary,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                             ),
@@ -501,7 +502,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: PmsTheme.background,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
@@ -521,7 +522,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                                   child: Text(
                                     it.productName,
                                     style: const TextStyle(
-                                      color: Color(0xFF475569),
+                                      color: PmsTheme.textSecondary,
                                       fontSize: 11.5,
                                     ),
                                   ),
@@ -537,7 +538,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                                 Text(
                                   '(Total ${it.totalReceivedToDate}/${it.orderedQuantity})',
                                   style: const TextStyle(
-                                    color: Color(0xFF64748B),
+                                    color: PmsTheme.textSecondary,
                                     fontSize: 10.5,
                                   ),
                                 ),
@@ -571,7 +572,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Color(0xFF64748B),
+                              color: PmsTheme.textSecondary,
                               fontSize: 10.5,
                             ),
                           ),
@@ -583,7 +584,7 @@ class _DeliveryLogsTabViewState extends State<DeliveryLogsTabView> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Color(0xFF64748B),
+                              color: PmsTheme.textSecondary,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),

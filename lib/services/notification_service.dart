@@ -9,6 +9,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../views/purchase_requests/pr_details_screen.dart';
 import 'api_service.dart';
+import '../theme/pms_theme.dart';
 
 /// Top-level background message handler required by Firebase Messaging
 @pragma('vm:entry-point')
@@ -496,7 +497,7 @@ class _TopNotificationBannerWidgetState
               color: Colors.transparent,
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  color: PmsTheme.textPrimary,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
@@ -559,7 +560,7 @@ class _TopNotificationBannerWidgetState
                             Text(
                               widget.body,
                               style: const TextStyle(
-                                color: Color(0xFF94A3B8),
+                                color: PmsTheme.textMuted,
                                 fontSize: 11.5,
                                 height: 1.25,
                               ),
@@ -590,8 +591,7 @@ class _TopNotificationBannerWidgetState
                         ),
                       ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded,
-                          size: 18, color: Color(0xFF64748B)),
+                      icon: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
                       padding: const EdgeInsets.only(left: 4),
                       constraints: const BoxConstraints(),
                       splashRadius: 16,

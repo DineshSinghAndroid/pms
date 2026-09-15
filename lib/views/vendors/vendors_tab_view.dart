@@ -5,6 +5,7 @@ import '../../bloc/vendor/vendor_bloc.dart';
 import '../../bloc/vendor/vendor_event.dart';
 import '../../bloc/vendor/vendor_state.dart';
 import 'vendor_list_section.dart';
+import '../../theme/pms_theme.dart';
 
 class VendorsTabView extends StatelessWidget {
   const VendorsTabView({super.key});
@@ -12,7 +13,7 @@ class VendorsTabView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      color: const Color(0xFF2563EB),
+      color: PmsTheme.primary,
       onRefresh: () async {
         context.read<VendorBloc>().add(const RefreshVendorsEvent());
         await context.read<VendorBloc>().stream.firstWhere(

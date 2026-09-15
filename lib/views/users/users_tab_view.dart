@@ -8,6 +8,7 @@ import '../../bloc/wing/wing_bloc.dart';
 import '../../bloc/wing/wing_state.dart';
 import '../../models/user_model.dart';
 import '../../models/wing_model.dart';
+import '../../theme/pms_theme.dart';
 
 class UsersTabView extends StatefulWidget {
   final bool isSuperAdmin;
@@ -77,9 +78,9 @@ class _UsersTabViewState extends State<UsersTabView> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: PmsTheme.glassSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (modalCtx) {
         return StatefulBuilder(
@@ -109,13 +110,13 @@ class _UsersTabViewState extends State<UsersTabView> {
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                           ),
                         ),
                         IconButton(
                           icon: const Icon(
                             Icons.close,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             size: 20,
                           ),
                           onPressed: () => Navigator.pop(ctx),
@@ -160,7 +161,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF475569),
+                            color: PmsTheme.textSecondary,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -170,9 +171,9 @@ class _UsersTabViewState extends State<UsersTabView> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Color(0xFFF8FAFC),
+                            color: PmsTheme.background,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Color(0xFFE2E8F0)),
+                            border: Border.all(color: PmsTheme.glassBorder),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
@@ -183,7 +184,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                               dropdownColor: Color(0xFFFFFFFF),
                               style: const TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF0F172A),
+                                color: PmsTheme.textPrimary,
                                 fontWeight: FontWeight.w600,
                               ),
                               items: _assignableRoles.map((r) {
@@ -232,7 +233,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                                   'Select 1 or more',
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: Color(0xFF0D9488),
+                                    color: PmsTheme.teal,
                                   ),
                                 ),
                               ],
@@ -243,7 +244,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                                 'No wings loaded. Please refresh wings.',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF64748B),
+                                  color: PmsTheme.textSecondary,
                                   fontStyle: FontStyle.italic,
                                 ),
                               )
@@ -259,17 +260,17 @@ class _UsersTabViewState extends State<UsersTabView> {
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                        color: isSelected ? Colors.white : const Color(0xFF0F172A),
+                                        color: isSelected ? Colors.white : PmsTheme.textPrimary,
                                       ),
                                     ),
                                     selected: isSelected,
-                                    selectedColor: const Color(0xFF0D9488),
-                                    backgroundColor: Colors.white,
+                                    selectedColor: PmsTheme.teal,
+                                    backgroundColor: PmsTheme.glassSurface,
                                     checkmarkColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                       side: BorderSide(
-                                        color: isSelected ? const Color(0xFF0D9488) : const Color(0xFFCBD5E1),
+                                        color: isSelected ? PmsTheme.teal : const Color(0xFFCBD5E1),
                                       ),
                                     ),
                                     onSelected: (selected) {
@@ -298,15 +299,15 @@ class _UsersTabViewState extends State<UsersTabView> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: Color(0xFFF8FAFC),
+                        color: PmsTheme.background,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Color(0xFFE2E8F0)),
+                        border: Border.all(color: PmsTheme.glassBorder),
                       ),
                       child: Row(
                         children: [
                           Checkbox(
                             value: isActive,
-                            activeColor: Color(0xFF2563EB),
+                            activeColor: PmsTheme.primary,
                             onChanged: (val) {
                               setModalState(() {
                                 isActive = val ?? true;
@@ -322,14 +323,14 @@ class _UsersTabViewState extends State<UsersTabView> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0F172A),
+                                    color: PmsTheme.textPrimary,
                                   ),
                                 ),
                                 Text(
                                   'User can log into the PMS application',
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: Color(0xFF64748B),
+                                    color: PmsTheme.textSecondary,
                                   ),
                                 ),
                               ],
@@ -410,7 +411,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF2563EB),
+                        backgroundColor: PmsTheme.primary,
                         foregroundColor: Color(0xFFFFFFFF),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -451,24 +452,24 @@ class _UsersTabViewState extends State<UsersTabView> {
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          backgroundColor: Color(0xFFFFFFFF),
+          backgroundColor: PmsTheme.glassSurface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           title: const Text(
             'Delete User',
-            style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+            style: TextStyle(color: PmsTheme.textPrimary, fontSize: 16),
           ),
           content: Text(
             'Are you sure you want to delete user "${user.name}"?',
-            style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+            style: const TextStyle(color: PmsTheme.textSecondary, fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx),
               child: const Text(
                 'Cancel',
-                style: TextStyle(color: Color(0xFF64748B)),
+                style: TextStyle(color: PmsTheme.textSecondary),
               ),
             ),
             ElevatedButton(
@@ -509,36 +510,36 @@ class _UsersTabViewState extends State<UsersTabView> {
           style: const TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF475569),
+            color: PmsTheme.textSecondary,
           ),
         ),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
           keyboardType: keyboardType,
-          style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+          style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+            hintStyle: const TextStyle(color: PmsTheme.textSecondary, fontSize: 12),
             prefixText: prefix,
             prefixStyle: const TextStyle(
-              color: Color(0xFF64748B),
+              color: PmsTheme.textSecondary,
               fontWeight: FontWeight.bold,
             ),
             filled: true,
-            fillColor: Color(0xFFF8FAFC),
+            fillColor: PmsTheme.background,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 10,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              borderSide: const BorderSide(color: PmsTheme.glassBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
-                color: Color(0xFF2563EB),
+                color: PmsTheme.primary,
                 width: 1.5,
               ),
             ),
@@ -552,28 +553,28 @@ class _UsersTabViewState extends State<UsersTabView> {
     switch (role.trim().toLowerCase()) {
       case 'superadmin':
       case 'super admin':
-        return Color(0xFF2563EB); // Purple
+        return PmsTheme.primary; // Purple
       case 'vendor':
         return Color(0xFF059669); // Emerald
       case 'manager':
-        return Color(0xFF2563EB); // Blue
+        return PmsTheme.primary; // Blue
       case 'digital studio incharge':
-        return Color(0xFF0D9488); // Teal
+        return PmsTheme.teal; // Teal
       case 'designer':
         return Color(0xFFD97706); // Amber
       case 'store incharge':
-        return Color(0xFF2563EB); // Indigo
+        return PmsTheme.primary; // Indigo
       case 'wing incharge':
         return Color(0xFFEA580C); // Orange
       default:
-        return Color(0xFF64748B);
+        return PmsTheme.textSecondary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      color: const Color(0xFF2563EB),
+      color: PmsTheme.primary,
       onRefresh: () async {
         context.read<UserBloc>().add(RefreshUsersEvent(phone: widget.userPhone));
         await context.read<UserBloc>().stream.firstWhere(
@@ -594,7 +595,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                 children: [
                   Icon(
                     Icons.people_alt_rounded,
-                    color: Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                     size: 20,
                   ),
                   SizedBox(width: 8),
@@ -603,7 +604,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                     ),
                   ),
                 ],
@@ -614,7 +615,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                   icon: const Icon(Icons.add, size: 14),
                   label: const Text('Add User'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF2563EB),
+                    backgroundColor: PmsTheme.primary,
                     foregroundColor: Color(0xFFFFFFFF),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -640,23 +641,23 @@ class _UsersTabViewState extends State<UsersTabView> {
             onChanged: (val) {
               setState(() => _searchQuery = val.trim().toLowerCase());
             },
-            style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+            style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary),
             decoration: InputDecoration(
               hintText: 'Search users by name, phone or role...',
               hintStyle: const TextStyle(
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
                 fontSize: 13,
               ),
               prefixIcon: const Icon(
                 Icons.search,
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
                 size: 18,
               ),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
                       icon: const Icon(
                         Icons.clear,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         size: 16,
                       ),
                       onPressed: () {
@@ -673,12 +674,12 @@ class _UsersTabViewState extends State<UsersTabView> {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                borderSide: const BorderSide(color: PmsTheme.glassBorder),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: Color(0xFF2563EB),
+                  color: PmsTheme.primary,
                   width: 1.5,
                 ),
               ),
@@ -706,14 +707,14 @@ class _UsersTabViewState extends State<UsersTabView> {
                       fontWeight: isSelected
                           ? FontWeight.bold
                           : FontWeight.w500,
-                      color: isSelected ? Color(0xFF0F172A) : Color(0xFF64748B),
+                      color: isSelected ? PmsTheme.textPrimary : PmsTheme.textSecondary,
                     ),
                   ),
                   selected: isSelected,
-                  selectedColor: Color(0xFF2563EB),
-                  backgroundColor: Color(0xFFFFFFFF),
+                  selectedColor: PmsTheme.primary,
+                  backgroundColor: PmsTheme.glassSurface,
                   side: BorderSide(
-                    color: isSelected ? Color(0xFF2563EB) : Color(0xFFE2E8F0),
+                    color: isSelected ? PmsTheme.primary : PmsTheme.glassBorder,
                   ),
                   onSelected: (selected) {
                     setState(() {
@@ -734,13 +735,14 @@ class _UsersTabViewState extends State<UsersTabView> {
                 return Container(
                   height: 120,
                   decoration: BoxDecoration(
-                    color: Color(0xFFFFFFFF),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                   ),
                   child: const Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFF2563EB),
+                      color: PmsTheme.primary,
                       strokeWidth: 2.5,
                     ),
                   ),
@@ -803,16 +805,17 @@ class _UsersTabViewState extends State<UsersTabView> {
                   return Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFFFFFF),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                     ),
                     child: const Center(
                       child: Text(
                         'No matching users found.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                         ),
                       ),
                     ),
@@ -847,9 +850,10 @@ class _UsersTabViewState extends State<UsersTabView> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -885,7 +889,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -893,7 +897,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                       'ID: #${user.id}',
                       style: const TextStyle(
                         fontSize: 10,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                       ),
                     ),
                   ],
@@ -930,7 +934,7 @@ class _UsersTabViewState extends State<UsersTabView> {
           ),
 
           const SizedBox(height: 12),
-          const Divider(color: Color(0xFFE2E8F0), height: 1),
+          const Divider(color: PmsTheme.glassBorder, height: 1),
           const SizedBox(height: 10),
 
           // Phone & Active toggle
@@ -938,7 +942,7 @@ class _UsersTabViewState extends State<UsersTabView> {
             children: [
               const Icon(
                 Icons.phone_iphone_rounded,
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
                 size: 14,
               ),
               const SizedBox(width: 6),
@@ -947,7 +951,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFFE2E8F0),
+                  color: PmsTheme.glassBorder,
                 ),
               ),
               const Spacer(),
@@ -992,7 +996,7 @@ class _UsersTabViewState extends State<UsersTabView> {
               children: [
                 const Icon(
                   Icons.email_outlined,
-                  color: Color(0xFF64748B),
+                  color: PmsTheme.textSecondary,
                   size: 14,
                 ),
                 const SizedBox(width: 6),
@@ -1001,7 +1005,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                     user.email!,
                     style: const TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF64748B),
+                      color: PmsTheme.textSecondary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1027,7 +1031,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF0D9488),
+                      color: PmsTheme.teal,
                     ),
                   ),
                 );
@@ -1046,8 +1050,8 @@ class _UsersTabViewState extends State<UsersTabView> {
                   icon: const Icon(Icons.edit, size: 12),
                   label: const Text('Edit'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Color(0xFF2563EB),
-                    side: const BorderSide(color: Color(0xFF2563EB)),
+                    foregroundColor: PmsTheme.primary,
+                    side: const BorderSide(color: PmsTheme.primary),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 4,

@@ -6,6 +6,7 @@ import 'package:pms/bloc/print_order/print_order_state.dart';
 import 'package:pms/models/print_order_model.dart';
 import 'package:pms/models/user_model.dart';
 import 'package:pms/views/print_orders/print_order_details_screen.dart';
+import 'package:pms/theme/pms_theme.dart';
 
 class PrintOrdersTabView extends StatefulWidget {
   final UserModel? userProfile;
@@ -69,7 +70,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
       case 'accepted':
       case 'dispatched':
       default:
-        return const Color(0xFF2563EB); // Blue
+        return PmsTheme.primary; // Blue
     }
   }
 
@@ -171,23 +172,23 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                     _searchQuery = val;
                   });
                 },
-                style: const TextStyle(color: Color(0xFF0F172A), fontSize: 13),
+                style: const TextStyle(color: PmsTheme.textPrimary, fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'Search by PO #, vendor, wing, or product...',
                   hintStyle: const TextStyle(
-                    color: Color(0xFF64748B),
+                    color: PmsTheme.textSecondary,
                     fontSize: 12,
                   ),
                   prefixIcon: const Icon(
                     Icons.search_rounded,
-                    color: Color(0xFF64748B),
+                    color: PmsTheme.textSecondary,
                     size: 18,
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
                           icon: const Icon(
                             Icons.clear,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             size: 16,
                           ),
                           onPressed: () {
@@ -206,15 +207,15 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    borderSide: const BorderSide(color: PmsTheme.glassBorder),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    borderSide: const BorderSide(color: PmsTheme.glassBorder),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFF2563EB)),
+                    borderSide: const BorderSide(color: PmsTheme.primary),
                   ),
                 ),
               ),
@@ -230,7 +231,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                     _buildFilterChip(
                       'in_production',
                       'In Printing',
-                      color: const Color(0xFF2563EB),
+                      color: PmsTheme.primary,
                     ),
                     const SizedBox(width: 8),
                     _buildFilterChip(
@@ -255,12 +256,12 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async => _loadPrintOrders(),
-            color: Color(0xFF2563EB),
+            color: PmsTheme.primary,
             child: BlocBuilder<PrintOrderBloc, PrintOrderState>(
               builder: (context, state) {
                 if (state is PrintOrderLoading) {
                   return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+                    child: CircularProgressIndicator(color: PmsTheme.primary),
                   );
                 } else if (state is PrintOrderError) {
                   return Center(
@@ -278,7 +279,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                           Text(
                             state.message,
                             style: const TextStyle(
-                              color: Color(0xFF475569),
+                              color: PmsTheme.textSecondary,
                               fontSize: 13,
                             ),
                             textAlign: TextAlign.center,
@@ -287,7 +288,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                           ElevatedButton(
                             onPressed: _loadPrintOrders,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF2563EB),
+                              backgroundColor: PmsTheme.primary,
                               foregroundColor: Color(0xFFFFFFFF),
                             ),
                             child: const Text('Retry'),
@@ -308,12 +309,12 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFFFFF),
+                              color: PmsTheme.glassSurface,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Icon(
                               Icons.print_disabled_rounded,
-                              color: Color(0xFF64748B),
+                              color: PmsTheme.textSecondary,
                               size: 30,
                             ),
                           ),
@@ -321,7 +322,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                           const Text(
                             'No Print Orders Found',
                             style: TextStyle(
-                              color: Color(0xFF0F172A),
+                              color: PmsTheme.textPrimary,
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
                             ),
@@ -332,7 +333,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                                 ? 'Only print orders created from your designs will appear here.'
                                 : 'Approved PRs dispatched to vendors will appear here.',
                             style: const TextStyle(
-                              color: Color(0xFF64748B),
+                              color: PmsTheme.textSecondary,
                               fontSize: 12,
                             ),
                             textAlign: TextAlign.center,
@@ -348,10 +349,10 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          color: const Color(0xFFEFF6FF),
+                          color: PmsTheme.backgroundGradientStart,
                           child: Row(
                             children: [
-                              const Icon(Icons.palette_outlined, size: 14, color: Color(0xFF2563EB)),
+                              const Icon(Icons.palette_outlined, size: 14, color: PmsTheme.primary),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
@@ -359,7 +360,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF2563EB),
+                                    color: PmsTheme.primary,
                                   ),
                                 ),
                               ),
@@ -392,7 +393,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
 
   Widget _buildFilterChip(String key, String label, {Color? color}) {
     final isSelected = _selectedStatusFilter == key;
-    final activeColor = color ?? Color(0xFF2563EB);
+    final activeColor = color ?? PmsTheme.primary;
 
     return ChoiceChip(
       label: Text(
@@ -400,17 +401,17 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.bold,
-          color: isSelected ? Color(0xFF0F172A) : Color(0xFF64748B),
+          color: isSelected ? activeColor : PmsTheme.textSecondary,
         ),
       ),
       selected: isSelected,
       onSelected: (val) {
         if (val) setState(() => _selectedStatusFilter = key);
       },
-      selectedColor: activeColor,
-      backgroundColor: Color(0xFFFFFFFF),
-      side: BorderSide(color: isSelected ? activeColor : Color(0xFFE2E8F0)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      selectedColor: activeColor.withValues(alpha: 0.16),
+      backgroundColor: PmsTheme.glassSurface,
+      side: BorderSide(color: isSelected ? activeColor : PmsTheme.glassBorder),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       showCheckmark: false,
     );
   }
@@ -434,9 +435,10 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
       borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
-          color: Color(0xFFFFFFFF),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
         ),
         clipBehavior: Clip.antiAlias,
         child: IntrinsicHeight(
@@ -463,9 +465,9 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Color(0xFFF8FAFC),
+                                  color: PmsTheme.background,
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: Color(0xFF475569)),
+                                  border: Border.all(color: PmsTheme.textSecondary),
                                 ),
                                 child: Text(
                                   po.poNumber,
@@ -485,7 +487,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Color(0xFFF8FAFC),
+                                    color: PmsTheme.background,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -529,7 +531,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                           const Icon(
                             Icons.storefront_rounded,
                             size: 14,
-                            color: Color(0xFF2563EB),
+                            color: PmsTheme.primary,
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -537,7 +539,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                                 ? (po.vendor?.name ?? 'Assigned Vendor')
                                 : 'XXXX (Printing Vendor)',
                             style: const TextStyle(
-                              color: Color(0xFF0F172A),
+                              color: PmsTheme.textPrimary,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                             ),
@@ -547,7 +549,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                             Text(
                               '(+91 ${po.vendor!.mobile1})',
                               style: const TextStyle(
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                                 fontSize: 11,
                               ),
                             ),
@@ -567,7 +569,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                             })
                             .join(' · '),
                         style: const TextStyle(
-                          color: Color(0xFF475569),
+                          color: PmsTheme.textSecondary,
                           fontSize: 12,
                         ),
                         maxLines: 2,
@@ -584,13 +586,13 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                               const Icon(
                                 Icons.apartment_rounded,
                                 size: 12,
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 po.wing?.name ?? 'General Wing',
                                 style: const TextStyle(
-                                  color: Color(0xFF64748B),
+                                  color: PmsTheme.textSecondary,
                                   fontSize: 11,
                                 ),
                               ),
@@ -601,13 +603,13 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                               const Icon(
                                 Icons.schedule_rounded,
                                 size: 12,
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 po.expectedDeliveryDate ?? 'ASAP',
                                 style: const TextStyle(
-                                  color: Color(0xFF475569),
+                                  color: PmsTheme.textSecondary,
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                 ),

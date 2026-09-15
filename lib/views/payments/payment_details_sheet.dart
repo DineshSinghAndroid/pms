@@ -4,6 +4,7 @@ import 'package:pms/bloc/payment/payment_bloc.dart';
 import 'package:pms/bloc/payment/payment_event.dart';
 import 'package:pms/bloc/payment/payment_state.dart';
 import 'package:pms/models/payment_model.dart';
+import 'package:pms/theme/pms_theme.dart';
 
 class PaymentDetailsSheet extends StatefulWidget {
   final ProductPaymentModel payment;
@@ -40,8 +41,8 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
         return Container(
           height: MediaQuery.of(context).size.height * 0.9,
           decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            color: PmsTheme.glassSurface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: Column(
             children: [
@@ -50,7 +51,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: const BoxDecoration(
-                  color: Color(0xFF0F172A), // Slate 900
+                  color: PmsTheme.textPrimary, // Slate 900
                   borderRadius:
                       BorderRadius.vertical(top: Radius.circular(24)),
                 ),
@@ -60,13 +61,13 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981), // Emerald 500
+                        color: PmsTheme.success, // Emerald 500
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         payment.paymentNumber,
                         style: const TextStyle(
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                           fontWeight: FontWeight.w900,
                           fontSize: 12,
                           fontFamily: 'monospace',
@@ -90,7 +91,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                             'Day 1 historical timeline',
                             style: TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF94A3B8),
+                              color: PmsTheme.textMuted,
                             ),
                           ),
                         ],
@@ -158,7 +159,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: PmsTheme.background,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.grey.shade200),
                       ),
@@ -174,7 +175,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 15,
-                                    color: Color(0xFF0F172A),
+                                    color: PmsTheme.textPrimary,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -204,7 +205,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                             'Wing: ${wing?.name ?? 'General'} · Vendor: ${vendor?.name ?? 'Vendor'}',
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF64748B),
+                              color: PmsTheme.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -214,7 +215,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,
-                              color: Color(0xFF94A3B8),
+                              color: PmsTheme.textMuted,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -236,8 +237,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                                 padding: const EdgeInsets.only(bottom: 6),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.check_circle,
-                                        size: 14, color: Color(0xFF059669)),
+                                    const Icon(Icons.check_circle, color: Color(0xFF059669), size: 14),
                                     const SizedBox(width: 6),
                                     Expanded(
                                       child: Text(
@@ -264,8 +264,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                           else if (item != null)
                             Row(
                               children: [
-                                const Icon(Icons.check_circle,
-                                    size: 14, color: Color(0xFF059669)),
+                                const Icon(Icons.check_circle, color: Color(0xFF059669), size: 14),
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
@@ -310,7 +309,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 0.5,
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                           ),
                         ),
                       ],
@@ -354,13 +353,13 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: PmsTheme.background,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: const Color(0xFF64748B)),
+          Icon(icon, size: 20, color: PmsTheme.textSecondary),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -371,7 +370,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                   style: const TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF94A3B8),
+                    color: PmsTheme.textMuted,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -380,7 +379,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: valueColor ?? const Color(0xFF0F172A),
+                    color: valueColor ?? PmsTheme.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -394,7 +393,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
   }
 
   Widget _buildTimelineItem(PaymentLifecycleStage stage, {required bool isLast}) {
-    Color dotColor = const Color(0xFF4F46E5); // Indigo
+    Color dotColor = PmsTheme.primary; // Indigo
     if (stage.stage == 'payment') {
       dotColor = const Color(0xFF059669); // Emerald
     }
@@ -432,7 +431,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: PmsTheme.background,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.grey.shade200),
                 ),
@@ -448,7 +447,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              color: Color(0xFF0F172A),
+                              color: PmsTheme.textPrimary,
                             ),
                           ),
                         ),
@@ -458,7 +457,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                             stage.date!,
                             style: const TextStyle(
                               fontSize: 10,
-                              color: Color(0xFF64748B),
+                              color: PmsTheme.textSecondary,
                               fontFamily: 'monospace',
                             ),
                           ),
@@ -485,9 +484,9 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('PR Number: ${d['pr_number'] ?? 'N/A'} · Wing: ${d['wing'] ?? 'N/A'}',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary)),
             Text('Requester: ${d['requester_name'] ?? 'Staff'}',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary)),
             if (d['remarks'] != null && d['remarks'] != '-')
               Text('Remarks: ${d['remarks']}',
                   style: const TextStyle(
@@ -499,9 +498,9 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Designer: ${d['designer_name'] ?? 'Assigned Designer'}',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary)),
             Text('Approved By: ${d['approved_by'] ?? 'Admin'} (${d['approved_at'] ?? ''})',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary)),
             if (d['admin_review_remarks'] != null && d['admin_review_remarks'] != '-')
               Text('Review: ${d['admin_review_remarks']}',
                   style: const TextStyle(
@@ -513,9 +512,9 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('PO Number: ${d['po_number'] ?? 'N/A'} · Vendor: ${d['vendor_name'] ?? 'N/A'}',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary)),
             Text('Ordered Quantity: ${d['ordered_quantity'] ?? 1} · Size: ${d['size'] ?? 'Standard'}',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary)),
           ],
         );
       case 'delivery':
@@ -536,7 +535,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
               ...batches.map(
                 (b) => Text(
                   '• Challan ${b['challan_number']}: Received ${b['received_quantity']} Qty on ${b['delivery_date']} by ${b['receiver_name']}',
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                  style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary),
                 ),
               )
             else
@@ -553,7 +552,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF059669))),
             Text('Paid By: ${d['paid_by'] ?? 'Admin'} · Method: ${d['payment_method'] ?? 'Bank Transfer'}',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary)),
             if (d['remarks'] != null && d['remarks'] != '-')
               Text('Notes: ${d['remarks']}',
                   style: const TextStyle(

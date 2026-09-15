@@ -9,6 +9,7 @@ import '../../models/newspaper_entry_model.dart';
 import '../../models/newspaper_model.dart';
 import '../../models/newspaper_size_model.dart';
 import '../../models/wing_model.dart';
+import '../../theme/pms_theme.dart';
 
 class AddEditNewspaperEntryDialog extends StatefulWidget {
   final NewspaperEntryModel? entry;
@@ -110,7 +111,7 @@ class _AddEditNewspaperEntryDialogState
             colorScheme: const ColorScheme.light(
               primary: Color(0xFF059669),
               onPrimary: Colors.white,
-              onSurface: Color(0xFF0F172A),
+              onSurface: PmsTheme.textPrimary,
             ),
           ),
           child: child!,
@@ -302,12 +303,12 @@ class _AddEditNewspaperEntryDialogState
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                           ),
                         ),
                         const Text(
                           'Track ad campaigns, dimensions & clippings',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                          style: TextStyle(fontSize: 11, color: PmsTheme.textSecondary),
                         ),
                       ],
                     ),
@@ -487,9 +488,9 @@ class _AddEditNewspaperEntryDialogState
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: PmsTheme.background,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: PmsTheme.glassBorder),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -526,7 +527,7 @@ class _AddEditNewspaperEntryDialogState
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: PmsTheme.glassSurface,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(color: const Color(0xFF059669)),
                               ),

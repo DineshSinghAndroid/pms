@@ -11,6 +11,7 @@ import '../../models/digital_studio_asset_model.dart';
 import '../../models/digital_studio_crew_request_model.dart';
 import '../../models/user_model.dart';
 import '../../models/wing_model.dart';
+import '../../theme/pms_theme.dart';
 
 class DigitalStudioCrewRequestsSubTab extends StatefulWidget {
   final UserModel? currentUser;
@@ -104,7 +105,7 @@ class _DigitalStudioCrewRequestsSubTabState
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -117,7 +118,7 @@ class _DigitalStudioCrewRequestsSubTabState
                         icon: const Icon(Icons.add_task, size: 17),
                         label: const Text('New Request'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2563EB),
+                          backgroundColor: PmsTheme.primary,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -143,7 +144,7 @@ class _DigitalStudioCrewRequestsSubTabState
                       'Pending',
                       'pending',
                       state.crewRequests.where((r) => r.isPending).length,
-                      badgeColor: const Color(0xFFF59E0B),
+                      badgeColor: PmsTheme.warning,
                     ),
                     _buildFilterTab(
                       'Allotted',
@@ -161,7 +162,7 @@ class _DigitalStudioCrewRequestsSubTabState
                       'Completed',
                       'completed',
                       state.crewRequests.where((r) => r.isCompleted).length,
-                      badgeColor: const Color(0xFF10B981),
+                      badgeColor: PmsTheme.success,
                     ),
                   ],
                 ),
@@ -171,7 +172,7 @@ class _DigitalStudioCrewRequestsSubTabState
               // 3. Request List
               Expanded(
                 child: RefreshIndicator(
-                  color: const Color(0xFF2563EB),
+                  color: PmsTheme.primary,
                   onRefresh: () async {
                     context.read<DigitalStudioBloc>().add(
                           RefreshDigitalStudioEvent(
@@ -279,7 +280,7 @@ class _DigitalStudioCrewRequestsSubTabState
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+            color: isSelected ? PmsTheme.textPrimary : PmsTheme.bgSoft,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -290,7 +291,7 @@ class _DigitalStudioCrewRequestsSubTabState
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                  color: isSelected ? Colors.white : const Color(0xFF475569),
+                  color: isSelected ? Colors.white : PmsTheme.textSecondary,
                 ),
               ),
               const SizedBox(width: 6),
@@ -307,7 +308,7 @@ class _DigitalStudioCrewRequestsSubTabState
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.white : (badgeColor ?? const Color(0xFF475569)),
+                    color: isSelected ? Colors.white : (badgeColor ?? PmsTheme.textSecondary),
                   ),
                 ),
               ),
@@ -333,7 +334,7 @@ class _DigitalStudioCrewRequestsSubTabState
       statusColor = const Color(0xFF5B21B6);
     } else if (req.isInProgress) {
       statusBg = const Color(0xFFDBEAFE);
-      statusColor = const Color(0xFF1E40AF);
+      statusColor = PmsTheme.primaryDark;
     } else if (req.isCompleted) {
       statusBg = const Color(0xFFD1FAE5);
       statusColor = const Color(0xFF065F46);
@@ -347,7 +348,7 @@ class _DigitalStudioCrewRequestsSubTabState
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PmsTheme.glassSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
@@ -375,7 +376,7 @@ class _DigitalStudioCrewRequestsSubTabState
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: PmsTheme.backgroundGradientStart,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(color: const Color(0xFFBFDBFE)),
                       ),
@@ -386,7 +387,7 @@ class _DigitalStudioCrewRequestsSubTabState
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E40AF),
+                          color: PmsTheme.primaryDark,
                         ),
                       ),
                     ),
@@ -394,7 +395,7 @@ class _DigitalStudioCrewRequestsSubTabState
                       req.requestNumber,
                       style: const TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'monospace',
                       ),
@@ -428,7 +429,7 @@ class _DigitalStudioCrewRequestsSubTabState
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
+              color: PmsTheme.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
@@ -442,7 +443,7 @@ class _DigitalStudioCrewRequestsSubTabState
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF64748B)),
+                  const Icon(Icons.access_time_rounded, size: 14, color: PmsTheme.textSecondary),
                   const SizedBox(width: 6),
                   Text(
                     '$startStr - $endStr',
@@ -457,7 +458,7 @@ class _DigitalStudioCrewRequestsSubTabState
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: PmsTheme.backgroundGradientStart,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -465,7 +466,7 @@ class _DigitalStudioCrewRequestsSubTabState
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                   ),
                 ),
               ),
@@ -478,7 +479,7 @@ class _DigitalStudioCrewRequestsSubTabState
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: PmsTheme.background,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.grey.shade200),
               ),
@@ -523,7 +524,7 @@ class _DigitalStudioCrewRequestsSubTabState
             const SizedBox(height: 8),
             Text(
               'Remarks: ${req.remarks}',
-              style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Color(0xFF64748B)),
+              style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: PmsTheme.textSecondary),
             ),
           ],
 
@@ -558,7 +559,7 @@ class _DigitalStudioCrewRequestsSubTabState
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: req.isPending
-                        ? const Color(0xFF7C3AED)
+                        ? PmsTheme.secondary
                         : const Color(0xFF6366F1),
                     foregroundColor: Colors.white,
                     elevation: 2,
@@ -605,7 +606,7 @@ class _DigitalStudioCrewRequestsSubTabState
                 ElevatedButton(
                   onPressed: () => _updateRequestStatus(context, req, 'completed'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
+                    backgroundColor: PmsTheme.success,
                     foregroundColor: Colors.white,
                     elevation: 1.5,
                     padding: const EdgeInsets.symmetric(
@@ -956,11 +957,34 @@ class _DigitalStudioCrewRequestsSubTabState
 
     bool showBusyCrew = false;
     bool showBusyAssets = false;
+    String crewQuery = '';
+    String assetQuery = '';
 
     showDialog(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (context, setDialogState) {
+          bool matchesCrew(UserModel member) {
+            if (crewQuery.isEmpty) return true;
+            return member.name.toLowerCase().contains(crewQuery) ||
+                member.phone.toLowerCase().contains(crewQuery);
+          }
+
+          bool matchesAsset(DigitalStudioAssetModel asset) {
+            if (assetQuery.isEmpty) return true;
+            return asset.name.toLowerCase().contains(assetQuery) ||
+                asset.assetCode.toLowerCase().contains(assetQuery) ||
+                asset.category.toLowerCase().contains(assetQuery);
+          }
+
+          final visibleCrew = availableCrew.where(matchesCrew).toList();
+          final visibleBusyCrew = busyCrew.where(matchesCrew).toList();
+          final visibleAssets =
+              availableAssetsList.where(matchesAsset).toList();
+          final visibleBusyAssets =
+              busyAssetsList.where(matchesAsset).toList();
+
+          return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text('Allot Crew & Assets: ${req.eventName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           content: SizedBox(
@@ -973,7 +997,7 @@ class _DigitalStudioCrewRequestsSubTabState
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: PmsTheme.bgSoft,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
@@ -981,12 +1005,12 @@ class _DigitalStudioCrewRequestsSubTabState
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.schedule, size: 14, color: Color(0xFF475569)),
+                            const Icon(Icons.schedule, size: 14, color: PmsTheme.textSecondary),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 '${DateFormat('dd MMM, hh:mm a').format(req.reportingDateTime)} - ${DateFormat('hh:mm a').format(req.eventEndTime)}',
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A), fontWeight: FontWeight.bold),
+                                style: const TextStyle(fontSize: 12, color: PmsTheme.textPrimary, fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
@@ -994,7 +1018,7 @@ class _DigitalStudioCrewRequestsSubTabState
                         const SizedBox(height: 4),
                         Text(
                           'Required Crew Count: ${req.requiredCrewCount}',
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                          style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary, fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -1033,13 +1057,24 @@ class _DigitalStudioCrewRequestsSubTabState
                       ),
                     ),
                   const SizedBox(height: 6),
+                  TextField(
+                    onChanged: (val) => setDialogState(
+                      () => crewQuery = val.trim().toLowerCase(),
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: 'Search crew by name or phone...',
+                      prefixIcon: Icon(Icons.search_rounded, size: 18),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Container(
                     height: 160,
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey.shade300),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: (availableCrew.isEmpty && (!showBusyCrew || busyCrew.isEmpty))
+                    child: (visibleCrew.isEmpty && (!showBusyCrew || visibleBusyCrew.isEmpty))
                         ? Center(
                             child: Padding(
                               padding: const EdgeInsets.all(12),
@@ -1058,7 +1093,7 @@ class _DigitalStudioCrewRequestsSubTabState
                           )
                         : ListView(
                             children: [
-                              ...availableCrew.map((member) {
+                              ...visibleCrew.map((member) {
                                 final isSelected = selectedEmployees.contains(member.id);
                                 return CheckboxListTile(
                                   dense: true,
@@ -1076,16 +1111,16 @@ class _DigitalStudioCrewRequestsSubTabState
                                   },
                                 );
                               }),
-                              if (showBusyCrew && busyCrew.isNotEmpty) ...[
+                              if (showBusyCrew && visibleBusyCrew.isNotEmpty) ...[
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                   color: Colors.red.shade50,
                                   child: Text(
-                                    'Occupied / Allotted to Other Events (${busyCrew.length})',
+                                    'Occupied / Allotted to Other Events (${visibleBusyCrew.length})',
                                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red.shade800),
                                   ),
                                 ),
-                                ...busyCrew.map((member) {
+                                ...visibleBusyCrew.map((member) {
                                   return Opacity(
                                     opacity: 0.6,
                                     child: CheckboxListTile(
@@ -1141,13 +1176,24 @@ class _DigitalStudioCrewRequestsSubTabState
                       ),
                     ),
                   const SizedBox(height: 6),
+                  TextField(
+                    onChanged: (val) => setDialogState(
+                      () => assetQuery = val.trim().toLowerCase(),
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: 'Search equipment by name or code...',
+                      prefixIcon: Icon(Icons.search_rounded, size: 18),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Container(
                     height: 160,
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey.shade300),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: (availableAssetsList.isEmpty && (!showBusyAssets || busyAssetsList.isEmpty))
+                    child: (visibleAssets.isEmpty && (!showBusyAssets || visibleBusyAssets.isEmpty))
                         ? Center(
                             child: Padding(
                               padding: const EdgeInsets.all(12),
@@ -1166,7 +1212,7 @@ class _DigitalStudioCrewRequestsSubTabState
                           )
                         : ListView(
                             children: [
-                              ...availableAssetsList.map((asset) {
+                              ...visibleAssets.map((asset) {
                                 final isSelected = selectedAssets.contains(asset.id);
                                 return CheckboxListTile(
                                   dense: true,
@@ -1184,16 +1230,16 @@ class _DigitalStudioCrewRequestsSubTabState
                                   },
                                 );
                               }),
-                              if (showBusyAssets && busyAssetsList.isNotEmpty) ...[
+                              if (showBusyAssets && visibleBusyAssets.isNotEmpty) ...[
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                   color: Colors.red.shade50,
                                   child: Text(
-                                    'Occupied Assets (${busyAssetsList.length})',
+                                    'Occupied Assets (${visibleBusyAssets.length})',
                                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red.shade800),
                                   ),
                                 ),
-                                ...busyAssetsList.map((asset) {
+                                ...visibleBusyAssets.map((asset) {
                                   return Opacity(
                                     opacity: 0.6,
                                     child: CheckboxListTile(
@@ -1279,7 +1325,8 @@ class _DigitalStudioCrewRequestsSubTabState
               child: const Text('Confirm Allotment'),
             ),
           ],
-        ),
+        );
+        },
       ),
     );
   }

@@ -8,6 +8,8 @@ import '../../models/purchase_request_model.dart';
 import '../../models/user_model.dart';
 import '../../repositories/purchase_request_repository.dart';
 import '../../services/api_service.dart';
+import '../../theme/pms_theme.dart';
+import '../../widgets/app_gradient_background.dart';
 
 class PostOrderDetailsScreen extends StatefulWidget {
   final PurchaseRequestModel postOrder;
@@ -92,7 +94,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                     child: Text(
                       title,
                       style: const TextStyle(
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -100,7 +102,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Color(0xFF475569)),
+                    icon: const Icon(Icons.close, color: PmsTheme.textSecondary),
                     onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
@@ -117,7 +119,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                     : const Padding(
                         padding: EdgeInsets.all(40),
                         child: CircularProgressIndicator(
-                          color: Color(0xFF2563EB),
+                          color: PmsTheme.primary,
                         ),
                       ),
                 errorBuilder: (context, error, stackTrace) => const Padding(
@@ -126,14 +128,14 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                     children: [
                       Icon(
                         Icons.broken_image_rounded,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         size: 48,
                       ),
                       SizedBox(height: 8),
                       Text(
                         'Failed to load image',
                         style: TextStyle(
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -153,7 +155,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: Color(0xFFFFFFFF),
+        backgroundColor: PmsTheme.glassSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
@@ -161,20 +163,20 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
             SizedBox(width: 8),
             Text(
               'Cancel Post Request',
-              style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+              style: TextStyle(color: PmsTheme.textPrimary, fontSize: 16),
             ),
           ],
         ),
         content: Text(
           'Are you sure you want to cancel the post request for ${pr.prNumber}? Status will revert to Approved and move back to the Purchase Requests screen.',
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+          style: const TextStyle(color: PmsTheme.textSecondary, fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
             child: const Text(
               'No, Keep Posted',
-              style: TextStyle(color: Color(0xFF64748B)),
+              style: TextStyle(color: PmsTheme.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -215,13 +217,14 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
     final posterName =
         pr.postedByUser?.name ?? pr.assignedDesigner?.name ?? 'Super Admin';
 
-    return Scaffold(
-      backgroundColor: Color(0xFFF8FAFC),
+    return AppGradientBackground(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: Color(0xFFFFFFFF),
+        backgroundColor: PmsTheme.glassSurface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0F172A)),
+          icon: const Icon(Icons.arrow_back_rounded, color: PmsTheme.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -232,7 +235,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                 Text(
                   pr.prNumber,
                   style: const TextStyle(
-                    color: Color(0xFF0F172A),
+                    color: PmsTheme.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -246,12 +249,12 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                   decoration: BoxDecoration(
                     color: Color(0xFFF5F3FF).withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Color(0xFF2563EB)),
+                    border: Border.all(color: PmsTheme.primary),
                   ),
                   child: const Text(
                     'POSTED ✓',
                     style: TextStyle(
-                      color: Color(0xFF475569),
+                      color: PmsTheme.textSecondary,
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
                     ),
@@ -261,13 +264,13 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
             ),
             const Text(
               'Digital & Social Media Publishing Order',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 11),
+              style: TextStyle(color: PmsTheme.textSecondary, fontSize: 11),
             ),
           ],
         ),
       ),
       body: RefreshIndicator(
-        color: const Color(0xFF2563EB),
+        color: PmsTheme.primary,
         onRefresh: _handleRefresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -282,7 +285,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                 color: Color(0xFFF5F3FF).withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Color(0xFF2563EB).withValues(alpha: 0.6),
+                  color: PmsTheme.primary.withValues(alpha: 0.6),
                 ),
               ),
               child: Row(
@@ -291,12 +294,12 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Color(0xFF2563EB),
+                      color: PmsTheme.primary,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       Icons.campaign_rounded,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                       size: 22,
                     ),
                   ),
@@ -308,7 +311,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                         const Text(
                           'Forwarded for Post Publishing',
                           style: TextStyle(
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
@@ -333,7 +336,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                               return Text(
                                 'Published on ${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} at $hour:$min $ampm',
                                 style: const TextStyle(
-                                  color: Color(0xFF475569),
+                                  color: PmsTheme.textSecondary,
                                   fontSize: 11,
                                 ),
                               );
@@ -355,9 +358,10 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Color(0xFFFFFFFF),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -369,14 +373,14 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                           children: [
                             Icon(
                               Icons.image_outlined,
-                              color: Color(0xFF2563EB),
+                              color: PmsTheme.primary,
                               size: 18,
                             ),
                             SizedBox(width: 8),
                             Text(
                               'Approved Artwork File',
                               style: TextStyle(
-                                color: Color(0xFF0F172A),
+                                color: PmsTheme.textPrimary,
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -391,17 +395,17 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Color(0xFF2563EB).withValues(alpha: 0.2),
+                              color: PmsTheme.primary.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: Color(0xFF2563EB).withValues(alpha: 0.5),
+                                color: PmsTheme.primary.withValues(alpha: 0.5),
                               ),
                             ),
                             child: const Text(
                               'Open External',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: Color(0xFF475569),
+                                color: PmsTheme.textSecondary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -432,7 +436,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                                       child: Padding(
                                         padding: EdgeInsets.all(32),
                                         child: CircularProgressIndicator(
-                                          color: Color(0xFF2563EB),
+                                          color: PmsTheme.primary,
                                         ),
                                       ),
                                     ),
@@ -443,7 +447,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                                       child: Text(
                                         'Failed to load artwork image',
                                         style: TextStyle(
-                                          color: Color(0xFF64748B),
+                                          color: PmsTheme.textSecondary,
                                           fontSize: 12,
                                         ),
                                       ),
@@ -459,9 +463,9 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Color(0xFFF8FAFC),
+                            color: PmsTheme.background,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Color(0xFFE2E8F0)),
+                            border: Border.all(color: PmsTheme.glassBorder),
                           ),
                           child: Row(
                             children: [
@@ -479,7 +483,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                                       pr.artworkFileName ??
                                           'Approved Proof Document',
                                       style: const TextStyle(
-                                        color: Color(0xFF0F172A),
+                                        color: PmsTheme.textPrimary,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -490,7 +494,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                                     const Text(
                                       'Tap to view document',
                                       style: TextStyle(
-                                        color: Color(0xFF64748B),
+                                        color: PmsTheme.textSecondary,
                                         fontSize: 10,
                                       ),
                                     ),
@@ -499,7 +503,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                               ),
                               const Icon(
                                 Icons.open_in_new_rounded,
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                                 size: 16,
                               ),
                             ],
@@ -516,9 +520,10 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Color(0xFFFFFFFF),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -527,14 +532,14 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                     children: [
                       Icon(
                         Icons.notes_rounded,
-                        color: Color(0xFF475569),
+                        color: PmsTheme.textSecondary,
                         size: 16,
                       ),
                       SizedBox(width: 8),
                       Text(
                         'Post Instructions / Remarks',
                         style: TextStyle(
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -547,7 +552,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                         ? pr.postRemarks!
                         : 'Forwarded for digital and social media post publishing.',
                     style: const TextStyle(
-                      color: Color(0xFF475569),
+                      color: PmsTheme.textSecondary,
                       fontSize: 12,
                       height: 1.4,
                     ),
@@ -565,9 +570,10 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFFFFFF),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,7 +581,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                         const Text(
                           'TARGET WING',
                           style: TextStyle(
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -584,7 +590,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                         Text(
                           pr.wing?.name ?? 'General Wing',
                           style: const TextStyle(
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
@@ -600,9 +606,10 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFFFFFF),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -610,7 +617,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                         const Text(
                           'DESIGNED BY',
                           style: TextStyle(
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -619,7 +626,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                         Text(
                           pr.assignedDesigner?.name ?? 'Designer',
                           style: const TextStyle(
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
@@ -639,9 +646,10 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Color(0xFFFFFFFF),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -649,7 +657,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                   Text(
                     'Products Scope (${pr.items.length} Item${pr.items.length > 1 ? 's' : ''})',
                     style: const TextStyle(
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
@@ -664,9 +672,9 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                       ),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Color(0xFFF8FAFC),
+                        color: PmsTheme.background,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Color(0xFFE2E8F0)),
+                        border: Border.all(color: PmsTheme.glassBorder),
                       ),
                       child: Row(
                         children: [
@@ -674,14 +682,14 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                             width: 28,
                             height: 28,
                             decoration: BoxDecoration(
-                              color: Color(0xFF2563EB).withValues(alpha: 0.2),
+                              color: PmsTheme.primary.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Center(
                               child: Text(
                                 '${idx + 1}',
                                 style: const TextStyle(
-                                  color: Color(0xFF475569),
+                                  color: PmsTheme.textSecondary,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -696,7 +704,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                                 Text(
                                   it.productName,
                                   style: const TextStyle(
-                                    color: Color(0xFF0F172A),
+                                    color: PmsTheme.textPrimary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -706,7 +714,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                                   Text(
                                     'Size: ${it.size}',
                                     style: const TextStyle(
-                                      color: Color(0xFF64748B),
+                                      color: PmsTheme.textSecondary,
                                       fontSize: 11,
                                     ),
                                   ),
@@ -720,14 +728,15 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: Color(0xFFFFFFFF),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                             ),
                             child: Text(
                               'Qty: ${it.quantity}',
                               style: const TextStyle(
-                                color: Color(0xFF475569),
+                                color: PmsTheme.textSecondary,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -749,8 +758,8 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: const BoxDecoration(
-          color: Color(0xFFFFFFFF),
-          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          color: PmsTheme.glassSurface,
+          border: Border(top: BorderSide(color: PmsTheme.glassBorder)),
         ),
         child: ElevatedButton.icon(
           onPressed: () => _confirmCancelPost(context, pr),
@@ -768,6 +777,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

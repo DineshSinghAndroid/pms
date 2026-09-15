@@ -8,6 +8,7 @@ import '../../models/user_model.dart';
 import 'digital_studio_assets_sub_tab.dart';
 import 'digital_studio_calendar_sub_tab.dart';
 import 'digital_studio_crew_requests_sub_tab.dart';
+import '../../theme/pms_theme.dart';
 
 class DigitalStudioManagementTabView extends StatefulWidget {
   final UserModel? currentUser;
@@ -78,13 +79,13 @@ class _DigitalStudioManagementTabViewState
   Widget build(BuildContext context) {
     if (isWingInchargeOnly) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: PmsTheme.background,
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header for Wing Incharge
             Container(
-              color: Colors.white,
+              color: PmsTheme.glassSurface,
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
               child: Row(
                 children: [
@@ -96,7 +97,7 @@ class _DigitalStudioManagementTabViewState
                     ),
                     child: const Icon(
                       Icons.videocam_outlined,
-                      color: Color(0xFF4F46E5),
+                      color: PmsTheme.primary,
                       size: 24,
                     ),
                   ),
@@ -110,7 +111,7 @@ class _DigitalStudioManagementTabViewState
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                             letterSpacing: -0.3,
                           ),
                         ),
@@ -119,7 +120,7 @@ class _DigitalStudioManagementTabViewState
                           'Submit and track crew & equipment requests for your wing',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
@@ -141,7 +142,7 @@ class _DigitalStudioManagementTabViewState
                     },
                     icon: const Icon(
                       Icons.refresh_rounded,
-                      color: Color(0xFF64748B),
+                      color: PmsTheme.textSecondary,
                       size: 20,
                     ),
                     tooltip: 'Refresh Data',
@@ -149,7 +150,7 @@ class _DigitalStudioManagementTabViewState
                 ],
               ),
             ),
-            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+            const Divider(height: 1, color: PmsTheme.glassBorder),
 
             // Body: Crew Requests only
             Expanded(
@@ -179,13 +180,13 @@ class _DigitalStudioManagementTabViewState
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAFC),
+          backgroundColor: PmsTheme.background,
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Header & Sub-Tab Bar
               Container(
-                color: Colors.white,
+                color: PmsTheme.glassSurface,
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +201,7 @@ class _DigitalStudioManagementTabViewState
                           ),
                           child: const Icon(
                             Icons.videocam_outlined,
-                            color: Color(0xFF4F46E5),
+                            color: PmsTheme.primary,
                             size: 24,
                           ),
                         ),
@@ -216,7 +217,7 @@ class _DigitalStudioManagementTabViewState
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
+                                  color: PmsTheme.textPrimary,
                                   letterSpacing: -0.3,
                                 ),
                               ),
@@ -227,7 +228,7 @@ class _DigitalStudioManagementTabViewState
                                     : 'Assets lifecycle, schedule calendar & crew allotment',
                                 style: const TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF64748B),
+                                  color: PmsTheme.textSecondary,
                                   fontWeight: FontWeight.w400,
                                 ),
                               ),
@@ -249,7 +250,7 @@ class _DigitalStudioManagementTabViewState
                           },
                           icon: const Icon(
                             Icons.refresh_rounded,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             size: 20,
                           ),
                           tooltip: 'Refresh Data',
@@ -264,14 +265,14 @@ class _DigitalStudioManagementTabViewState
                         height: 46,
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
+                          color: PmsTheme.bgSoft,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: PmsTheme.glassBorder),
                         ),
                         child: TabBar(
                           controller: _tabController!,
                           indicator: BoxDecoration(
-                            color: Colors.white,
+                            color: PmsTheme.glassSurface,
                             borderRadius: BorderRadius.circular(8),
                             boxShadow: [
                               BoxShadow(
@@ -283,8 +284,8 @@ class _DigitalStudioManagementTabViewState
                           ),
                           indicatorSize: TabBarIndicatorSize.tab,
                           labelPadding: const EdgeInsets.symmetric(horizontal: 2),
-                          labelColor: const Color(0xFF4F46E5),
-                          unselectedLabelColor: const Color(0xFF64748B),
+                          labelColor: PmsTheme.primary,
+                          unselectedLabelColor: PmsTheme.textSecondary,
                           labelStyle: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -330,8 +331,8 @@ class _DigitalStudioManagementTabViewState
                                               ),
                                               decoration: BoxDecoration(
                                                 color: _currentTabIndex == 1
-                                                    ? const Color(0xFF4F46E5).withValues(alpha: 0.1)
-                                                    : const Color(0xFFE2E8F0),
+                                                    ? PmsTheme.primary.withValues(alpha: 0.1)
+                                                    : PmsTheme.glassBorder,
                                                 borderRadius: BorderRadius.circular(10),
                                               ),
                                               child: Text(
@@ -340,8 +341,8 @@ class _DigitalStudioManagementTabViewState
                                                   fontSize: 10,
                                                   fontWeight: FontWeight.bold,
                                                   color: _currentTabIndex == 1
-                                                      ? const Color(0xFF4F46E5)
-                                                      : const Color(0xFF475569),
+                                                      ? PmsTheme.primary
+                                                      : PmsTheme.textSecondary,
                                                 ),
                                               ),
                                             ),
@@ -372,8 +373,8 @@ class _DigitalStudioManagementTabViewState
                                               ),
                                               decoration: BoxDecoration(
                                                 color: _currentTabIndex == 0
-                                                    ? const Color(0xFF4F46E5).withValues(alpha: 0.1)
-                                                    : const Color(0xFFE2E8F0),
+                                                    ? PmsTheme.primary.withValues(alpha: 0.1)
+                                                    : PmsTheme.glassBorder,
                                                 borderRadius: BorderRadius.circular(10),
                                               ),
                                               child: Text(
@@ -382,8 +383,8 @@ class _DigitalStudioManagementTabViewState
                                                   fontSize: 10,
                                                   fontWeight: FontWeight.bold,
                                                   color: _currentTabIndex == 0
-                                                      ? const Color(0xFF4F46E5)
-                                                      : const Color(0xFF475569),
+                                                      ? PmsTheme.primary
+                                                      : PmsTheme.textSecondary,
                                                 ),
                                               ),
                                             ),
@@ -426,7 +427,7 @@ class _DigitalStudioManagementTabViewState
                                                 vertical: 1.5,
                                               ),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFFEF4444),
+                                                color: PmsTheme.error,
                                                 borderRadius: BorderRadius.circular(10),
                                               ),
                                               child: Text(

@@ -11,6 +11,7 @@ import '../../models/newspaper_model.dart';
 import '../../models/user_model.dart';
 import '../../models/wing_model.dart';
 import 'add_edit_newspaper_entry_dialog.dart';
+import '../../theme/pms_theme.dart';
 
 class NewsTrackingTabView extends StatefulWidget {
   final UserModel? currentUser;
@@ -245,7 +246,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
       builder: (context, state) {
         if (state is NewsTrackingLoading) {
           return const Scaffold(
-            backgroundColor: Color(0xFFF8FAFC),
+            backgroundColor: PmsTheme.background,
             body: Center(
               child: CircularProgressIndicator(color: Color(0xFF059669)),
             ),
@@ -254,7 +255,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
 
         if (state is NewsTrackingLoaded) {
           return Scaffold(
-            backgroundColor: const Color(0xFFF8FAFC),
+            backgroundColor: PmsTheme.background,
             body: RefreshIndicator(
               onRefresh: () async => _loadData(),
               color: const Color(0xFF059669),
@@ -300,7 +301,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                                     style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w800,
-                                      color: Color(0xFF0F172A),
+                                      color: PmsTheme.textPrimary,
                                     ),
                                   ),
                                 ],
@@ -336,14 +337,14 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                               _buildKpiCard(
                                 title: 'This Month',
                                 value: '${state.thisMonthEntries}',
-                                color: const Color(0xFF2563EB),
+                                color: PmsTheme.primary,
                                 icon: Icons.calendar_today_rounded,
                               ),
                               const SizedBox(width: 8),
                               _buildKpiCard(
                                 title: 'Newspapers',
                                 value: '${state.totalNewspapers}',
-                                color: const Color(0xFF7C3AED),
+                                color: PmsTheme.secondary,
                                 icon: Icons.layers_outlined,
                               ),
                             ],
@@ -356,7 +357,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                             onChanged: (v) => _loadData(),
                             decoration: InputDecoration(
                               hintText: 'Search ad campaign, remarks...',
-                              prefixIcon: const Icon(Icons.search, size: 20, color: Color(0xFF64748B)),
+                              prefixIcon: const Icon(Icons.search, size: 20, color: PmsTheme.textSecondary),
                               suffixIcon: _searchController.text.isNotEmpty
                                   ? IconButton(
                                       icon: const Icon(Icons.clear, size: 18),
@@ -371,11 +372,11 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                               contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                borderSide: const BorderSide(color: PmsTheme.glassBorder),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                borderSide: const BorderSide(color: PmsTheme.glassBorder),
                               ),
                             ),
                           ),
@@ -402,7 +403,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                                       fontWeight: FontWeight.w600,
                                       color: _selectedWingId != null
                                           ? const Color(0xFF059669)
-                                          : const Color(0xFF475569),
+                                          : PmsTheme.textSecondary,
                                     ),
                                   ),
                                   selected: _selectedWingId != null,
@@ -428,7 +429,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                                       fontWeight: FontWeight.w600,
                                       color: _selectedNewspaperId != null
                                           ? const Color(0xFF059669)
-                                          : const Color(0xFF475569),
+                                          : PmsTheme.textSecondary,
                                     ),
                                   ),
                                   selected: _selectedNewspaperId != null,
@@ -477,13 +478,13 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                               width: 64,
                               height: 64,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
+                                color: PmsTheme.bgSoft,
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: const Icon(
                                 Icons.newspaper_rounded,
                                 size: 32,
-                                color: Color(0xFF94A3B8),
+                                color: PmsTheme.textMuted,
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -494,7 +495,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                             const SizedBox(height: 4),
                             const Text(
                               'Try changing filters or add a new entry',
-                              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                              style: TextStyle(fontSize: 12, color: PmsTheme.textSecondary),
                             ),
                           ],
                         ),
@@ -522,7 +523,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
         }
 
         return const Scaffold(
-          backgroundColor: Color(0xFFF8FAFC),
+          backgroundColor: PmsTheme.background,
           body: Center(child: Text('Initialize News Tracking...')),
         );
       },
@@ -539,9 +540,9 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: PmsTheme.glassSurface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: PmsTheme.glassBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -554,7 +555,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF64748B),
+                    color: PmsTheme.textSecondary,
                   ),
                 ),
                 Icon(icon, size: 14, color: color),
@@ -587,9 +588,9 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PmsTheme.glassSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: PmsTheme.glassBorder),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -617,7 +618,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: PmsTheme.backgroundGradientStart,
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(color: const Color(0xFFBFDBFE)),
                         ),
@@ -626,7 +627,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                           style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1D4ED8),
+                            color: PmsTheme.primaryDark,
                           ),
                         ),
                       ),
@@ -652,7 +653,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
+                            color: PmsTheme.bgSoft,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -660,7 +661,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF475569),
+                              color: PmsTheme.textSecondary,
                             ),
                           ),
                         ),
@@ -672,7 +673,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
+                    color: PmsTheme.textPrimary,
                   ),
                 ),
               ],
@@ -685,7 +686,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: PmsTheme.textPrimary,
               ),
             ),
 
@@ -693,12 +694,12 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
               const SizedBox(height: 4),
               Text(
                 item.remark!,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary),
               ),
             ],
 
             const SizedBox(height: 12),
-            const Divider(height: 1, color: Color(0xFFF1F5F9)),
+            const Divider(height: 1, color: PmsTheme.bgSoft),
             const SizedBox(height: 10),
 
             // Action / Link buttons row
@@ -749,21 +750,21 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: PmsTheme.backgroundGradientStart,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: const Color(0xFFBFDBFE)),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.link, size: 14, color: Color(0xFF2563EB)),
+                          Icon(Icons.link, size: 14, color: PmsTheme.primary),
                           SizedBox(width: 4),
                           Text(
                             'Link 1',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF2563EB),
+                              color: PmsTheme.primary,
                             ),
                           ),
                         ],
@@ -814,7 +815,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
 
                 // Edit & Delete
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF64748B)),
+                  icon: const Icon(Icons.edit_outlined, size: 18, color: PmsTheme.textSecondary),
                   tooltip: 'Edit Entry',
                   onPressed: () => _openEditModal(state, item),
                 ),

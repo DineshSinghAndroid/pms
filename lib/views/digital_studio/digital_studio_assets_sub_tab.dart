@@ -7,6 +7,7 @@ import '../../bloc/digital_studio/digital_studio_event.dart';
 import '../../bloc/digital_studio/digital_studio_state.dart';
 import '../../models/digital_studio_asset_model.dart';
 import '../../models/user_model.dart';
+import '../../theme/pms_theme.dart';
 
 class DigitalStudioAssetsSubTab extends StatefulWidget {
   final UserModel? currentUser;
@@ -134,7 +135,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
                           _buildSummaryCard(
                             label: 'Available',
                             count: available,
-                            color: const Color(0xFF10B981),
+                            color: PmsTheme.success,
                             icon: Icons.check_circle_outline,
                           ),
                           const SizedBox(width: 10),
@@ -148,7 +149,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
                           _buildSummaryCard(
                             label: 'Maintenance',
                             count: maintenance,
-                            color: const Color(0xFFF59E0B),
+                            color: PmsTheme.warning,
                             icon: Icons.build_circle_outlined,
                           ),
                         ],
@@ -185,7 +186,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
                             vertical: 10,
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF1F5F9),
+                          fillColor: PmsTheme.bgSoft,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -205,7 +206,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
                         icon: const Icon(Icons.add, size: 18),
                         label: const Text('Add Asset'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2563EB),
+                          backgroundColor: PmsTheme.primary,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -266,7 +267,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
               // 4. Asset List
               Expanded(
                 child: RefreshIndicator(
-                  color: const Color(0xFF2563EB),
+                  color: PmsTheme.primary,
                   onRefresh: () async {
                     context.read<DigitalStudioBloc>().add(
                           RefreshDigitalStudioEvent(
@@ -390,7 +391,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
                 style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF64748B),
+                  color: PmsTheme.textSecondary,
                 ),
               ),
             ],
@@ -413,13 +414,13 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => onSelect(value),
-        selectedColor: const Color(0xFF2563EB),
+        selectedColor: PmsTheme.primary,
         labelStyle: TextStyle(
-          color: isSelected ? Colors.white : const Color(0xFF475569),
+          color: isSelected ? Colors.white : PmsTheme.textSecondary,
           fontSize: 12,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
         ),
-        backgroundColor: const Color(0xFFF1F5F9),
+        backgroundColor: PmsTheme.bgSoft,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
@@ -438,13 +439,13 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => onSelect(value),
-        selectedColor: const Color(0xFF0F172A),
+        selectedColor: PmsTheme.textPrimary,
         labelStyle: TextStyle(
-          color: isSelected ? Colors.white : const Color(0xFF475569),
+          color: isSelected ? Colors.white : PmsTheme.textSecondary,
           fontSize: 12,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
         ),
-        backgroundColor: const Color(0xFFF1F5F9),
+        backgroundColor: PmsTheme.bgSoft,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
@@ -474,7 +475,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: PmsTheme.glassSurface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
@@ -502,7 +503,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
+                        color: PmsTheme.bgSoft,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -521,7 +522,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -554,14 +555,14 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
+              color: PmsTheme.textPrimary,
             ),
           ),
           if (asset.modelSerial != null && asset.modelSerial!.isNotEmpty) ...[
             const SizedBox(height: 2),
             Text(
               'Model/Serial: ${asset.modelSerial}',
-              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+              style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary),
             ),
           ],
 
@@ -571,7 +572,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: PmsTheme.background,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.grey.shade200),
               ),
@@ -580,7 +581,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
                   const Icon(
                     Icons.person_outline,
                     size: 16,
-                    color: Color(0xFF64748B),
+                    color: PmsTheme.textSecondary,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
@@ -618,7 +619,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
                 icon: const Icon(Icons.history, size: 15),
                 label: const Text('Logs & History', style: TextStyle(fontSize: 12)),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF64748B),
+                  foregroundColor: PmsTheme.textSecondary,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                 ),
               ),
@@ -629,7 +630,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
                   ElevatedButton(
                     onPressed: () => _setAssetStatus(context, asset, 'available'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
+                      backgroundColor: PmsTheme.success,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -825,7 +826,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.history, color: Color(0xFF2563EB)),
+                  const Icon(Icons.history, color: PmsTheme.primary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -836,13 +837,13 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                         const Text(
                           'Complete Lifecycle & Audit Logs',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                          style: TextStyle(fontSize: 11, color: PmsTheme.textSecondary),
                         ),
                       ],
                     ),
@@ -873,11 +874,11 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
                         if (log.action == 'assigned') {
                           dotColor = const Color(0xFF8B5CF6);
                         } else if (log.action == 'returned') {
-                          dotColor = const Color(0xFF10B981);
+                          dotColor = PmsTheme.success;
                         } else if (log.action == 'reassigned') {
                           dotColor = const Color(0xFF06B6D4);
                         } else if (log.action == 'maintenance' || log.action == 'damaged') {
-                          dotColor = const Color(0xFFEF4444);
+                          dotColor = PmsTheme.error;
                         }
 
                         final dateStr = log.createdAt != null
@@ -926,7 +927,7 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
                                         dateStr,
                                         style: const TextStyle(
                                           fontSize: 10,
-                                          color: Color(0xFF94A3B8),
+                                          color: PmsTheme.textMuted,
                                         ),
                                       ),
                                     ],

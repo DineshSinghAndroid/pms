@@ -24,6 +24,7 @@ import '../../bloc/news_tracking/news_tracking_bloc.dart';
 import '../../bloc/news_tracking/news_tracking_state.dart';
 import '../../models/user_model.dart';
 import '../../widgets/app_logo.dart';
+import '../../theme/pms_theme.dart';
 import '../legal/delete_account_dialog.dart';
 
 enum NavMenu {
@@ -102,7 +103,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
     return Container(
       width: 280,
       height: double.infinity,
-      color: Color(0xFFF8FAFC), // Slate 900
+        color: PmsTheme.background,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -111,7 +112,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFFFFFFFF))),
+                border: Border(bottom: BorderSide(color: PmsTheme.glassSurface)),
               ),
               child: Row(
                 children: [
@@ -126,7 +127,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           letterSpacing: -0.3,
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                         ),
                       ),
                       const Text(
@@ -135,7 +136,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.8,
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                         ),
                       ),
                     ],
@@ -173,7 +174,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                           isManager)) ...[
                     _buildExpandableHeading(
                       title: 'PRINT MANAGEMENT',
-                      color: Color(0xFF2563EB),
+                      color: PmsTheme.primary,
                       isExpanded: _isPrintManagementExpanded,
                       onToggle: () {
                         setState(() {
@@ -388,7 +389,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   if (!isDigitalStudioEmployee && widget.isSuperAdmin) ...[
                     _buildExpandableHeading(
                       title: 'USER MANAGEMENT',
-                      color: Color(0xFF2563EB),
+                      color: PmsTheme.primary,
                       isExpanded: _isUserManagementExpanded,
                       onToggle: () {
                         setState(() {
@@ -477,7 +478,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: const BoxDecoration(
-                 border: Border(top: BorderSide(color: Color(0xFFFFFFFF))),
+                 border: Border(top: BorderSide(color: PmsTheme.glassSurface)),
               ),
               child: Row(
                 children: [
@@ -487,11 +488,11 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                     decoration: BoxDecoration(
                       color: widget.isDesigner
                           ? Color(0xFFD97706).withValues(alpha: 0.2)
-                          : Color(0xFF2563EB).withValues(alpha: 0.2),
+                          : PmsTheme.primary.withValues(alpha: 0.2),
                       border: Border.all(
                         color: widget.isDesigner
                             ? Color(0xFFD97706).withValues(alpha: 0.4)
-                            : Color(0xFF2563EB).withValues(alpha: 0.4),
+                            : PmsTheme.primary.withValues(alpha: 0.4),
                       ),
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -505,7 +506,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                           fontWeight: FontWeight.bold,
                           color: widget.isDesigner
                               ? Color(0xFFD97706)
-                              : Color(0xFF2563EB),
+                              : PmsTheme.primary,
                         ),
                       ),
                     ),
@@ -520,7 +521,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -528,7 +529,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                           '$roleName · $userPhone',
                           style: const TextStyle(
                             fontSize: 10,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -564,7 +565,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
           fontSize: 10,
           fontWeight: FontWeight.w800,
           letterSpacing: 1.0,
-          color: Color(0xFF64748B),
+          color: PmsTheme.textSecondary,
         ),
       ),
     );
@@ -623,16 +624,41 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: isSelected
-                ? (widget.isDesigner ? Color(0xFFD97706) : Color(0xFF2563EB))
+                ? (widget.isDesigner
+                    ? const Color(0xFFD97706).withValues(alpha: 0.14)
+                    : PmsTheme.primary.withValues(alpha: 0.12))
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
+            border: isSelected
+                ? Border.all(
+                    color: widget.isDesigner
+                        ? const Color(0xFFD97706).withValues(alpha: 0.35)
+                        : PmsTheme.glassBorderActive,
+                  )
+                : null,
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: (widget.isDesigner
+                              ? const Color(0xFFD97706)
+                              : PmsTheme.primary)
+                          .withValues(alpha: 0.18),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
           ),
           child: Row(
             children: [
               Icon(
                 icon,
                 size: 18,
-                color: isSelected ? Color(0xFF0F172A) : Color(0xFF64748B),
+                color: isSelected
+                    ? (widget.isDesigner
+                        ? const Color(0xFFD97706)
+                        : PmsTheme.primary)
+                    : PmsTheme.textMuted,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -641,7 +667,9 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? Color(0xFF0F172A) : Color(0xFF475569),
+                    color: isSelected
+                        ? PmsTheme.textPrimary
+                        : PmsTheme.textSecondary,
                   ),
                 ),
               ),
@@ -654,17 +682,22 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? (widget.isDesigner
-                              ? Color(0xFFB45309)
-                              : Color(0xFFEFF6FF))
-                        : Color(0xFFFFFFFF),
-                    borderRadius: BorderRadius.circular(6),
+                              ? const Color(0xFFD97706).withValues(alpha: 0.18)
+                              : PmsTheme.primaryLight)
+                        : PmsTheme.glassSurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: PmsTheme.glassBorder),
                   ),
                   child: Text(
                     '$badgeCount',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? Color(0xFF0F172A) : Color(0xFF64748B),
+                      color: isSelected
+                          ? (widget.isDesigner
+                              ? const Color(0xFFD97706)
+                              : PmsTheme.primary)
+                          : PmsTheme.textMuted,
                     ),
                   ),
                 ),

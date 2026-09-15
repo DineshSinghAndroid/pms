@@ -8,6 +8,7 @@ import '../../bloc/product_type/product_type_bloc.dart';
 import '../../bloc/product_type/product_type_event.dart';
 import '../../bloc/product_type/product_type_state.dart';
 import '../../models/product_type_model.dart';
+import '../../theme/pms_theme.dart';
 
 class ProductTypesTabView extends StatefulWidget {
   final bool isSuperAdmin;
@@ -60,9 +61,9 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: PmsTheme.glassSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (modalCtx) {
         return StatefulBuilder(
@@ -89,13 +90,13 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                           ),
                         ),
                         IconButton(
                           icon: const Icon(
                             Icons.close,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             size: 20,
                           ),
                           onPressed: () => Navigator.pop(modalCtx),
@@ -113,7 +114,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF475569),
+                            color: PmsTheme.textSecondary,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -123,9 +124,9 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Color(0xFFF8FAFC),
+                            color: PmsTheme.background,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Color(0xFFE2E8F0)),
+                            border: Border.all(color: PmsTheme.glassBorder),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<int>(
@@ -134,7 +135,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                               dropdownColor: Color(0xFFFFFFFF),
                               style: const TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF0F172A),
+                                color: PmsTheme.textPrimary,
                                 fontWeight: FontWeight.w600,
                               ),
                               items: categories.map((c) {
@@ -260,24 +261,24 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          backgroundColor: Color(0xFFFFFFFF),
+          backgroundColor: PmsTheme.glassSurface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           title: const Text(
             'Delete Product Type',
-            style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+            style: TextStyle(color: PmsTheme.textPrimary, fontSize: 16),
           ),
           content: Text(
             'Are you sure you want to delete "${productType.name}" (${productType.productCode ?? ''})?',
-            style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+            style: const TextStyle(color: PmsTheme.textSecondary, fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx),
               child: const Text(
                 'Cancel',
-                style: TextStyle(color: Color(0xFF64748B)),
+                style: TextStyle(color: PmsTheme.textSecondary),
               ),
             ),
             ElevatedButton(
@@ -319,7 +320,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
           style: const TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF475569),
+            color: PmsTheme.textSecondary,
           ),
         ),
         const SizedBox(height: 6),
@@ -327,23 +328,23 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
           controller: controller,
           style: TextStyle(
             fontSize: 13,
-            color: Color(0xFF0F172A),
+            color: PmsTheme.textPrimary,
             fontFamily: isMonospace ? 'monospace' : null,
             fontWeight: isMonospace ? FontWeight.bold : FontWeight.normal,
             letterSpacing: isMonospace ? 1.5 : 0,
           ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+            hintStyle: const TextStyle(color: PmsTheme.textSecondary, fontSize: 12),
             filled: true,
-            fillColor: Color(0xFFF8FAFC),
+            fillColor: PmsTheme.background,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 10,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              borderSide: const BorderSide(color: PmsTheme.glassBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -394,7 +395,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                     ),
                   ),
                 ],
@@ -431,23 +432,23 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
             onChanged: (val) {
               setState(() => _searchQuery = val.trim().toLowerCase());
             },
-            style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+            style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary),
             decoration: InputDecoration(
               hintText: 'Search product name or code (e.g. 000001)...',
               hintStyle: const TextStyle(
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
                 fontSize: 13,
               ),
               prefixIcon: const Icon(
                 Icons.search,
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
                 size: 18,
               ),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
                       icon: const Icon(
                         Icons.clear,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         size: 16,
                       ),
                       onPressed: () {
@@ -464,7 +465,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                borderSide: const BorderSide(color: PmsTheme.glassBorder),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -508,17 +509,17 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                                 ? FontWeight.bold
                                 : FontWeight.w500,
                             color: isSelected
-                                ? Color(0xFF0F172A)
-                                : Color(0xFF64748B),
+                                ? PmsTheme.textPrimary
+                                : PmsTheme.textSecondary,
                           ),
                         ),
                         selected: isSelected,
                         selectedColor: Color(0xFF059669),
-                        backgroundColor: Color(0xFFFFFFFF),
+                        backgroundColor: PmsTheme.glassSurface,
                         side: BorderSide(
                           color: isSelected
                               ? Color(0xFF059669)
-                              : Color(0xFFE2E8F0),
+                              : PmsTheme.glassBorder,
                         ),
                         onSelected: (selected) {
                           setState(() {
@@ -545,9 +546,10 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                 return Container(
                   height: 120,
                   decoration: BoxDecoration(
-                    color: Color(0xFFFFFFFF),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                   ),
                   child: const Center(
                     child: CircularProgressIndicator(
@@ -616,16 +618,17 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                   return Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFFFFFF),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                     ),
                     child: const Center(
                       child: Text(
                         'No product types found.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                         ),
                       ),
                     ),
@@ -660,9 +663,10 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -673,9 +677,9 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Color(0xFFF8FAFC),
+                  color: PmsTheme.background,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Color(0xFFE2E8F0)),
+                  border: Border.all(color: PmsTheme.glassBorder),
                 ),
                 child: Text(
                   pt.productCode ?? '000000',
@@ -698,7 +702,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -706,7 +710,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                       'ID: #${pt.id}',
                       style: const TextStyle(
                         fontSize: 10,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                       ),
                     ),
                   ],
@@ -720,10 +724,10 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                 decoration: BoxDecoration(
                   color: isHospital
                       ? Color(0xFFFEF2F2).withValues(alpha: 0.4)
-                      : Color(0xFFEFF6FF).withValues(alpha: 0.4),
+                      : PmsTheme.backgroundGradientStart.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isHospital ? Color(0xFFB91C1C) : Color(0xFF2563EB),
+                    color: isHospital ? Color(0xFFB91C1C) : PmsTheme.primary,
                   ),
                 ),
                 child: Text(
@@ -731,7 +735,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: isHospital ? Color(0xFFB91C1C) : Color(0xFF2563EB),
+                    color: isHospital ? Color(0xFFB91C1C) : PmsTheme.primary,
                   ),
                 ),
               ),

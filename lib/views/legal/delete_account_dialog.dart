@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/user_model.dart';
 import '../../services/api_service.dart';
+import '../../theme/pms_theme.dart';
 
 class DeleteAccountDialog extends StatefulWidget {
   final User user;
@@ -120,7 +121,7 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                 const SizedBox(height: 10),
                 const Text(
                   'Your profile and access will be de-registered within 7 business days in accordance with Google Play Developer policy. You will now be logged out.',
-                  style: TextStyle(fontSize: 12, height: 1.4, color: Color(0xFF64748B)),
+                  style: TextStyle(fontSize: 12, height: 1.4, color: PmsTheme.textSecondary),
                 ),
               ],
             ),
@@ -130,7 +131,7 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                   Navigator.of(ctx).pop();
                   await FirebaseAuth.instance.signOut();
                 },
-                child: const Text('OK, Sign Out', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                child: const Text('OK, Sign Out', style: TextStyle(fontWeight: FontWeight.bold, color: PmsTheme.primary)),
               ),
             ],
           ),
@@ -159,7 +160,7 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      backgroundColor: Colors.white,
+      backgroundColor: PmsTheme.glassSurface,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(22),
@@ -194,14 +195,14 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                         ),
                       ),
                       Text(
                         'Account & Data Deletion Request',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -210,7 +211,7 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                 ),
                 IconButton(
                   onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF94A3B8)),
+                  icon: const Icon(Icons.close_rounded, size: 20, color: PmsTheme.textMuted),
                 ),
               ],
             ),
@@ -273,15 +274,15 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
               style: const TextStyle(fontSize: 12),
               decoration: InputDecoration(
                 hintText: 'e.g. Completed contract, resignation, etc.',
-                hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                hintStyle: const TextStyle(fontSize: 12, color: PmsTheme.textMuted),
                 contentPadding: const EdgeInsets.all(12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  borderSide: const BorderSide(color: PmsTheme.glassBorder),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  borderSide: const BorderSide(color: PmsTheme.glassBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -310,7 +311,7 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                       padding: EdgeInsets.only(top: 12),
                       child: Text(
                         'I understand my account will be permanently closed and my access revoked.',
-                        style: TextStyle(fontSize: 11.5, color: Color(0xFF475569), height: 1.3),
+                        style: TextStyle(fontSize: 11.5, color: PmsTheme.textSecondary, height: 1.3),
                       ),
                     ),
                   ),
@@ -355,7 +356,7 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF475569),
+                foregroundColor: PmsTheme.textSecondary,
                 side: const BorderSide(color: Color(0xFFCBD5E1)),
                 padding: const EdgeInsets.symmetric(vertical: 11),
                 shape: RoundedRectangleBorder(

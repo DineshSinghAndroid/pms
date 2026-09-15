@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/pms_theme.dart';
 
 class PmsNotificationItem {
   final int id;
@@ -84,21 +85,21 @@ class PmsNotificationItem {
     switch (type.toLowerCase()) {
       case 'purchase_request':
       case 'pr':
-        return const Color(0xFF2563EB); // Blue
+        return PmsTheme.primary; // Blue
       case 'print_order':
       case 'po':
-        return const Color(0xFF4F46E5); // Indigo
+        return PmsTheme.primary; // Indigo
       case 'delivery':
         return const Color(0xFF0891B2); // Cyan
       case 'payment':
         return const Color(0xFF059669); // Emerald Green
       case 'studio_request':
       case 'digital_studio':
-        return const Color(0xFF7C3AED); // Purple
+        return PmsTheme.secondary; // Purple
       case 'announcement':
         return const Color(0xFFD97706); // Amber
       default:
-        return const Color(0xFF64748B); // Slate
+        return PmsTheme.textSecondary; // Slate
     }
   }
 }

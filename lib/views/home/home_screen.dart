@@ -49,6 +49,9 @@ import '../../services/api_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/app_update_service.dart';
 import '../../widgets/app_logo.dart';
+import '../../widgets/app_gradient_background.dart';
+import '../../widgets/pms_status_chip.dart';
+import '../../theme/pms_theme.dart';
 import '../notifications/notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -495,7 +498,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     if (_isAccountInactive) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: PmsTheme.background,
         body: SafeArea(
           child: Center(
             child: Padding(
@@ -513,7 +516,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     child: const Icon(
                       Icons.block_rounded,
                       size: 44,
-                      color: Color(0xFFDC2626),
+                      color: PmsTheme.error,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -522,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -531,7 +534,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF64748B),
+                      color: PmsTheme.textMuted,
                       height: 1.5,
                     ),
                   ),
@@ -546,7 +549,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFDC2626),
+                      backgroundColor: PmsTheme.error,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -564,9 +567,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     if (_isLoadingProfile) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF8FAFC),
-        body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+        body: AppGradientBackground(
+          child: Center(child: CircularProgressIndicator()),
         ),
       );
     }
@@ -575,19 +577,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final Color roleColor;
     if (isSuperAdmin) {
       roleTitle = 'Super Admin';
-      roleColor = const Color(0xFF2563EB);
+      roleColor = PmsTheme.primary;
     } else if (isManager) {
       roleTitle = 'Manager';
-      roleColor = const Color(0xFF4F46E5);
+      roleColor = PmsTheme.primary;
     } else if (isDigitalStudioIncharge) {
       roleTitle = 'Digital Studio Incharge';
-      roleColor = const Color(0xFF7C3AED);
+      roleColor = PmsTheme.secondary;
     } else if (isStoreIncharge) {
       roleTitle = 'Store Incharge';
       roleColor = const Color(0xFF0891B2);
     } else if (isWingIncharge) {
       roleTitle = 'Wing Incharge';
-      roleColor = const Color(0xFF0D9488);
+      roleColor = PmsTheme.teal;
     } else if (isDesigner) {
       roleTitle = 'Designer';
       roleColor = const Color(0xFFD97706);
@@ -596,7 +598,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       roleColor = const Color(0xFF059669);
     } else {
       roleTitle = _userProfile?.role ?? 'User';
-      roleColor = const Color(0xFF64748B);
+      roleColor = PmsTheme.textSecondary;
     }
 
     final String displayName = (_userProfile?.name != null &&
@@ -646,7 +648,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                 ],
               ),
-              backgroundColor: const Color(0xFF1E293B),
+              backgroundColor: PmsTheme.textPrimary,
               behavior: SnackBarBehavior.floating,
               duration: const Duration(seconds: 2),
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -663,14 +665,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       },
       child: Scaffold(
         key: _scaffoldKey,
-        backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+        backgroundColor: PmsTheme.glassSurface,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         toolbarHeight: 64,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu_rounded, color: Color(0xFF0F172A)),
+            icon: const Icon(Icons.menu_rounded, color: PmsTheme.textPrimary),
             tooltip: 'Open Menu',
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
@@ -690,7 +693,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.3,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                       height: 1.1,
                     ),
                   ),
@@ -704,7 +707,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           style: const TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF1E293B),
+                            color: PmsTheme.textSecondary,
                             height: 1.1,
                           ),
                           maxLines: 1,
@@ -712,32 +715,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 1.5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: roleColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(5),
-                          border: Border.all(
-                            color: roleColor.withValues(alpha: 0.3),
-                            width: 0.6,
-                          ),
-                        ),
-                        child: Text(
-                          roleTitle,
-                          style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
-                            color: roleColor,
-                            letterSpacing: 0.2,
-                            height: 1.1,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
+                      PmsStatusChip(label: roleTitle, color: roleColor),
                     ],
                   ),
                 ],
@@ -747,7 +725,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF64748B)),
+            icon: const Icon(Icons.refresh_rounded, color: PmsTheme.textMuted),
             tooltip: 'Refresh Data',
             onPressed: _refreshCurrentTab,
           ),
@@ -755,10 +733,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             icon: Badge.count(
               count: _unreadNotificationCount,
               isLabelVisible: _unreadNotificationCount > 0,
-              backgroundColor: const Color(0xFFDC2626),
+              backgroundColor: PmsTheme.error,
               textColor: Colors.white,
               textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-              child: const Icon(Icons.notifications_outlined, color: Color(0xFF0F172A), size: 24),
+              child: const Icon(Icons.notifications_rounded, color: PmsTheme.textPrimary, size: 24),
             ),
             tooltip: 'Notifications',
             onPressed: () async {
@@ -779,7 +757,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Color(0xFFB91C1C)),
+            icon: const Icon(Icons.logout_rounded, color: PmsTheme.error),
             tooltip: 'Logout',
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
@@ -788,7 +766,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ],
       ),
       drawer: Drawer(
-        backgroundColor: Color(0xFFF8FAFC),
+        backgroundColor: PmsTheme.background,
         child: SideMenuDrawer(
           selectedMenu: _selectedMenu,
           onMenuSelected: (menu) {
@@ -801,7 +779,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           isDesigner: isDesigner,
         ),
       ),
-      body: _buildBody(),
+      body: AppGradientBackground(child: _buildBody()),
       ),
     );
   }

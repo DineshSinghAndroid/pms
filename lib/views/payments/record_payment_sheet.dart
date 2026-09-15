@@ -5,6 +5,7 @@ import 'package:pms/bloc/payment/payment_event.dart';
 import 'package:pms/bloc/payment/payment_state.dart';
 import 'package:pms/models/eligible_payment_item_model.dart';
 import 'package:pms/models/user_model.dart';
+import 'package:pms/theme/pms_theme.dart';
 
 class RecordPaymentSheet extends StatefulWidget {
   final UserModel? currentUser;
@@ -155,8 +156,8 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
         return Container(
           height: MediaQuery.of(context).size.height * 0.9,
           decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            color: PmsTheme.glassSurface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: Column(
             children: [
@@ -182,7 +183,7 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                       ),
                       child: const Icon(
                         Icons.payments_outlined,
-                        color: Colors.white,
+                        
                         size: 20,
                       ),
                     ),
@@ -196,7 +197,7 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
+                              color: PmsTheme.textPrimary,
                             ),
                           ),
                           Text(
@@ -230,7 +231,7 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
-                        color: Color(0xFF475569),
+                        color: PmsTheme.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -242,7 +243,7 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                         prefixIcon: const Icon(Icons.search, size: 20),
                         isDense: true,
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: PmsTheme.background,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(color: Colors.grey.shade300),
@@ -262,14 +263,14 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                         padding: const EdgeInsets.all(24),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: PmsTheme.background,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.grey.shade200),
                         ),
                         child: const Text(
                           'No candidate products found to pay.',
                           style: TextStyle(
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -332,14 +333,14 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 13,
-                                                color: Color(0xFF0F172A),
+                                                color: PmsTheme.textPrimary,
                                               ),
                                             ),
                                             Text(
                                               '${item.vendorName} · ${item.wingName}',
                                               style: const TextStyle(
                                                 fontSize: 11,
-                                                color: Color(0xFF64748B),
+                                                color: PmsTheme.textSecondary,
                                               ),
                                             ),
                                           ],
@@ -525,7 +526,7 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
-                                color: Color(0xFF0F172A),
+                                color: PmsTheme.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -535,7 +536,7 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                                   margin: const EdgeInsets.only(bottom: 6),
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: PmsTheme.glassSurface,
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: const Color(0xFFA7F3D0),
@@ -600,7 +601,7 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                                 margin: const EdgeInsets.only(bottom: 6),
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: PmsTheme.glassSurface,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
                                     color: const Color(0xFFA7F3D0),
@@ -687,7 +688,7 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.5,
-                          color: Color(0xFF475569),
+                          color: PmsTheme.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -834,7 +835,7 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: PmsTheme.glassSurface,
                   border: Border(
                     top: BorderSide(color: Colors.grey.shade200),
                   ),
@@ -870,9 +871,7 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2,
                                 ),
                               )
                             : const Text(

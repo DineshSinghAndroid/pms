@@ -7,7 +7,9 @@ import 'package:pms/models/print_order_model.dart';
 import 'package:pms/models/user_model.dart';
 import 'package:pms/repositories/print_order_repository.dart';
 import 'package:pms/services/api_service.dart';
+import 'package:pms/theme/pms_theme.dart';
 import 'package:pms/views/delivery_logs/update_delivery_dialog.dart';
+import 'package:pms/widgets/app_gradient_background.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PrintOrderDetailsScreen extends StatefulWidget {
@@ -75,7 +77,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
       case 'accepted':
       case 'dispatched':
       default:
-        return const Color(0xFF2563EB); // Blue
+        return PmsTheme.primary; // Blue
     }
   }
 
@@ -148,20 +150,21 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           );
         }
       },
-      child: Scaffold(
-        backgroundColor: Color(0xFFF8FAFC),
+      child: AppGradientBackground(
+        child: Scaffold(
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: Color(0xFFFFFFFF),
+          backgroundColor: PmsTheme.glassSurface,
           elevation: 0,
           title: Text(
             _po.poNumber,
             style: const TextStyle(
-              color: Color(0xFF0F172A),
+              color: PmsTheme.textPrimary,
               fontWeight: FontWeight.bold,
               fontSize: 17,
             ),
           ),
-          iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
+          iconTheme: const IconThemeData(color: PmsTheme.textPrimary),
           actions: [
             Container(
               margin: const EdgeInsets.only(right: 14),
@@ -183,7 +186,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           ],
         ),
         body: RefreshIndicator(
-          color: const Color(0xFF2563EB),
+          color: PmsTheme.primary,
           onRefresh: _handleRefresh,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -219,6 +222,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
         ),
         bottomNavigationBar: _buildBottomActionBar(),
       ),
+      ),
     );
   }
 
@@ -235,9 +239,10 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,7 +253,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
               const Text(
                 'ASSIGNED PRINTING VENDOR',
                 style: TextStyle(
-                  color: Color(0xFF2563EB),
+                  color: PmsTheme.primary,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -261,7 +266,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: Color(0xFFF8FAFC),
+                    color: PmsTheme.background,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -282,15 +287,15 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Color(0xFF2563EB).withValues(alpha: 0.2),
+                  color: PmsTheme.primary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: Color(0xFF2563EB).withValues(alpha: 0.4),
+                    color: PmsTheme.primary.withValues(alpha: 0.4),
                   ),
                 ),
                 child: const Icon(
                   Icons.print_rounded,
-                  color: Color(0xFF2563EB),
+                  color: PmsTheme.primary,
                   size: 20,
                 ),
               ),
@@ -302,7 +307,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                     Text(
                       vendorName,
                       style: const TextStyle(
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -312,7 +317,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                       Text(
                         vendorMobile,
                         style: const TextStyle(
-                          color: Color(0xFF475569),
+                          color: PmsTheme.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -335,12 +340,12 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
             ],
           ),
           if (vendorAddress != null && vendorAddress.isNotEmpty) ...[
-            const Divider(color: Color(0xFFE2E8F0), height: 20),
+            const Divider(color: PmsTheme.glassBorder, height: 20),
             Row(
               children: [
                 const Icon(
                   Icons.location_on_outlined,
-                  color: Color(0xFF64748B),
+                  color: PmsTheme.textSecondary,
                   size: 14,
                 ),
                 const SizedBox(width: 4),
@@ -348,7 +353,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                   child: Text(
                     vendorAddress,
                     style: const TextStyle(
-                      color: Color(0xFF64748B),
+                      color: PmsTheme.textSecondary,
                       fontSize: 11,
                     ),
                   ),
@@ -365,9 +370,10 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,7 +381,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           const Text(
             'DELIVERY TARGET & SCHEDULE',
             style: TextStyle(
-              color: Color(0xFF64748B),
+              color: PmsTheme.textSecondary,
               fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
@@ -390,13 +396,13 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                   children: [
                     const Text(
                       'Target Wing / Branch',
-                      style: TextStyle(color: Color(0xFF64748B), fontSize: 10),
+                      style: TextStyle(color: PmsTheme.textSecondary, fontSize: 10),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       _po.wing?.name ?? 'General Wing',
                       style: const TextStyle(
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -410,13 +416,13 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                   children: [
                     const Text(
                       'Expected Delivery',
-                      style: TextStyle(color: Color(0xFF64748B), fontSize: 10),
+                      style: TextStyle(color: PmsTheme.textSecondary, fontSize: 10),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '${_po.expectedDeliveryDate ?? 'ASAP'} (${_po.expectedDeliveryTime ?? 'Anytime'})',
                       style: const TextStyle(
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -428,15 +434,15 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           ),
           if (_po.requesterRemarks != null &&
               _po.requesterRemarks!.isNotEmpty) ...[
-            const Divider(color: Color(0xFFE2E8F0), height: 20),
+            const Divider(color: PmsTheme.glassBorder, height: 20),
             const Text(
               'Requester Remarks (Read-Only):',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 10),
+              style: TextStyle(color: PmsTheme.textSecondary, fontSize: 10),
             ),
             const SizedBox(height: 2),
             Text(
               _po.requesterRemarks!,
-              style: const TextStyle(color: Color(0xFF475569), fontSize: 11),
+              style: const TextStyle(color: PmsTheme.textSecondary, fontSize: 11),
             ),
           ],
         ],
@@ -492,9 +498,10 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,7 +512,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
               const Text(
                 'PRINT ITEMS & PROOFS',
                 style: TextStyle(
-                  color: Color(0xFF64748B),
+                  color: PmsTheme.textSecondary,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -514,13 +521,13 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Color(0xFFF8FAFC),
+                  color: PmsTheme.background,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   '${_po.items.length} Products',
                   style: const TextStyle(
-                    color: Color(0xFF475569),
+                    color: PmsTheme.textSecondary,
                     fontSize: 10,
                   ),
                 ),
@@ -531,7 +538,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           if (_po.items.isEmpty)
             const Text(
               'No items attached.',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              style: TextStyle(color: PmsTheme.textSecondary, fontSize: 12),
             )
           else
             ListView.separated(
@@ -539,7 +546,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _po.items.length,
               separatorBuilder: (context, index) =>
-                  const Divider(color: Color(0xFFE2E8F0), height: 16),
+                  const Divider(color: PmsTheme.glassBorder, height: 16),
               itemBuilder: (context, idx) {
                 final it = _po.items[idx];
                 return Column(
@@ -552,14 +559,14 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                           width: 22,
                           height: 22,
                           decoration: BoxDecoration(
-                            color: Color(0xFF2563EB).withValues(alpha: 0.2),
+                            color: PmsTheme.primary.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Center(
                             child: Text(
                               '${idx + 1}',
                               style: const TextStyle(
-                                color: Color(0xFF2563EB),
+                                color: PmsTheme.primary,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -574,7 +581,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                               Text(
                                 it.productName,
                                 style: const TextStyle(
-                                  color: Color(0xFF0F172A),
+                                  color: PmsTheme.textPrimary,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
                                 ),
@@ -594,7 +601,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                                           : (it.receivedQuantity > 0
                                                 ? Color(0xFFD97706)
                                                       .withValues(alpha: 0.15)
-                                                : Color(0xFF2563EB)
+                                                : PmsTheme.primary
                                                       .withValues(alpha: 0.15)),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
@@ -608,7 +615,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                                             ? Color(0xFF059669)
                                             : (it.receivedQuantity > 0
                                                   ? Color(0xFFD97706)
-                                                  : Color(0xFF2563EB)),
+                                                  : PmsTheme.primary),
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -620,7 +627,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                                     Text(
                                       'Size: ${it.size}',
                                       style: const TextStyle(
-                                        color: Color(0xFF64748B),
+                                        color: PmsTheme.textSecondary,
                                         fontSize: 11,
                                       ),
                                     ),
@@ -649,16 +656,16 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Color(0xFFF8FAFC),
+                            color: PmsTheme.background,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Color(0xFFE2E8F0)),
+                            border: Border.all(color: PmsTheme.glassBorder),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
                                 Icons.download_rounded,
-                                color: Color(0xFF2563EB),
+                                color: PmsTheme.primary,
                                 size: 14,
                               ),
                               const SizedBox(width: 6),
@@ -666,7 +673,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                                 child: Text(
                                   it.attachmentName ?? 'Download Print Proof',
                                   style: const TextStyle(
-                                    color: Color(0xFF2563EB),
+                                    color: PmsTheme.primary,
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -691,9 +698,10 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -701,7 +709,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           const Text(
             'PRODUCTION & DISPATCH AUDIT LOG',
             style: TextStyle(
-              color: Color(0xFF64748B),
+              color: PmsTheme.textSecondary,
               fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
@@ -711,7 +719,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
           if (_po.activities.isEmpty)
             const Text(
               'No history recorded yet.',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              style: TextStyle(color: PmsTheme.textSecondary, fontSize: 12),
             )
           else
             ListView.separated(
@@ -719,7 +727,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _po.activities.length,
               separatorBuilder: (context, index) =>
-                  const Divider(color: Color(0xFFE2E8F0), height: 12),
+                  const Divider(color: PmsTheme.glassBorder, height: 12),
               itemBuilder: (context, idx) {
                 final act = _po.activities[idx];
                 final String dateStr;
@@ -735,13 +743,13 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.circle, size: 8, color: Color(0xFF2563EB)),
+                    const Icon(Icons.circle, size: 8, color: PmsTheme.primary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         _sanitizeActivityRemarks(act.remarks ?? act.action),
                         style: const TextStyle(
-                          color: Color(0xFF475569),
+                          color: PmsTheme.textSecondary,
                           fontSize: 11,
                         ),
                       ),
@@ -751,7 +759,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                       Text(
                         dateStr,
                         style: const TextStyle(
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                           fontSize: 10,
                         ),
                       ),
@@ -809,8 +817,8 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: const BoxDecoration(
-          color: Color(0xFFFFFFFF),
-          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          color: PmsTheme.glassSurface,
+          border: Border(top: BorderSide(color: PmsTheme.glassBorder)),
         ),
         child: SafeArea(
           child: Container(
@@ -850,8 +858,8 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: const BoxDecoration(
-          color: Color(0xFFFFFFFF),
-          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          color: PmsTheme.glassSurface,
+          border: Border(top: BorderSide(color: PmsTheme.glassBorder)),
         ),
         child: SafeArea(
           child: ElevatedButton.icon(
@@ -891,14 +899,14 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: const BoxDecoration(
-          color: Color(0xFFFFFFFF),
-          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          color: PmsTheme.glassSurface,
+          border: Border(top: BorderSide(color: PmsTheme.glassBorder)),
         ),
         child: SafeArea(
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: PmsTheme.backgroundGradientStart,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: const Color(0xFFBFDBFE)),
             ),
@@ -906,7 +914,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
               children: [
                 Icon(
                   Icons.print_rounded,
-                  color: Color(0xFF2563EB),
+                  color: PmsTheme.primary,
                   size: 20,
                 ),
                 SizedBox(width: 10),
@@ -914,7 +922,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
                   child: Text(
                     'Order is assigned for printing. Please print & deliver to campus.',
                     style: TextStyle(
-                      color: Color(0xFF1E40AF),
+                      color: PmsTheme.primaryDark,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),

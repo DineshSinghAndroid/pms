@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../services/api_service.dart';
 import '../../services/app_update_service.dart';
 import 'app_update_settings_dialog.dart';
+import '../../theme/pms_theme.dart';
 
 class SettingsTabView extends StatefulWidget {
   final bool isSuperAdmin;
@@ -95,7 +96,7 @@ class _SettingsTabViewState extends State<SettingsTabView> {
     final bool canManageUpdates = widget.isSuperAdmin;
 
     return RefreshIndicator(
-      color: const Color(0xFF2563EB),
+      color: PmsTheme.primary,
       onRefresh: () async {
         await Future.wait([
           _loadPackageDetails(),
@@ -111,14 +112,14 @@ class _SettingsTabViewState extends State<SettingsTabView> {
           // 1. System Settings Header
           const Row(
             children: [
-              Icon(Icons.settings_outlined, color: Color(0xFF64748B), size: 20),
+              Icon(Icons.settings_rounded, color: PmsTheme.primary, size: 20),
               SizedBox(width: 8),
               Text(
                 'System Settings & Connection',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: PmsTheme.textPrimary,
                 ),
               ),
             ],
@@ -127,26 +128,27 @@ class _SettingsTabViewState extends State<SettingsTabView> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFFFF),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildInfoRow('Application', 'PMS Admin Mobile'),
-                const Divider(color: Color(0xFFE2E8F0), height: 20),
+                const Divider(color: PmsTheme.glassBorder, height: 20),
                 _buildInfoRow(
                   'App Version',
                   'v$_appVersion (Build #$_appBuildNumber)',
                 ),
-                const Divider(color: Color(0xFFE2E8F0), height: 20),
+                const Divider(color: PmsTheme.glassBorder, height: 20),
                 _buildInfoRow('Organization', 'Prince Eduhub'),
-                const Divider(color: Color(0xFFE2E8F0), height: 20),
+                const Divider(color: PmsTheme.glassBorder, height: 20),
                 _buildInfoRow('Backend Base URL', ApiService.baseUrl),
-                const Divider(color: Color(0xFFE2E8F0), height: 20),
+                const Divider(color: PmsTheme.glassBorder, height: 20),
                 _buildInfoRow('State Management', 'BLoC (flutter_bloc 9.x)'),
-                const Divider(color: Color(0xFFE2E8F0), height: 20),
+                const Divider(color: PmsTheme.glassBorder, height: 20),
                 _buildInfoRow('Network Client', 'Dio HTTP 5.x'),
               ],
             ),
@@ -158,14 +160,14 @@ class _SettingsTabViewState extends State<SettingsTabView> {
           const Row(
             children: [
               Icon(Icons.system_update_rounded,
-                  color: Color(0xFF4F46E5), size: 20),
+                  color: PmsTheme.primary, size: 20),
               SizedBox(width: 8),
               Text(
                 'App Updates & Version Control',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: PmsTheme.textPrimary,
                 ),
               ),
             ],
@@ -173,9 +175,10 @@ class _SettingsTabViewState extends State<SettingsTabView> {
           const SizedBox(height: 16),
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFFFF),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
             ),
             child: Column(
               children: [
@@ -196,14 +199,14 @@ class _SettingsTabViewState extends State<SettingsTabView> {
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
+                                color: PmsTheme.primary,
                                 strokeWidth: 2,
-                                color: Color(0xFF4F46E5),
                               ),
                             ),
                           )
                         : const Icon(
                             Icons.refresh_rounded,
-                            color: Color(0xFF4F46E5),
+                            color: PmsTheme.primary,
                             size: 20,
                           ),
                   ),
@@ -212,7 +215,7 @@ class _SettingsTabViewState extends State<SettingsTabView> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                     ),
                   ),
                   subtitle: Text(
@@ -221,19 +224,19 @@ class _SettingsTabViewState extends State<SettingsTabView> {
                         : 'Currently installed: Build #$_appBuildNumber',
                     style: const TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF64748B),
+                      color: PmsTheme.textSecondary,
                     ),
                   ),
                   trailing: const Icon(
                     Icons.chevron_right_rounded,
-                    color: Color(0xFF94A3B8),
+                    color: PmsTheme.textMuted,
                   ),
                   onTap: _isCheckingUpdate ? null : _checkForUpdates,
                 ),
 
                 // Admin Update Management Tile (Visible for Admins)
                 if (canManageUpdates) ...[
-                  const Divider(color: Color(0xFFE2E8F0), height: 1),
+                  const Divider(color: PmsTheme.glassBorder, height: 1),
                   ListTile(
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -246,7 +249,7 @@ class _SettingsTabViewState extends State<SettingsTabView> {
                       ),
                       child: const Icon(
                         Icons.admin_panel_settings_rounded,
-                        color: Color(0xFF7C3AED),
+                        color: PmsTheme.secondary,
                         size: 20,
                       ),
                     ),
@@ -255,14 +258,14 @@ class _SettingsTabViewState extends State<SettingsTabView> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     subtitle: const Text(
                       'Set target build number, toggle force update, store links',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                       ),
                     ),
                     trailing: Container(
@@ -279,7 +282,7 @@ class _SettingsTabViewState extends State<SettingsTabView> {
                         style: TextStyle(
                           fontSize: 9.5,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF7C3AED),
+                          color: PmsTheme.secondary,
                         ),
                       ),
                     ),
@@ -295,14 +298,14 @@ class _SettingsTabViewState extends State<SettingsTabView> {
           // 3. Legal Compliance Section
           const Row(
             children: [
-              Icon(Icons.gavel_outlined, color: Color(0xFF64748B), size: 20),
+              Icon(Icons.gavel_outlined, color: PmsTheme.textSecondary, size: 20),
               SizedBox(width: 8),
               Text(
                 'Legal & Institutional Compliance',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: PmsTheme.textPrimary,
                 ),
               ),
             ],
@@ -310,9 +313,10 @@ class _SettingsTabViewState extends State<SettingsTabView> {
           const SizedBox(height: 16),
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFFFF),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
             ),
             child: Column(
               children: [
@@ -323,7 +327,7 @@ class _SettingsTabViewState extends State<SettingsTabView> {
                   icon: Icons.privacy_tip_outlined,
                   url: '${ApiService.liveServerUrl}/privacy-policy',
                 ),
-                const Divider(color: Color(0xFFE2E8F0), height: 1),
+                const Divider(color: PmsTheme.glassBorder, height: 1),
                 _buildPolicyTile(
                   context,
                   title: 'Terms & Conditions',
@@ -331,7 +335,7 @@ class _SettingsTabViewState extends State<SettingsTabView> {
                   icon: Icons.description_outlined,
                   url: '${ApiService.liveServerUrl}/terms-and-conditions',
                 ),
-                const Divider(color: Color(0xFFE2E8F0), height: 1),
+                const Divider(color: PmsTheme.glassBorder, height: 1),
                 _buildPolicyTile(
                   context,
                   title: 'Request Account & Data Deletion',
@@ -356,8 +360,8 @@ class _SettingsTabViewState extends State<SettingsTabView> {
     required String subtitle,
     required IconData icon,
     required String url,
-    Color iconColor = const Color(0xFF2563EB),
-    Color iconBg = const Color(0xFFEFF6FF),
+    Color iconColor = PmsTheme.primary,
+    Color iconBg = PmsTheme.backgroundGradientStart,
   }) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -375,20 +379,20 @@ class _SettingsTabViewState extends State<SettingsTabView> {
         style: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF0F172A),
+          color: PmsTheme.textPrimary,
         ),
       ),
       subtitle: Text(
         subtitle,
         style: const TextStyle(
           fontSize: 11,
-          color: Color(0xFF64748B),
+          color: PmsTheme.textSecondary,
         ),
       ),
       trailing: const Icon(
         Icons.open_in_new_rounded,
         size: 16,
-        color: Color(0xFF94A3B8),
+        color: PmsTheme.textMuted,
       ),
       onTap: () => _launchUrl(context, url),
     );
@@ -403,7 +407,7 @@ class _SettingsTabViewState extends State<SettingsTabView> {
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF64748B),
+            color: PmsTheme.textSecondary,
           ),
         ),
         Flexible(
@@ -412,7 +416,7 @@ class _SettingsTabViewState extends State<SettingsTabView> {
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
+              color: PmsTheme.textPrimary,
             ),
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,

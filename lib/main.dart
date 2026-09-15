@@ -35,6 +35,7 @@ import 'theme/pms_theme.dart';
 import 'views/auth/login_screen.dart';
 import 'views/home/home_screen.dart';
 import 'views/permissions/permission_required_screen.dart';
+import 'widgets/app_gradient_background.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -164,9 +165,8 @@ class AuthGate extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            backgroundColor: Color(0xFFF8FAFC),
-            body: Center(
-              child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+            body: AppGradientBackground(
+              child: Center(child: CircularProgressIndicator()),
             ),
           );
         }
@@ -232,9 +232,8 @@ class _PermissionGateState extends State<PermissionGate>
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF8FAFC),
-        body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+        body: AppGradientBackground(
+          child: Center(child: CircularProgressIndicator()),
         ),
       );
     }

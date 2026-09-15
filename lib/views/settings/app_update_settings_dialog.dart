@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/app_update_info.dart';
 import '../../services/app_update_service.dart';
 import '../../widgets/app_update_dialog.dart';
+import '../../theme/pms_theme.dart';
 
 class AppUpdateSettingsDialog extends StatefulWidget {
   final String? userPhone;
@@ -167,7 +168,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
             ? const SizedBox(
                 height: 200,
                 child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
+                  child: CircularProgressIndicator(color: PmsTheme.primary),
                 ),
               )
             : SingleChildScrollView(
@@ -188,7 +189,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                           ),
                           child: const Icon(
                             Icons.system_update_rounded,
-                            color: Color(0xFF4F46E5),
+                            color: PmsTheme.primary,
                             size: 22,
                           ),
                         ),
@@ -202,7 +203,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F172A),
+                                  color: PmsTheme.textPrimary,
                                 ),
                               ),
                               SizedBox(height: 2),
@@ -210,7 +211,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                                 'OTA configuration based on build number',
                                 style: TextStyle(
                                   fontSize: 11.5,
-                                  color: Color(0xFF64748B),
+                                  color: PmsTheme.textSecondary,
                                 ),
                               ),
                             ],
@@ -218,7 +219,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                         ),
                         IconButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close_rounded, color: Color(0xFF94A3B8)),
+                          icon: const Icon(Icons.close_rounded, color: PmsTheme.textMuted),
                           tooltip: 'Close',
                         ),
                       ],
@@ -232,16 +233,16 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: PmsTheme.background,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: PmsTheme.glassBorder),
                       ),
                       child: Row(
                         children: [
                           const Icon(
                             Icons.phone_android_rounded,
                             size: 18,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -263,7 +264,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -273,17 +274,17 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                       decoration: InputDecoration(
                         hintText: 'e.g. 5',
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: PmsTheme.background,
                         prefixIcon: const Icon(
                           Icons.tag_rounded,
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                           size: 18,
                         ),
                         helperText:
                             'Devices with build number < this number will be asked to update.',
                         helperStyle: const TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -292,7 +293,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(
-                            color: Color(0xFF4F46E5),
+                            color: PmsTheme.primary,
                             width: 1.5,
                           ),
                         ),
@@ -313,12 +314,12 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                       decoration: BoxDecoration(
                         color: _isForceUpdate
                             ? const Color(0xFFFFF1F2)
-                            : const Color(0xFFF8FAFC),
+                            : PmsTheme.background,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _isForceUpdate
                               ? const Color(0xFFFECDD3)
-                              : const Color(0xFFE2E8F0),
+                              : PmsTheme.glassBorder,
                         ),
                       ),
                       child: SwitchListTile(
@@ -333,7 +334,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                             fontWeight: FontWeight.w700,
                             color: _isForceUpdate
                                 ? const Color(0xFF991B1B)
-                                : const Color(0xFF0F172A),
+                                : PmsTheme.textPrimary,
                           ),
                         ),
                         subtitle: Text(
@@ -344,7 +345,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                             fontSize: 11,
                             color: _isForceUpdate
                                 ? const Color(0xFFB91C1C)
-                                : const Color(0xFF64748B),
+                                : PmsTheme.textSecondary,
                           ),
                         ),
                       ),
@@ -357,7 +358,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -366,10 +367,10 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                       decoration: InputDecoration(
                         hintText: 'e.g. New Update Available!',
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: PmsTheme.background,
                         prefixIcon: const Icon(
                           Icons.title_rounded,
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                           size: 18,
                         ),
                         border: OutlineInputBorder(
@@ -379,7 +380,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(
-                            color: Color(0xFF4F46E5),
+                            color: PmsTheme.primary,
                             width: 1.5,
                           ),
                         ),
@@ -397,7 +398,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -408,7 +409,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                         hintText:
                             'https://play.google.com/store/apps/details?id=com.pms.prince.pms',
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: PmsTheme.background,
                         prefixIcon: const Icon(
                           Icons.android_rounded,
                           color: Color(0xFF059669),
@@ -421,7 +422,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(
-                            color: Color(0xFF4F46E5),
+                            color: PmsTheme.primary,
                             width: 1.5,
                           ),
                         ),
@@ -439,7 +440,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -449,7 +450,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                       decoration: InputDecoration(
                         hintText: 'https://apps.apple.com/app/com.pms.prince.pms',
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: PmsTheme.background,
                         prefixIcon: const Icon(
                           Icons.apple_rounded,
                           color: Color(0xFF334155),
@@ -462,7 +463,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(
-                            color: Color(0xFF4F46E5),
+                            color: PmsTheme.primary,
                             width: 1.5,
                           ),
                         ),
@@ -480,7 +481,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -490,7 +491,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                       decoration: InputDecoration(
                         hintText: 'Describe new features, fixes, improvements...',
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: PmsTheme.background,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -498,7 +499,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(
-                            color: Color(0xFF4F46E5),
+                            color: PmsTheme.primary,
                             width: 1.5,
                           ),
                         ),
@@ -522,7 +523,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF4F46E5),
+                              foregroundColor: PmsTheme.primary,
                               side: const BorderSide(color: Color(0xFFC7D2FE)),
                               padding: const EdgeInsets.symmetric(vertical: 13),
                               shape: RoundedRectangleBorder(
@@ -539,9 +540,8 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2,
+                                      
                                     ),
                                   )
                                 : const Icon(Icons.save_rounded, size: 16),
@@ -550,7 +550,7 @@ class _AppUpdateSettingsDialogState extends State<AppUpdateSettingsDialog> {
                               style: const TextStyle(fontWeight: FontWeight.w700),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF4F46E5),
+                              backgroundColor: PmsTheme.primary,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 13),
                               shape: RoundedRectangleBorder(

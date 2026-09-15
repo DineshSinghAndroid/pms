@@ -5,6 +5,7 @@ import '../../bloc/category/category_bloc.dart';
 import '../../bloc/category/category_event.dart';
 import '../../bloc/category/category_state.dart';
 import '../../models/category_model.dart';
+import '../../theme/pms_theme.dart';
 
 class CategoriesTabView extends StatefulWidget {
   final bool isSuperAdmin;
@@ -32,9 +33,9 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: PmsTheme.glassSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (modalCtx) {
         return Padding(
@@ -59,13 +60,13 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     IconButton(
                       icon: const Icon(
                         Icons.close,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         size: 20,
                       ),
                       onPressed: () => Navigator.pop(modalCtx),
@@ -142,7 +143,7 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF2563EB),
+                    backgroundColor: PmsTheme.primary,
                     foregroundColor: Color(0xFFFFFFFF),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -170,24 +171,24 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          backgroundColor: Color(0xFFFFFFFF),
+          backgroundColor: PmsTheme.glassSurface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           title: const Text(
             'Delete Category',
-            style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+            style: TextStyle(color: PmsTheme.textPrimary, fontSize: 16),
           ),
           content: Text(
             'Are you sure you want to delete "${category.name}"? Linked product types will also be deleted.',
-            style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+            style: const TextStyle(color: PmsTheme.textSecondary, fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx),
               child: const Text(
                 'Cancel',
-                style: TextStyle(color: Color(0xFF64748B)),
+                style: TextStyle(color: PmsTheme.textSecondary),
               ),
             ),
             ElevatedButton(
@@ -229,31 +230,31 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
           style: const TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF475569),
+            color: PmsTheme.textSecondary,
           ),
         ),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
           maxLines: maxLines,
-          style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+          style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+            hintStyle: const TextStyle(color: PmsTheme.textSecondary, fontSize: 12),
             filled: true,
-            fillColor: Color(0xFFF8FAFC),
+            fillColor: PmsTheme.background,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 10,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              borderSide: const BorderSide(color: PmsTheme.glassBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
-                color: Color(0xFF2563EB),
+                color: PmsTheme.primary,
                 width: 1.5,
               ),
             ),
@@ -266,7 +267,7 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      color: const Color(0xFF2563EB),
+      color: PmsTheme.primary,
       onRefresh: () async {
         context.read<CategoryBloc>().add(const RefreshCategoriesEvent());
         await context.read<CategoryBloc>().stream.firstWhere(
@@ -287,7 +288,7 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
                 children: [
                   Icon(
                     Icons.category_rounded,
-                    color: Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                     size: 20,
                   ),
                   SizedBox(width: 8),
@@ -296,7 +297,7 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                     ),
                   ),
                 ],
@@ -307,7 +308,7 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
                   icon: const Icon(Icons.add, size: 14),
                   label: const Text('Add Category'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF2563EB),
+                    backgroundColor: PmsTheme.primary,
                     foregroundColor: Color(0xFFFFFFFF),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -333,23 +334,23 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
             onChanged: (val) {
               setState(() => _searchQuery = val.trim().toLowerCase());
             },
-            style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+            style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary),
             decoration: InputDecoration(
               hintText: 'Search categories...',
               hintStyle: const TextStyle(
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
                 fontSize: 13,
               ),
               prefixIcon: const Icon(
                 Icons.search,
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
                 size: 18,
               ),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
                       icon: const Icon(
                         Icons.clear,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         size: 16,
                       ),
                       onPressed: () {
@@ -366,12 +367,12 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                borderSide: const BorderSide(color: PmsTheme.glassBorder),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: Color(0xFF2563EB),
+                  color: PmsTheme.primary,
                   width: 1.5,
                 ),
               ),
@@ -387,13 +388,14 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
                 return Container(
                   height: 120,
                   decoration: BoxDecoration(
-                    color: Color(0xFFFFFFFF),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                   ),
                   child: const Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFF2563EB),
+                      color: PmsTheme.primary,
                       strokeWidth: 2.5,
                     ),
                   ),
@@ -449,16 +451,17 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
                   return Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFFFFFF),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                     ),
                     child: const Center(
                       child: Text(
                         'No categories found.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                         ),
                       ),
                     ),
@@ -491,9 +494,10 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -504,13 +508,13 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: Color(0xFF2563EB).withValues(alpha: 0.2),
+                  color: PmsTheme.primary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Center(
                   child: Icon(
                     Icons.folder_special_rounded,
-                    color: Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                     size: 20,
                   ),
                 ),
@@ -525,7 +529,7 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -533,7 +537,7 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
                       'Slug: ${cat.slug ?? ''}',
                       style: const TextStyle(
                         fontSize: 10,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                       ),
                     ),
                   ],
@@ -542,7 +546,7 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Color(0xFFEFF6FF),
+                  color: PmsTheme.backgroundGradientStart,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -550,7 +554,7 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                   ),
                 ),
               ),
@@ -563,7 +567,7 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
               cat.description!,
               style: const TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
                 height: 1.4,
               ),
             ),
@@ -579,8 +583,8 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
                   icon: const Icon(Icons.edit, size: 12),
                   label: const Text('Edit'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Color(0xFF2563EB),
-                    side: const BorderSide(color: Color(0xFF2563EB)),
+                    foregroundColor: PmsTheme.primary,
+                    side: const BorderSide(color: PmsTheme.primary),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 4,

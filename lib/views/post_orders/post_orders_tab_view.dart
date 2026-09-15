@@ -7,6 +7,7 @@ import 'package:pms/models/purchase_request_model.dart';
 import 'package:pms/models/user_model.dart';
 import 'package:pms/services/api_service.dart';
 import 'package:pms/views/post_orders/post_order_details_screen.dart';
+import 'package:pms/theme/pms_theme.dart';
 
 class PostOrdersTabView extends StatefulWidget {
   final UserModel? currentUser;
@@ -97,7 +98,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: Color(0xFFFFFFFF),
+        backgroundColor: PmsTheme.glassSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
@@ -105,20 +106,20 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
             SizedBox(width: 8),
             Text(
               'Cancel Post Request',
-              style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+              style: TextStyle(color: PmsTheme.textPrimary, fontSize: 16),
             ),
           ],
         ),
         content: Text(
           'Are you sure you want to cancel the post request for ${pr.prNumber}? Status will revert to Approved and move back to the Purchase Requests screen.',
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+          style: const TextStyle(color: PmsTheme.textSecondary, fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
             child: const Text(
               'No, Keep Posted',
-              style: TextStyle(color: Color(0xFF64748B)),
+              style: TextStyle(color: PmsTheme.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -172,13 +173,13 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
             // Top Search Bar
             Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              color: Color(0xFFFFFFFF),
+              color: PmsTheme.glassSurface,
               child: Column(
                 children: [
                   TextField(
                     controller: _searchCtrl,
                     style: const TextStyle(
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                       fontSize: 13,
                     ),
                     onChanged: (val) {
@@ -190,19 +191,19 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                       hintText:
                           'Search PR #, wing, product, or post remarks...',
                       hintStyle: const TextStyle(
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         fontSize: 12,
                       ),
                       prefixIcon: const Icon(
                         Icons.search,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         size: 18,
                       ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
                               icon: const Icon(
                                 Icons.clear,
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                                 size: 16,
                               ),
                               onPressed: () {
@@ -214,23 +215,23 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                             )
                           : null,
                       filled: true,
-                      fillColor: Color(0xFFF8FAFC),
+                      fillColor: PmsTheme.background,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 10,
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: const BorderSide(color: PmsTheme.glassBorder),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: const BorderSide(color: PmsTheme.glassBorder),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(
-                          color: Color(0xFF2563EB),
+                          color: PmsTheme.primary,
                           width: 1.5,
                         ),
                       ),
@@ -258,7 +259,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
             // Post Orders List / Empty State
             Expanded(
               child: RefreshIndicator(
-                color: Color(0xFF2563EB),
+                color: PmsTheme.primary,
                 onRefresh: () async {
                   _loadPostOrders();
                   await Future.delayed(const Duration(milliseconds: 600));
@@ -282,7 +283,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                                   ),
                                   child: const Icon(
                                     Icons.campaign_outlined,
-                                    color: Color(0xFF2563EB),
+                                    color: PmsTheme.primary,
                                     size: 32,
                                   ),
                                 ),
@@ -290,7 +291,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                                 const Text(
                                   'No Post Orders Found',
                                   style: TextStyle(
-                                    color: Color(0xFF0F172A),
+                                    color: PmsTheme.textPrimary,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -300,7 +301,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                                   'Approve a Purchase Request and tap "Post It" to forward artwork for digital & social publishing.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    color: Color(0xFF64748B),
+                                    color: PmsTheme.textSecondary,
                                     fontSize: 12,
                                     height: 1.4,
                                   ),
@@ -343,16 +344,16 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: isSelected ? Color(0xFF2563EB) : Color(0xFFF8FAFC),
+            color: isSelected ? PmsTheme.primary : PmsTheme.background,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected ? Color(0xFF2563EB) : Color(0xFFE2E8F0),
+              color: isSelected ? PmsTheme.primary : PmsTheme.glassBorder,
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Color(0xFF0F172A) : Color(0xFF64748B),
+              color: isSelected ? PmsTheme.textPrimary : PmsTheme.textSecondary,
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             ),
@@ -371,9 +372,9 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Color(0xFFFFFFFF),
+        color: PmsTheme.glassSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFF2563EB).withValues(alpha: 0.35)),
+        border: Border.all(color: PmsTheme.primary.withValues(alpha: 0.35)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -420,12 +421,12 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                             decoration: BoxDecoration(
                               color: Color(0xFFF5F3FF).withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Color(0xFF2563EB)),
+                              border: Border.all(color: PmsTheme.primary),
                             ),
                             child: Text(
                               pr.prNumber,
                               style: const TextStyle(
-                                color: Color(0xFF2563EB),
+                                color: PmsTheme.primary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: 'monospace',
@@ -441,14 +442,14 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Color(0xFFF8FAFC),
+                                  color: PmsTheme.background,
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: Color(0xFFE2E8F0)),
+                                  border: Border.all(color: PmsTheme.glassBorder),
                                 ),
                                 child: Text(
                                   pr.wing!.name,
                                   style: const TextStyle(
-                                    color: Color(0xFF64748B),
+                                    color: PmsTheme.textSecondary,
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -470,7 +471,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                       decoration: BoxDecoration(
                         color: Color(0xFFF5F3FF).withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Color(0xFF2563EB)),
+                        border: Border.all(color: PmsTheme.primary),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -478,7 +479,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                           Icon(
                             Icons.campaign_rounded,
                             size: 12,
-                            color: Color(0xFF475569),
+                            color: PmsTheme.textSecondary,
                           ),
                           SizedBox(width: 4),
                           Text(
@@ -486,7 +487,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                             style: TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF475569),
+                              color: PmsTheme.textSecondary,
                             ),
                           ),
                         ],
@@ -509,7 +510,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                         child: Container(
                           width: 58,
                           height: 58,
-                          color: Color(0xFFF8FAFC),
+                          color: PmsTheme.background,
                           child: isImg
                               ? Image.network(
                                   artworkUrl,
@@ -518,7 +519,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                                       const Center(
                                         child: Icon(
                                           Icons.broken_image_rounded,
-                                          color: Color(0xFF64748B),
+                                          color: PmsTheme.textSecondary,
                                           size: 20,
                                         ),
                                       ),
@@ -548,7 +549,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                                   child: Text(
                                     '• ${it.productName} (Qty: ${it.quantity}${it.size != null ? ', ${it.size}' : ''})',
                                     style: const TextStyle(
-                                      color: Color(0xFF0F172A),
+                                      color: PmsTheme.textPrimary,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -561,7 +562,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                             Text(
                               '+${pr.items.length - 2} more item(s)',
                               style: const TextStyle(
-                                color: Color(0xFF2563EB),
+                                color: PmsTheme.primary,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -572,7 +573,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                             Text(
                               'Remarks: ${pr.postRemarks!}',
                               style: const TextStyle(
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                                 fontSize: 11,
                                 fontStyle: FontStyle.italic,
                               ),
@@ -588,7 +589,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
 
                 const SizedBox(height: 12),
 
-                const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                const Divider(height: 1, color: PmsTheme.glassBorder),
 
                 const SizedBox(height: 10),
 
@@ -602,7 +603,7 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                             ? 'Posted by $posterName on ${pr.postedAt!.day.toString().padLeft(2, '0')}/${pr.postedAt!.month.toString().padLeft(2, '0')}'
                             : 'Posted by $posterName',
                         style: const TextStyle(
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                           fontSize: 10.5,
                           fontWeight: FontWeight.w500,
                         ),
@@ -643,13 +644,13 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: Color(0xFF2563EB),
+                            color: PmsTheme.primary,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text(
                             'View Details',
                             style: TextStyle(
-                              color: Color(0xFF0F172A),
+                              color: PmsTheme.textPrimary,
                               fontSize: 10.5,
                               fontWeight: FontWeight.bold,
                             ),

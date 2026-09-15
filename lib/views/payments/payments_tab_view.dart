@@ -7,6 +7,7 @@ import 'package:pms/models/payment_model.dart';
 import 'package:pms/models/user_model.dart';
 import 'package:pms/views/payments/payment_details_sheet.dart';
 import 'package:pms/views/payments/record_payment_sheet.dart';
+import 'package:pms/theme/pms_theme.dart';
 
 class PaymentsTabView extends StatefulWidget {
   final UserModel? currentUser;
@@ -67,14 +68,14 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: PmsTheme.background,
       body: SafeArea(
         child: Column(
           children: [
             // Top Action Bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: Colors.white,
+              
               child: Row(
                 children: [
                   Expanded(
@@ -85,7 +86,7 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
                         prefixIcon: const Icon(Icons.search, size: 20),
                         isDense: true,
                         filled: true,
-                        fillColor: const Color(0xFFF1F5F9),
+                        fillColor: PmsTheme.bgSoft,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -173,7 +174,7 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF64748B),
+                              color: PmsTheme.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -235,11 +236,11 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
 
     return Card(
       elevation: 0,
+      color: PmsTheme.glassSurface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: PmsTheme.glassBorder),
       ),
-      color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -253,7 +254,7 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A),
+                    color: PmsTheme.textPrimary,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -306,7 +307,7 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
-                color: Color(0xFF0F172A),
+                color: PmsTheme.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
@@ -314,7 +315,7 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
               '${wing?.name ?? 'Wing'} · PO: #${p.poNumber}${p.itemsCount > 1 ? ' (${p.itemsCount} products)' : ''}',
               style: const TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -331,7 +332,7 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF94A3B8),
+                          color: PmsTheme.textMuted,
                         ),
                       ),
                       Text(
@@ -356,7 +357,7 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF94A3B8),
+                          color: PmsTheme.textMuted,
                         ),
                       ),
                       Text(
@@ -380,7 +381,7 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF94A3B8),
+                            color: PmsTheme.textMuted,
                           ),
                         ),
                         Text(
@@ -408,7 +409,7 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
                   'By: ${p.paidByUser?.name ?? 'Admin'}',
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF64748B),
+                    color: PmsTheme.textSecondary,
                   ),
                 ),
                 TextButton.icon(
@@ -416,7 +417,7 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
                   icon: const Icon(Icons.remove_red_eye_outlined, size: 16),
                   label: const Text('View Details'),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF0F172A),
+                    foregroundColor: PmsTheme.textPrimary,
                     textStyle: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,

@@ -24,7 +24,9 @@ import '../../models/wing_model.dart';
 import '../../repositories/product_type_repository.dart';
 import '../../repositories/purchase_request_repository.dart';
 import '../../repositories/wing_repository.dart';
+import '../../widgets/searchable_typeahead.dart';
 import 'pr_details_screen.dart';
+import '../../theme/pms_theme.dart';
 
 class PurchaseRequestsTabView extends StatefulWidget {
   final bool isSuperAdmin;
@@ -212,13 +214,15 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
     final timeCtrl = TextEditingController(text: '04:00 PM');
     final remarksCtrl = TextEditingController();
     ProductTypeModel? chosenPickerProduct;
+    final productSearchCtrl = TextEditingController();
+    final productSearchFocus = FocusNode();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: PmsTheme.glassSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (modalCtx) {
         return StatefulBuilder(
@@ -257,7 +261,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F172A),
+                                color: PmsTheme.textPrimary,
                               ),
                             ),
                           ],
@@ -265,7 +269,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                         IconButton(
                           icon: const Icon(
                             Icons.close,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             size: 20,
                           ),
                           onPressed: () => Navigator.pop(modalCtx),
@@ -278,9 +282,9 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Color(0xFFF8FAFC),
+                        color: PmsTheme.background,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Color(0xFFE2E8F0)),
+                        border: Border.all(color: PmsTheme.glassBorder),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,48 +298,27 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Color(0xFFFFFFFF),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Color(0xFFE2E8F0)),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<ProductTypeModel>(
-                                isExpanded: true,
-                                dropdownColor: Color(0xFFFFFFFF),
-                                value: chosenPickerProduct,
-                                hint: const Text(
-                                  'Search & Select Product',
-                                  style: TextStyle(
-                                    color: Color(0xFF64748B),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                items: allProductTypes.map((pt) {
-                                  return DropdownMenuItem<ProductTypeModel>(
-                                    value: pt,
-                                    child: Text(
-                                      '[${pt.productCode ?? '000000'}] ${pt.name} (${pt.category?.name ?? ''})',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF0F172A),
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (val) {
-                                  setModalState(() {
-                                    chosenPickerProduct = val;
-                                  });
-                                },
-                              ),
-                            ),
+                          SearchableTypeahead<ProductTypeModel>(
+                            items: allProductTypes,
+                            controller: productSearchCtrl,
+                            focusNode: productSearchFocus,
+                            hintText: 'Type name or product code...',
+                            displayString: (pt) =>
+                                '[${pt.productCode ?? '000000'}] ${pt.name} (${pt.category?.name ?? ''})',
+                            matches: (pt, q) {
+                              return pt.name.toLowerCase().contains(q) ||
+                                  (pt.productCode?.toLowerCase().contains(q) ??
+                                      false) ||
+                                  (pt.subName?.toLowerCase().contains(q) ??
+                                      false) ||
+                                  (pt.category?.name.toLowerCase().contains(q) ??
+                                      false);
+                            },
+                            onSelected: (val) {
+                              setModalState(() {
+                                chosenPickerProduct = val;
+                              });
+                            },
                           ),
                           const SizedBox(height: 10),
                           ElevatedButton.icon(
@@ -363,6 +346,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                         'pickedSize': null,
                                       });
                                       chosenPickerProduct = null;
+                                      productSearchCtrl.clear();
                                     });
                                   },
                             icon: const Icon(Icons.add_box_rounded, size: 16),
@@ -395,7 +379,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -404,10 +388,10 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Color(0xFFF8FAFC),
+                          color: PmsTheme.background,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Color(0xFFE2E8F0),
+                            color: PmsTheme.glassBorder,
                             style: BorderStyle.solid,
                           ),
                         ),
@@ -415,7 +399,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                           child: Text(
                             'No products added yet. Select a product above and tap "Add Product Box".',
                             style: TextStyle(
-                              color: Color(0xFF64748B),
+                              color: PmsTheme.textSecondary,
                               fontSize: 12,
                             ),
                             textAlign: TextAlign.center,
@@ -432,9 +416,9 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Color(0xFFF8FAFC),
+                          color: PmsTheme.background,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Color(0xFFE2E8F0)),
+                          border: Border.all(color: PmsTheme.glassBorder),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -450,10 +434,10 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                         vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Color(0xFFFFFFFF),
+                                        color: PmsTheme.glassSurface,
                                         borderRadius: BorderRadius.circular(6),
                                         border: Border.all(
-                                          color: Color(0xFF475569),
+                                          color: PmsTheme.textSecondary,
                                         ),
                                       ),
                                       child: Text(
@@ -472,7 +456,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF0F172A),
+                                        color: PmsTheme.textPrimary,
                                       ),
                                     ),
                                   ],
@@ -504,7 +488,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                         'Quantity *',
                                         style: TextStyle(
                                           fontSize: 10,
-                                          color: Color(0xFF64748B),
+                                          color: PmsTheme.textSecondary,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -516,7 +500,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                         keyboardType: TextInputType.number,
                                         style: const TextStyle(
                                           fontSize: 13,
-                                          color: Color(0xFF0F172A),
+                                          color: PmsTheme.textPrimary,
                                           fontWeight: FontWeight.bold,
                                         ),
                                         decoration: InputDecoration(
@@ -548,7 +532,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                         'Size / Dimensions',
                                         style: TextStyle(
                                           fontSize: 10,
-                                          color: Color(0xFF64748B),
+                                          color: PmsTheme.textSecondary,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -559,12 +543,12 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                                 as TextEditingController,
                                         style: const TextStyle(
                                           fontSize: 13,
-                                          color: Color(0xFF0F172A),
+                                          color: PmsTheme.textPrimary,
                                         ),
                                         decoration: InputDecoration(
                                           hintText: 'e.g. 10x4 ft, A4',
                                           hintStyle: const TextStyle(
-                                            color: Color(0xFF64748B),
+                                            color: PmsTheme.textSecondary,
                                             fontSize: 11,
                                           ),
                                           filled: true,
@@ -595,7 +579,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                   'Sample Attachment (Camera / Any File / Reference)',
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: Color(0xFF64748B),
+                                    color: PmsTheme.textSecondary,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -640,8 +624,8 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                           style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                                         ),
                                         style: OutlinedButton.styleFrom(
-                                          foregroundColor: const Color(0xFF2563EB),
-                                          side: const BorderSide(color: Color(0xFF2563EB)),
+                                          foregroundColor: PmsTheme.primary,
+                                          side: const BorderSide(color: PmsTheme.primary),
                                           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(8),
@@ -701,7 +685,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F5F9),
+                                      color: PmsTheme.bgSoft,
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(color: const Color(0xFFCBD5E1)),
                                     ),
@@ -720,14 +704,14 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                               : Container(
                                                   width: 38,
                                                   height: 38,
-                                                  color: const Color(0xFFE2E8F0),
+                                                  color: PmsTheme.glassBorder,
                                                   child: Icon(
                                                     (item['pickedName'] as String).toLowerCase().endsWith('.pdf')
                                                         ? Icons.picture_as_pdf_rounded
                                                         : Icons.insert_drive_file_rounded,
                                                     color: (item['pickedName'] as String).toLowerCase().endsWith('.pdf')
                                                         ? const Color(0xFFDC2626)
-                                                        : const Color(0xFF2563EB),
+                                                        : PmsTheme.primary,
                                                     size: 22,
                                                   ),
                                                 ),
@@ -743,7 +727,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                                 style: const TextStyle(
                                                   fontSize: 11,
                                                   fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF0F172A),
+                                                  color: PmsTheme.textPrimary,
                                                 ),
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
@@ -753,7 +737,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                                   _formatFileSize(item['pickedSize'] as int),
                                                   style: const TextStyle(
                                                     fontSize: 10,
-                                                    color: Color(0xFF64748B),
+                                                    color: PmsTheme.textSecondary,
                                                   ),
                                                 ),
                                             ],
@@ -791,18 +775,18 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                           as TextEditingController,
                                   style: const TextStyle(
                                     fontSize: 11,
-                                    color: Color(0xFF0F172A),
+                                    color: PmsTheme.textPrimary,
                                   ),
                                   decoration: InputDecoration(
                                     prefixIcon: const Icon(
                                       Icons.note_alt_outlined,
-                                      color: Color(0xFF64748B),
+                                      color: PmsTheme.textSecondary,
                                       size: 15,
                                     ),
                                     hintText:
                                         'Or enter sample link / note (optional)',
                                     hintStyle: const TextStyle(
-                                      color: Color(0xFF94A3B8),
+                                      color: PmsTheme.textMuted,
                                       fontSize: 11,
                                     ),
                                     filled: true,
@@ -831,7 +815,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -843,9 +827,9 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Color(0xFFF8FAFC),
+                        color: PmsTheme.background,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Color(0xFFE2E8F0)),
+                        border: Border.all(color: PmsTheme.glassBorder),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<int>(
@@ -854,7 +838,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                           dropdownColor: Color(0xFFFFFFFF),
                           style: const TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                             fontWeight: FontWeight.w600,
                           ),
                           items: availableWings.map((w) {
@@ -900,9 +884,9 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                 vertical: 12,
                               ),
                               decoration: BoxDecoration(
-                                color: Color(0xFFF8FAFC),
+                                color: PmsTheme.background,
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Color(0xFFE2E8F0)),
+                                border: Border.all(color: PmsTheme.glassBorder),
                               ),
                               child: Row(
                                 children: [
@@ -916,7 +900,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                     '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFF0F172A),
+                                      color: PmsTheme.textPrimary,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -931,16 +915,16 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                             controller: timeCtrl,
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF0F172A),
+                              color: PmsTheme.textPrimary,
                             ),
                             decoration: InputDecoration(
                               hintText: 'Delivery Time',
                               hintStyle: const TextStyle(
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                                 fontSize: 11,
                               ),
                               filled: true,
-                              fillColor: Color(0xFFF8FAFC),
+                              fillColor: PmsTheme.background,
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 12,
@@ -962,16 +946,16 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                       maxLines: 2,
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                       decoration: InputDecoration(
                         hintText: 'Remarks & finishing instructions...',
                         hintStyle: const TextStyle(
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                           fontSize: 12,
                         ),
                         filled: true,
-                        fillColor: Color(0xFFF8FAFC),
+                        fillColor: PmsTheme.background,
                         contentPadding: const EdgeInsets.all(12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -1070,8 +1054,11 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
         },
       );
     },
-  );
-}
+    ).whenComplete(() {
+      productSearchCtrl.dispose();
+      productSearchFocus.dispose();
+    });
+  }
 
   // ================= ASSIGN DESIGNER MODAL =================
   void _showAssignDesignerDialog(
@@ -1140,7 +1127,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return AlertDialog(
-              backgroundColor: const Color(0xFFFFFFFF),
+              backgroundColor: PmsTheme.glassSurface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
@@ -1156,7 +1143,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                     child: Text(
                       'Assign PR ${pr.prNumber}',
                       style: const TextStyle(
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -1171,7 +1158,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                   Text(
                     'Select an active Designer for Wing "${pr.wing?.name ?? 'General'}":',
                     style: const TextStyle(
-                      color: Color(0xFF64748B),
+                      color: PmsTheme.textSecondary,
                       fontSize: 12,
                     ),
                   ),
@@ -1182,9 +1169,9 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: PmsTheme.background,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: PmsTheme.glassBorder),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<int>(
@@ -1193,7 +1180,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                         dropdownColor: const Color(0xFFFFFFFF),
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                         items: designers.map((d) {
@@ -1218,7 +1205,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                   onPressed: () => Navigator.pop(dialogCtx),
                   child: const Text(
                     'Cancel',
-                    style: TextStyle(color: Color(0xFF64748B)),
+                    style: TextStyle(color: PmsTheme.textSecondary),
                   ),
                 ),
                 ElevatedButton(
@@ -1256,7 +1243,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      color: const Color(0xFF2563EB),
+      color: PmsTheme.primary,
       onRefresh: () async {
         _fetchPRs();
         _preloadPrDependencies();
@@ -1293,7 +1280,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                     ),
                   ),
                 ],
@@ -1391,9 +1378,9 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
               return Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: Color(0xFFF8FAFC),
+                  color: PmsTheme.background,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Color(0xFFE2E8F0)),
+                  border: Border.all(color: PmsTheme.glassBorder),
                 ),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -1410,21 +1397,21 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                         title: 'Shifted to Print Orders',
                         count: poCount,
                         scopeKey: 'sent_to_print',
-                        activeColor: Color(0xFF2563EB),
+                        activeColor: PmsTheme.primary,
                       ),
                       const SizedBox(width: 4),
                       _buildScopeTab(
                         title: 'Shifted to Post Orders',
                         count: postCount,
                         scopeKey: 'posted',
-                        activeColor: Color(0xFF2563EB),
+                        activeColor: PmsTheme.primary,
                       ),
                       const SizedBox(width: 4),
                       _buildScopeTab(
                         title: 'All PR History',
                         count: totalCount,
                         scopeKey: 'all',
-                        activeColor: Color(0xFF64748B),
+                        activeColor: PmsTheme.textSecondary,
                       ),
                     ],
                   ),
@@ -1440,23 +1427,23 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
             controller: _searchController,
             onChanged: (val) =>
                 setState(() => _searchQuery = val.trim().toLowerCase()),
-            style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+            style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary),
             decoration: InputDecoration(
               hintText: 'Search PR #, product, wing, or designer...',
               hintStyle: const TextStyle(
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
                 fontSize: 13,
               ),
               prefixIcon: const Icon(
                 Icons.search,
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
                 size: 18,
               ),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
                       icon: const Icon(
                         Icons.clear,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                         size: 16,
                       ),
                       onPressed: () {
@@ -1473,7 +1460,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                borderSide: const BorderSide(color: PmsTheme.glassBorder),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -1493,24 +1480,24 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
-                _buildStatusChip('All Statuses', null, Color(0xFF64748B)),
+                _buildStatusChip('All Statuses', null, PmsTheme.textSecondary),
                 const SizedBox(width: 8),
                 _buildStatusChip(
                   'Assigned',
                   'assigned_to_designer',
-                  Color(0xFF2563EB),
+                  PmsTheme.primary,
                 ),
                 const SizedBox(width: 8),
                 _buildStatusChip(
                   'In Progress',
                   'in_progress',
-                  Color(0xFF2563EB),
+                  PmsTheme.primary,
                 ),
                 const SizedBox(width: 8),
                 _buildStatusChip(
                   'Under Review',
                   'submitted_for_approval',
-                  Color(0xFF2563EB),
+                  PmsTheme.primary,
                 ),
                 const SizedBox(width: 8),
                 _buildStatusChip(
@@ -1524,10 +1511,10 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                 _buildStatusChip(
                   'Sent to Print',
                   'sent_to_print',
-                  Color(0xFF2563EB),
+                  PmsTheme.primary,
                 ),
                 const SizedBox(width: 8),
-                _buildStatusChip('Posted', 'posted', Color(0xFF2563EB)),
+                _buildStatusChip('Posted', 'posted', PmsTheme.primary),
                 const SizedBox(width: 8),
                 _buildStatusChip('Completed', 'completed', Color(0xFF059669)),
                 if (widget.isSuperAdmin ||
@@ -1554,9 +1541,10 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                 return Container(
                   height: 140,
                   decoration: BoxDecoration(
-                    color: Color(0xFFFFFFFF),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                   ),
                   child: const Center(
                     child: CircularProgressIndicator(
@@ -1615,16 +1603,17 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                   return Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Color(0xFFFFFFFF),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
                     ),
                     child: const Center(
                       child: Text(
                         'No purchase requests match the selected filters.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                         ),
                       ),
                     ),
@@ -1691,7 +1680,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected ? Color(0xFF0F172A) : Color(0xFF64748B),
+                color: isSelected ? PmsTheme.textPrimary : PmsTheme.textSecondary,
               ),
             ),
             const SizedBox(width: 6),
@@ -1699,7 +1688,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? Color(0xFF0F172A).withValues(alpha: 0.25)
+                    ? PmsTheme.textPrimary.withValues(alpha: 0.25)
                     : Color(0xFFFFFFFF),
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -1708,7 +1697,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? Color(0xFF0F172A) : Color(0xFF64748B),
+                  color: isSelected ? PmsTheme.textPrimary : PmsTheme.textSecondary,
                 ),
               ),
             ),
@@ -1726,13 +1715,13 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
         style: TextStyle(
           fontSize: 11,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-          color: isSelected ? Color(0xFF0F172A) : Color(0xFF64748B),
+          color: isSelected ? activeColor : PmsTheme.textSecondary,
         ),
       ),
       selected: isSelected,
-      selectedColor: activeColor,
-      backgroundColor: Color(0xFFFFFFFF),
-      side: BorderSide(color: isSelected ? activeColor : Color(0xFFE2E8F0)),
+      selectedColor: activeColor.withValues(alpha: 0.16),
+      backgroundColor: PmsTheme.glassSurface,
+      side: BorderSide(color: isSelected ? activeColor : PmsTheme.glassBorder),
       onSelected: (selected) {
         setState(() => _selectedStatus = statusVal);
       },
@@ -1742,20 +1731,20 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
   Widget _buildPRCard(BuildContext context, PurchaseRequestModel pr) {
     // Status visual theme configuration
     Color primaryColor = Color(0xFFD97706);
-    Color cardBorderColor = Color(0xFFE2E8F0);
-    Color cardBgTint = Color(0xFFFFFFFF);
+    Color cardBorderColor = PmsTheme.glassBorder;
+    Color cardBgTint = PmsTheme.glassSurface;
 
     if (pr.status == 'assigned_to_designer') {
-      primaryColor = Color(0xFF2563EB); // Blue
-      cardBorderColor = Color(0xFF2563EB).withValues(alpha: 0.4);
-      cardBgTint = Color(0xFFEFF6FF).withValues(alpha: 0.12);
+      primaryColor = PmsTheme.primary; // Blue
+      cardBorderColor = PmsTheme.primary.withValues(alpha: 0.4);
+      cardBgTint = PmsTheme.backgroundGradientStart.withValues(alpha: 0.12);
     } else if (pr.status == 'in_progress') {
-      primaryColor = Color(0xFF2563EB); // Indigo
-      cardBorderColor = Color(0xFF2563EB).withValues(alpha: 0.4);
-      cardBgTint = Color(0xFFEFF6FF).withValues(alpha: 0.12);
+      primaryColor = PmsTheme.primary; // Indigo
+      cardBorderColor = PmsTheme.primary.withValues(alpha: 0.4);
+      cardBgTint = PmsTheme.backgroundGradientStart.withValues(alpha: 0.12);
     } else if (pr.status == 'submitted_for_approval') {
-      primaryColor = Color(0xFF2563EB); // Purple
-      cardBorderColor = Color(0xFF2563EB).withValues(alpha: 0.4);
+      primaryColor = PmsTheme.primary; // Purple
+      cardBorderColor = PmsTheme.primary.withValues(alpha: 0.4);
       cardBgTint = Color(0xFFF5F3FF).withValues(alpha: 0.12);
     } else if (pr.status == 'rejected_revision_needed') {
       primaryColor = Color(0xFFDC2626); // Rose / Red
@@ -1766,12 +1755,12 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
       cardBorderColor = Color(0xFF059669).withValues(alpha: 0.4);
       cardBgTint = Color(0xFF059669).withValues(alpha: 0.12);
     } else if (pr.status == 'sent_to_print') {
-      primaryColor = Color(0xFF2563EB); // Blue
-      cardBorderColor = Color(0xFF2563EB).withValues(alpha: 0.4);
-      cardBgTint = Color(0xFFEFF6FF).withValues(alpha: 0.12);
+      primaryColor = PmsTheme.primary; // Blue
+      cardBorderColor = PmsTheme.primary.withValues(alpha: 0.4);
+      cardBgTint = PmsTheme.backgroundGradientStart.withValues(alpha: 0.12);
     } else if (pr.status == 'posted') {
-      primaryColor = Color(0xFF2563EB); // Purple
-      cardBorderColor = Color(0xFF2563EB).withValues(alpha: 0.4);
+      primaryColor = PmsTheme.primary; // Purple
+      cardBorderColor = PmsTheme.primary.withValues(alpha: 0.4);
       cardBgTint = Color(0xFFF5F3FF).withValues(alpha: 0.12);
     } else if (pr.status == 'completed') {
       primaryColor = Color(0xFF059669); // Emerald
@@ -1797,7 +1786,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
         },
         child: Container(
           decoration: BoxDecoration(
-            color: Color(0xFFFFFFFF),
+            color: PmsTheme.glassSurface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: cardBorderColor),
           ),
@@ -1849,7 +1838,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Color(0xFFF8FAFC),
+                            color: PmsTheme.background,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: primaryColor.withValues(alpha: 0.5),
@@ -1882,16 +1871,16 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Color(0xFFF8FAFC),
+                            color: PmsTheme.background,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Color(0xFFE2E8F0)),
+                            border: Border.all(color: PmsTheme.glassBorder),
                           ),
                           child: Text(
                             pr.wing?.name ?? 'General Wing',
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF475569),
+                              color: PmsTheme.textSecondary,
                             ),
                           ),
                         ),
@@ -1946,7 +1935,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                     '${it.productName} (Qty: ${it.quantity}${it.size != null ? ', ${it.size}' : ''})',
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFF0F172A),
+                                      color: PmsTheme.textPrimary,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -2009,7 +1998,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                           children: [
                             const Icon(
                               Icons.event_rounded,
-                              color: Color(0xFF64748B),
+                              color: PmsTheme.textSecondary,
                               size: 14,
                             ),
                             const SizedBox(width: 4),
@@ -2017,7 +2006,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                               pr.expectedDeliveryDate ?? 'No date set',
                               style: const TextStyle(
                                 fontSize: 11,
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                               ),
                             ),
                             if (pr.items.any(
@@ -2038,7 +2027,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                       .withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
-                                    color: Color(0xFF2563EB)
+                                    color: PmsTheme.primary
                                         .withValues(alpha: 0.5),
                                   ),
                                 ),
@@ -2047,14 +2036,14 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                     Icon(
                                       Icons.attach_file_rounded,
                                       size: 10,
-                                      color: Color(0xFF475569),
+                                      color: PmsTheme.textSecondary,
                                     ),
                                     SizedBox(width: 2),
                                     Text(
                                       'Media',
                                       style: TextStyle(
                                         fontSize: 9,
-                                        color: Color(0xFF475569),
+                                        color: PmsTheme.textSecondary,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -2088,9 +2077,9 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                         return Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
+                            color: PmsTheme.background,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: PmsTheme.glassBorder),
                           ),
                           child: Column(
                             children: [
@@ -2128,7 +2117,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                             style: const TextStyle(
                                               fontSize: 9.5,
                                               fontWeight: FontWeight.w800,
-                                              color: Color(0xFF64748B),
+                                              color: PmsTheme.textSecondary,
                                               letterSpacing: 0.4,
                                             ),
                                           ),
@@ -2140,7 +2129,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                               fontSize: 12,
                                               fontWeight: FontWeight.bold,
                                               color: pr.assignedDesigner != null
-                                                  ? const Color(0xFF0F172A)
+                                                  ? PmsTheme.textPrimary
                                                   : const Color(0xFFD97706),
                                             ),
                                           ),
@@ -2179,7 +2168,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                           ? Icons.swap_horiz_rounded
                                           : Icons.person_add_alt_1_rounded,
                                       size: 18,
-                                      color: Colors.white,
+                                      
                                     ),
                                     label: Text(
                                       pr.assignedDesigner != null
@@ -2193,7 +2182,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: pr.assignedDesigner != null
-                                          ? const Color(0xFF4F46E5)
+                                          ? PmsTheme.primary
                                           : const Color(0xFFD97706),
                                       foregroundColor: Colors.white,
                                       elevation: 2,
@@ -2230,21 +2219,21 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
     String label = 'Pending';
 
     if (status == 'assigned_to_designer') {
-      bg = Color(0xFFEFF6FF).withValues(alpha: 0.4);
-      border = Color(0xFF2563EB);
-      text = Color(0xFF2563EB);
+      bg = PmsTheme.backgroundGradientStart.withValues(alpha: 0.4);
+      border = PmsTheme.primary;
+      text = PmsTheme.primary;
       icon = Icons.assignment_ind_rounded;
       label = 'Assigned';
     } else if (status == 'in_progress') {
-      bg = Color(0xFFEFF6FF).withValues(alpha: 0.4);
-      border = Color(0xFF2563EB);
-      text = Color(0xFF2563EB);
+      bg = PmsTheme.backgroundGradientStart.withValues(alpha: 0.4);
+      border = PmsTheme.primary;
+      text = PmsTheme.primary;
       icon = Icons.draw_rounded;
       label = 'In Progress';
     } else if (status == 'submitted_for_approval') {
       bg = Color(0xFFF5F3FF).withValues(alpha: 0.4);
-      border = Color(0xFF2563EB);
-      text = Color(0xFF475569);
+      border = PmsTheme.primary;
+      text = PmsTheme.textSecondary;
       icon = Icons.hourglass_top_rounded;
       label = 'Under Review';
     } else if (status == 'rejected_revision_needed') {
@@ -2260,15 +2249,15 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
       icon = Icons.check_circle_rounded;
       label = 'Approved';
     } else if (status == 'sent_to_print') {
-      bg = Color(0xFFEFF6FF).withValues(alpha: 0.4);
-      border = Color(0xFF2563EB);
-      text = Color(0xFF2563EB);
+      bg = PmsTheme.backgroundGradientStart.withValues(alpha: 0.4);
+      border = PmsTheme.primary;
+      text = PmsTheme.primary;
       icon = Icons.print_rounded;
       label = 'Sent to Print';
     } else if (status == 'posted') {
       bg = Color(0xFFF5F3FF).withValues(alpha: 0.4);
-      border = Color(0xFF2563EB);
-      text = Color(0xFF475569);
+      border = PmsTheme.primary;
+      text = PmsTheme.textSecondary;
       icon = Icons.campaign_rounded;
       label = 'Posted ✓';
     } else if (status == 'completed') {

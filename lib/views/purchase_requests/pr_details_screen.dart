@@ -21,6 +21,8 @@ import '../../repositories/print_order_repository.dart';
 import '../../repositories/purchase_request_repository.dart';
 import '../../repositories/vendor_repository.dart';
 import '../../services/api_service.dart';
+import '../../theme/pms_theme.dart';
+import '../../widgets/app_gradient_background.dart';
 import '../print_orders/print_order_details_screen.dart';
 
 class PRDetailsScreen extends StatefulWidget {
@@ -171,7 +173,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       context: context,
       builder: (ctx) {
         return Dialog(
-          backgroundColor: const Color(0xFFFFFFFF),
+          backgroundColor: PmsTheme.glassSurface,
           insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -193,7 +195,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       child: Text(
                         title,
                         style: const TextStyle(
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
@@ -203,7 +205,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     IconButton(
                       icon: const Icon(
                         Icons.close,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                         size: 20,
                       ),
                       onPressed: () => Navigator.pop(ctx),
@@ -228,14 +230,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       final loaded = loadingProgress.cumulativeBytesLoaded;
                       return Container(
                         height: 200,
-                        color: const Color(0xFFF8FAFC),
+                        color: PmsTheme.background,
                         child: Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const CircularProgressIndicator(
+                                color: PmsTheme.primary,
                                 strokeWidth: 2.5,
-                                color: Color(0xFF2563EB),
                               ),
                               const SizedBox(height: 12),
                               Text(
@@ -244,7 +246,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                     : 'Loading image...',
                                 style: const TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF64748B),
+                                  color: PmsTheme.textSecondary,
                                 ),
                               ),
                             ],
@@ -256,7 +258,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       return Container(
                         height: 180,
                         padding: const EdgeInsets.all(16),
-                        color: const Color(0xFFFFFFFF),
+                        color: PmsTheme.glassSurface,
                         child: Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -270,7 +272,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                               const Text(
                                 'Unable to preview image directly.',
                                 style: TextStyle(
-                                  color: Color(0xFF64748B),
+                                  color: PmsTheme.textSecondary,
                                   fontSize: 13,
                                 ),
                               ),
@@ -280,7 +282,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 child: const Text(
                                   'Tap here to open in external viewer',
                                   style: TextStyle(
-                                    color: Color(0xFF2563EB),
+                                    color: PmsTheme.primary,
                                     fontSize: 12,
                                     decoration: TextDecoration.underline,
                                   ),
@@ -327,9 +329,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: PmsTheme.glassSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (modalCtx) {
         return StatefulBuilder(
@@ -354,7 +356,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           children: [
                             const Icon(
                               Icons.cloud_upload_outlined,
-                              color: Color(0xFF2563EB),
+                              color: PmsTheme.primary,
                               size: 22,
                             ),
                             const SizedBox(width: 8),
@@ -365,7 +367,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F172A),
+                                color: PmsTheme.textPrimary,
                               ),
                             ),
                           ],
@@ -373,7 +375,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         IconButton(
                           icon: const Icon(
                             Icons.close,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             size: 20,
                           ),
                           onPressed: () => Navigator.pop(bottomCtx),
@@ -410,7 +412,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                               pr.adminReviewRemarks!,
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF0F172A),
+                                color: PmsTheme.textPrimary,
                               ),
                             ),
                           ],
@@ -425,7 +427,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF475569),
+                        color: PmsTheme.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -457,10 +459,10 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 horizontal: 10,
                               ),
                               decoration: BoxDecoration(
-                                color: Color(0xFFF8FAFC),
+                                color: PmsTheme.background,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Color(0xFF2563EB)
+                                  color: PmsTheme.primary
                                       .withValues(alpha: 0.5),
                                 ),
                               ),
@@ -468,7 +470,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 children: [
                                   Icon(
                                     Icons.camera_alt_rounded,
-                                    color: Color(0xFF2563EB),
+                                    color: PmsTheme.primary,
                                     size: 22,
                                   ),
                                   SizedBox(height: 4),
@@ -476,7 +478,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                     'Click / Camera',
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: Color(0xFF0F172A),
+                                      color: PmsTheme.textPrimary,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -485,7 +487,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                     'Take live photo',
                                     style: TextStyle(
                                       fontSize: 9,
-                                      color: Color(0xFF64748B),
+                                      color: PmsTheme.textSecondary,
                                     ),
                                   ),
                                 ],
@@ -520,10 +522,10 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 horizontal: 10,
                               ),
                               decoration: BoxDecoration(
-                                color: Color(0xFFF8FAFC),
+                                color: PmsTheme.background,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Color(0xFF2563EB)
+                                  color: PmsTheme.primary
                                       .withValues(alpha: 0.5),
                                 ),
                               ),
@@ -531,7 +533,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 children: [
                                   Icon(
                                     Icons.folder_open_rounded,
-                                    color: Color(0xFF2563EB),
+                                    color: PmsTheme.primary,
                                     size: 22,
                                   ),
                                   SizedBox(height: 4),
@@ -539,7 +541,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                     'Explore Files',
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: Color(0xFF0F172A),
+                                      color: PmsTheme.textPrimary,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -548,7 +550,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                     'Gallery, PDF, Video',
                                     style: TextStyle(
                                       fontSize: 9,
-                                      color: Color(0xFF64748B),
+                                      color: PmsTheme.textSecondary,
                                     ),
                                   ),
                                 ],
@@ -565,7 +567,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Color(0xFFF8FAFC),
+                          color: PmsTheme.background,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Color(0xFF059669)),
                         ),
@@ -600,7 +602,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                               style: const TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.bold,
-                                                color: Color(0xFF0F172A),
+                                                color: PmsTheme.textPrimary,
                                               ),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -661,7 +663,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF475569),
+                        color: PmsTheme.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -670,21 +672,21 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       maxLines: 3,
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                       decoration: InputDecoration(
                         hintText: 'Describe artwork layout, media specs, color profiles, or corrections...',
                         hintStyle: const TextStyle(
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                           fontSize: 12,
                         ),
                         filled: true,
-                        fillColor: Color(0xFFF8FAFC),
+                        fillColor: PmsTheme.background,
                         contentPadding: const EdgeInsets.all(12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(
-                            color: Color(0xFFE2E8F0),
+                            color: PmsTheme.glassBorder,
                           ),
                         ),
                       ),
@@ -715,14 +717,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                             content: Text(
                               '✓ Artwork submitted to Super Admin for approval!',
                             ),
-                            backgroundColor: Color(0xFF2563EB),
+                            backgroundColor: PmsTheme.primary,
                           ),
                         );
                       },
                       icon: const Icon(Icons.send_rounded, size: 16),
                       label: const Text('Send to Admin for Approval'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF2563EB),
+                        backgroundColor: PmsTheme.primary,
                         foregroundColor: Color(0xFFFFFFFF),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -747,7 +749,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          backgroundColor: Color(0xFFFFFFFF),
+          backgroundColor: PmsTheme.glassSurface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
@@ -761,7 +763,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               SizedBox(width: 8),
               Text(
                 'Request Revision',
-                style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+                style: TextStyle(color: PmsTheme.textPrimary, fontSize: 16),
               ),
             ],
           ),
@@ -771,25 +773,25 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             children: [
               Text(
                 'Enter revision comments for Designer (${pr.assignedDesigner?.name ?? 'Designer'}):',
-                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                style: const TextStyle(color: PmsTheme.textSecondary, fontSize: 12),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: remarksCtrl,
                 maxLines: 3,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A)),
+                style: const TextStyle(fontSize: 12, color: PmsTheme.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Specify exact changes needed (e.g. font size, logo color, margin)...',
                   hintStyle: const TextStyle(
-                    color: Color(0xFF64748B),
+                    color: PmsTheme.textSecondary,
                     fontSize: 12,
                   ),
                   filled: true,
-                  fillColor: Color(0xFFF8FAFC),
+                  fillColor: PmsTheme.background,
                   contentPadding: const EdgeInsets.all(12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    borderSide: const BorderSide(color: PmsTheme.glassBorder),
                   ),
                 ),
               ),
@@ -800,7 +802,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               onPressed: () => Navigator.pop(dialogCtx),
               child: const Text(
                 'Cancel',
-                style: TextStyle(color: Color(0xFF64748B)),
+                style: TextStyle(color: PmsTheme.textSecondary),
               ),
             ),
             ElevatedButton(
@@ -845,7 +847,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          backgroundColor: Color(0xFFFFFFFF),
+          backgroundColor: PmsTheme.glassSurface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
@@ -859,20 +861,20 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               SizedBox(width: 8),
               Text(
                 'Approve Artwork',
-                style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+                style: TextStyle(color: PmsTheme.textPrimary, fontSize: 16),
               ),
             ],
           ),
           content: Text(
             'Are you sure you want to approve the artwork for PR ${pr.prNumber}? This will mark the design phase as completed.',
-            style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+            style: const TextStyle(color: PmsTheme.textSecondary, fontSize: 12),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx),
               child: const Text(
                 'Cancel',
-                style: TextStyle(color: Color(0xFF64748B)),
+                style: TextStyle(color: PmsTheme.textSecondary),
               ),
             ),
             ElevatedButton(
@@ -970,7 +972,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return AlertDialog(
-              backgroundColor: const Color(0xFFFFFFFF),
+              backgroundColor: PmsTheme.glassSurface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
@@ -998,7 +1000,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                               ? 'Re-assign Designer'
                               : 'Assign Designer',
                           style: const TextStyle(
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1006,7 +1008,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         Text(
                           pr.prNumber,
                           style: const TextStyle(
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             fontSize: 11,
                             fontFamily: 'monospace',
                             fontWeight: FontWeight.bold,
@@ -1024,7 +1026,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   Text(
                     'Select a Designer for Wing "${pr.wing?.name ?? 'General'}":',
                     style: const TextStyle(
-                      color: Color(0xFF475569),
+                      color: PmsTheme.textSecondary,
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
                     ),
@@ -1036,7 +1038,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: PmsTheme.background,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: const Color(0xFFCBD5E1)),
                     ),
@@ -1047,7 +1049,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         dropdownColor: const Color(0xFFFFFFFF),
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                         items: designers.map((d) {
@@ -1088,7 +1090,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   child: const Text(
                     'Cancel',
                     style: TextStyle(
-                      color: Color(0xFF64748B),
+                      color: PmsTheme.textSecondary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1168,15 +1170,16 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+    return AppGradientBackground(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: PmsTheme.glassSurface,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Color(0xFF0F172A),
+            color: PmsTheme.textPrimary,
             size: 18,
           ),
           onPressed: () => Navigator.pop(context),
@@ -1186,7 +1189,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0F172A),
+            color: PmsTheme.textPrimary,
           ),
         ),
       ),
@@ -1194,7 +1197,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
         builder: (context, state) {
           if (state is PurchaseRequestLoading) {
             return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+              child: CircularProgressIndicator(color: PmsTheme.primary),
             );
           }
 
@@ -1204,7 +1207,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 .toList();
             if (prList.isEmpty) {
               return RefreshIndicator(
-                color: const Color(0xFF2563EB),
+                color: PmsTheme.primary,
                 onRefresh: _handleRefresh,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -1213,7 +1216,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     alignment: Alignment.center,
                     child: const Text(
                       'Purchase Request not found. Pull to refresh.',
-                      style: TextStyle(color: Color(0xFF64748B)),
+                      style: TextStyle(color: PmsTheme.textSecondary),
                     ),
                   ),
                 ),
@@ -1225,7 +1228,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           }
 
           return RefreshIndicator(
-            color: const Color(0xFF2563EB),
+            color: PmsTheme.primary,
             onRefresh: _handleRefresh,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -1234,12 +1237,13 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 alignment: Alignment.center,
                 child: const Text(
                   'Error loading PR details. Pull to retry.',
-                  style: TextStyle(color: Color(0xFF64748B)),
+                  style: TextStyle(color: PmsTheme.textSecondary),
                 ),
               ),
             ),
           );
         },
+      ),
       ),
     );
   }
@@ -1249,7 +1253,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       children: [
         Expanded(
           child: RefreshIndicator(
-            color: const Color(0xFF2563EB),
+            color: PmsTheme.primary,
             onRefresh: _handleRefresh,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -1291,9 +1295,10 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1307,9 +1312,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: Color(0xFFF8FAFC),
+                  color: PmsTheme.background,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Color(0xFFE2E8F0)),
+                  border: Border.all(color: PmsTheme.glassBorder),
                 ),
                 child: Text(
                   pr.prNumber,
@@ -1326,7 +1331,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(color: Color(0xFFE2E8F0), height: 1),
+          const Divider(color: PmsTheme.glassBorder, height: 1),
           const SizedBox(height: 12),
 
           // Meta Grid
@@ -1338,7 +1343,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   children: [
                     const Text(
                       'Campus / Wing',
-                      style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 10, color: PmsTheme.textSecondary),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -1346,7 +1351,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                   ],
@@ -1358,7 +1363,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   children: [
                     const Text(
                       'Expected Delivery',
-                      style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 10, color: PmsTheme.textSecondary),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -1366,7 +1371,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                       ),
                     ),
                   ],
@@ -1381,9 +1386,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: PmsTheme.background,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: PmsTheme.glassBorder),
             ),
             child: Row(
               children: [
@@ -1400,7 +1405,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         ? Icons.brush_rounded
                         : Icons.person_off_outlined,
                     color: pr.assignedDesigner != null
-                        ? const Color(0xFF4F46E5)
+                        ? PmsTheme.primary
                         : const Color(0xFFD97706),
                     size: 18,
                   ),
@@ -1418,7 +1423,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           fontSize: 9.5,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.5,
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -1430,7 +1435,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: pr.assignedDesigner != null
-                              ? const Color(0xFF0F172A)
+                              ? PmsTheme.textPrimary
                               : const Color(0xFFD97706),
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -1447,7 +1452,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           ? Icons.swap_horiz_rounded
                           : Icons.person_add_alt_1_rounded,
                       size: 16,
-                      color: Colors.white,
+                      
                     ),
                     label: Text(
                       pr.assignedDesigner != null ? 'Re-assign' : 'Assign',
@@ -1458,7 +1463,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: pr.assignedDesigner != null
-                          ? const Color(0xFF4F46E5)
+                          ? PmsTheme.primary
                           : const Color(0xFFD97706),
                       foregroundColor: Colors.white,
                       elevation: 1.5,
@@ -1523,7 +1528,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   'Please review requested changes and submit revised artwork.',
               style: const TextStyle(
                 fontSize: 12,
-                color: Color(0xFF0F172A),
+                color: PmsTheme.textPrimary,
                 height: 1.3,
               ),
             ),
@@ -1547,16 +1552,16 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Color(0xFFFFFFFF),
+                    color: PmsTheme.glassSurface,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Color(0xFF475569)),
+                    border: Border.all(color: PmsTheme.textSecondary),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(
                         Icons.remove_red_eye_outlined,
-                        color: Color(0xFF475569),
+                        color: PmsTheme.textSecondary,
                         size: 14,
                       ),
                       const SizedBox(width: 6),
@@ -1565,7 +1570,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           'View Last Submitted File \n(${pr.artworkFileName ?? 'Artwork'})',
                           style: const TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF475569),
+                            color: PmsTheme.textSecondary,
                             fontWeight: FontWeight.bold,
                           ),
                           maxLines: 2,
@@ -1591,7 +1596,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
         decoration: BoxDecoration(
           color: Color(0xFFF5F3FF).withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Color(0xFF2563EB).withValues(alpha: 0.6)),
+          border: Border.all(color: PmsTheme.primary.withValues(alpha: 0.6)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1604,7 +1609,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     children: [
                       Icon(
                         Icons.hourglass_top_rounded,
-                        color: Color(0xFF475569),
+                        color: PmsTheme.textSecondary,
                         size: 16,
                       ),
                       SizedBox(width: 6),
@@ -1614,7 +1619,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF475569),
+                            color: PmsTheme.textSecondary,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1636,14 +1641,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Color(0xFF2563EB),
+                        color: PmsTheme.primary,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text(
                         'View Image',
                         style: TextStyle(
                           fontSize: 10,
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1658,14 +1663,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Color(0xFF2563EB),
+                        color: PmsTheme.primary,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text(
                         'Open File',
                         style: TextStyle(
                           fontSize: 10,
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1679,7 +1684,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: PmsTheme.textPrimary,
               ),
             ),
             if (pr.designerSubmissionRemarks != null &&
@@ -1687,7 +1692,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               const SizedBox(height: 4),
               Text(
                 'Designer Note: ${pr.designerSubmissionRemarks}',
-                style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary),
               ),
             ],
             if (isImg && fileUrl.isNotEmpty) ...[
@@ -1709,14 +1714,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       if (loadingProgress == null) return child;
                       return Container(
                         height: 120,
-                        color: const Color(0xFFF1F5F9),
+                        color: PmsTheme.bgSoft,
                         child: const Center(
                           child: SizedBox(
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
+                              color: PmsTheme.primary,
                               strokeWidth: 2,
-                              color: Color(0xFF2563EB),
                             ),
                           ),
                         ),
@@ -1745,11 +1750,11 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       IconData headerIcon = Icons.check_circle_rounded;
       if (pr.status == 'sent_to_print') {
         title = 'Dispatched to Print Vendor';
-        headerColor = Color(0xFF2563EB);
+        headerColor = PmsTheme.primary;
         headerIcon = Icons.print_rounded;
       } else if (pr.status == 'posted') {
         title = 'Forwarded for Post Publishing';
-        headerColor = Color(0xFF475569);
+        headerColor = PmsTheme.textSecondary;
         headerIcon = Icons.campaign_rounded;
       } else if (pr.status == 'completed') {
         title = 'Completed & Delivered';
@@ -1813,7 +1818,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         'View Artwork',
                         style: TextStyle(
                           fontSize: 10,
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1830,13 +1835,13 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Color(0xFFEFF6FF).withValues(alpha: 0.25),
+          color: PmsTheme.backgroundGradientStart.withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Color(0xFF2563EB).withValues(alpha: 0.5)),
+          border: Border.all(color: PmsTheme.primary.withValues(alpha: 0.5)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.brush_rounded, color: Color(0xFF2563EB), size: 16),
+            const Icon(Icons.brush_rounded, color: PmsTheme.primary, size: 16),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -1844,7 +1849,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2563EB),
+                  color: PmsTheme.primary,
                 ),
               ),
             ),
@@ -1940,10 +1945,10 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFEFF6FF).withValues(alpha: 0.4),
+          color: PmsTheme.backgroundGradientStart.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.4),
+            color: PmsTheme.primary.withValues(alpha: 0.4),
           ),
         ),
         child: Column(
@@ -1954,12 +1959,12 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                    color: PmsTheme.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
                     Icons.palette_outlined,
-                    color: Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                     size: 20,
                   ),
                 ),
@@ -1973,7 +1978,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                             ? 'Assigned to: ${pr.assignedDesigner!.name}'
                             : 'Assigned to Designer',
                         style: const TextStyle(
-                          color: Color(0xFF1E40AF),
+                          color: PmsTheme.primaryDark,
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
@@ -2005,7 +2010,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4F46E5),
+                  backgroundColor: PmsTheme.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   elevation: 1,
@@ -2049,7 +2054,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFFFEF3C7),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFF59E0B)),
+                border: Border.all(color: PmsTheme.warning),
               ),
               child: const Icon(
                 Icons.lock_rounded,
@@ -2117,9 +2122,10 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2140,7 +2146,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                     ),
                   ),
                 ],
@@ -2148,14 +2154,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Color(0xFFF8FAFC),
+                  color: PmsTheme.background,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   '${pr.items.length} item(s)',
                   style: const TextStyle(
                     fontSize: 10,
-                    color: Color(0xFF64748B),
+                    color: PmsTheme.textSecondary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -2170,9 +2176,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               padding: const EdgeInsets.all(10),
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: Color(0xFFF8FAFC),
+                color: PmsTheme.background,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Color(0xFFE2E8F0)),
+                border: Border.all(color: PmsTheme.glassBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2181,7 +2187,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     children: [
                       Icon(
                         Icons.notes_rounded,
-                        color: Color(0xFF2563EB),
+                        color: PmsTheme.primary,
                         size: 14,
                       ),
                       SizedBox(width: 4),
@@ -2190,7 +2196,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF2563EB),
+                          color: PmsTheme.primary,
                         ),
                       ),
                     ],
@@ -2200,7 +2206,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     pr.remarks!,
                     style: const TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF475569),
+                      color: PmsTheme.textSecondary,
                       height: 1.3,
                     ),
                   ),
@@ -2220,9 +2226,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Color(0xFFF8FAFC),
+                color: PmsTheme.background,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Color(0xFFE2E8F0)),
+                border: Border.all(color: PmsTheme.glassBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2241,7 +2247,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Color(0xFFFFFFFF),
+                                  color: PmsTheme.glassSurface,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -2260,7 +2266,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
+                                  color: PmsTheme.textPrimary,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -2295,7 +2301,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         : 'Size: Not specified',
                     style: const TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF64748B),
+                      color: PmsTheme.textSecondary,
                     ),
                   ),
 
@@ -2311,7 +2317,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                             'Sample: ${it.attachmentName ?? it.attachmentPath}',
                             style: const TextStyle(
                               fontSize: 10,
-                              color: Color(0xFF475569),
+                              color: PmsTheme.textSecondary,
                               fontStyle: FontStyle.italic,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -2335,14 +2341,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Color(0xFFE2E8F0),
+                              color: PmsTheme.glassBorder,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
                               'View Sample',
                               style: TextStyle(
                                 fontSize: 9,
-                                color: Color(0xFF2563EB),
+                                color: PmsTheme.primary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -2368,9 +2374,10 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2382,7 +2389,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 children: [
                   Icon(
                     Icons.history_rounded,
-                    color: Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                     size: 16,
                   ),
                   SizedBox(width: 6),
@@ -2391,7 +2398,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                     ),
                   ),
                 ],
@@ -2422,26 +2429,26 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           if (pr.activities.isEmpty)
             const Text(
               'No activity logs recorded yet.',
-              style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 11, color: PmsTheme.textSecondary),
             )
           else
             ...pr.activities.map((act) {
               final actDate = _formatDateTime(act.createdAt);
 
-              Color badgeBg = Color(0xFFF8FAFC);
-              Color badgeBorder = Color(0xFFE2E8F0);
-              Color badgeText = Color(0xFF64748B);
+              Color badgeBg = PmsTheme.background;
+              Color badgeBorder = PmsTheme.glassBorder;
+              Color badgeText = PmsTheme.textSecondary;
               String actionTitle = act.action;
 
               if (act.action == 'work_started') {
-                badgeBg = Color(0xFFEFF6FF).withValues(alpha: 0.4);
-                badgeBorder = Color(0xFF2563EB);
-                badgeText = Color(0xFF2563EB);
+                badgeBg = PmsTheme.backgroundGradientStart.withValues(alpha: 0.4);
+                badgeBorder = PmsTheme.primary;
+                badgeText = PmsTheme.primary;
                 actionTitle = 'Work Started';
               } else if (act.action == 'submitted_for_approval') {
                 badgeBg = Color(0xFFF5F3FF).withValues(alpha: 0.4);
-                badgeBorder = Color(0xFF2563EB);
-                badgeText = Color(0xFF475569);
+                badgeBorder = PmsTheme.primary;
+                badgeText = PmsTheme.textSecondary;
                 actionTitle = 'Artwork Submitted';
               } else if (act.action == 'rejected_with_revision') {
                 badgeBg = Color(0xFFFEF2F2).withValues(alpha: 0.4);
@@ -2466,9 +2473,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Color(0xFFF8FAFC),
+                  color: PmsTheme.background,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Color(0xFFE2E8F0)),
+                  border: Border.all(color: PmsTheme.glassBorder),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2499,7 +2506,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           actDate,
                           style: const TextStyle(
                             fontSize: 10,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                           ),
                         ),
                       ],
@@ -2510,7 +2517,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         _sanitizeAuditRemarks(act.remarks!, pr),
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                           height: 1.3,
                         ),
                       ),
@@ -2535,9 +2542,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: Color(0xFFFFFFFF),
+                            color: PmsTheme.glassSurface,
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Color(0xFF475569)),
+                            border: Border.all(color: PmsTheme.textSecondary),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -2547,7 +2554,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                     ? Icons.image_rounded
                                     : Icons.attach_file_rounded,
                                 size: 12,
-                                color: Color(0xFF2563EB),
+                                color: PmsTheme.primary,
                               ),
                               const SizedBox(width: 4),
                               Flexible(
@@ -2555,7 +2562,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                   'View Attached Proof \n(${act.attachmentName ?? 'File'})',
                                   style: const TextStyle(
                                     fontSize: 10,
-                                    color: Color(0xFF2563EB),
+                                    color: PmsTheme.primary,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -2635,8 +2642,8 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
-            color: Color(0xFFFFFFFF),
-            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            color: PmsTheme.glassSurface,
+            border: Border(top: BorderSide(color: PmsTheme.glassBorder)),
           ),
           child: ElevatedButton.icon(
             onPressed: () {
@@ -2678,8 +2685,8 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
-            color: Color(0xFFFFFFFF),
-            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            color: PmsTheme.glassSurface,
+            border: Border(top: BorderSide(color: PmsTheme.glassBorder)),
           ),
           child: ElevatedButton.icon(
             onPressed: () => _showSubmitWorkModal(context, pr),
@@ -2691,7 +2698,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF2563EB),
+              backgroundColor: PmsTheme.primary,
               foregroundColor: Color(0xFFFFFFFF),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -2705,25 +2712,25 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       if (isDesigner && pr.status == 'submitted_for_approval') {
         return Container(
           padding: const EdgeInsets.all(16),
-          color: const Color(0xFFFFFFFF),
+          color: PmsTheme.glassSurface,
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF).withValues(alpha: 0.35),
+              color: PmsTheme.backgroundGradientStart.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.5),
+                color: PmsTheme.primary.withValues(alpha: 0.5),
               ),
             ),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.hourglass_top_rounded, color: Color(0xFF2563EB), size: 16),
+                Icon(Icons.hourglass_top_rounded, color: PmsTheme.primary, size: 16),
                 SizedBox(width: 8),
                 Text(
                   'Artwork Submitted · Waiting for Incharge Approval',
                   style: TextStyle(
-                    color: Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -2740,7 +2747,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       if (pr.status == 'pending_assignment') {
         return Container(
           padding: const EdgeInsets.all(16),
-          color: const Color(0xFFFFFFFF),
+          color: PmsTheme.glassSurface,
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -2826,14 +2833,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       if (pr.status == 'assigned_to_designer') {
         return Container(
           padding: const EdgeInsets.all(16),
-          color: const Color(0xFFFFFFFF),
+          color: PmsTheme.glassSurface,
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF).withValues(alpha: 0.4),
+              color: PmsTheme.backgroundGradientStart.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.4),
+                color: PmsTheme.primary.withValues(alpha: 0.4),
               ),
             ),
             child: Column(
@@ -2844,12 +2851,12 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                        color: PmsTheme.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
                         Icons.palette_outlined,
-                        color: Color(0xFF2563EB),
+                        color: PmsTheme.primary,
                         size: 20,
                       ),
                     ),
@@ -2863,7 +2870,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 ? 'Assigned to Designer: ${pr.assignedDesigner!.name}'
                                 : 'Assigned to Designer',
                             style: const TextStyle(
-                              color: Color(0xFF1E40AF),
+                              color: PmsTheme.primaryDark,
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
@@ -2895,7 +2902,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4F46E5),
+                      backgroundColor: PmsTheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       elevation: 1,
@@ -2918,8 +2925,8 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
-            color: Color(0xFFFFFFFF),
-            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            color: PmsTheme.glassSurface,
+            border: Border(top: BorderSide(color: PmsTheme.glassBorder)),
           ),
           child: Row(
             children: [
@@ -2962,7 +2969,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       if (pr.status == 'rejected_revision_needed') {
         return Container(
           padding: const EdgeInsets.all(16),
-          color: const Color(0xFFFFFFFF),
+          color: PmsTheme.glassSurface,
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
             decoration: BoxDecoration(
@@ -3000,25 +3007,25 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       if (pr.status == 'in_progress') {
         return Container(
           padding: const EdgeInsets.all(16),
-          color: const Color(0xFFFFFFFF),
+          color: PmsTheme.glassSurface,
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF).withValues(alpha: 0.3),
+              color: PmsTheme.backgroundGradientStart.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.5),
+                color: PmsTheme.primary.withValues(alpha: 0.5),
               ),
             ),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.brush_rounded, color: Color(0xFF2563EB), size: 16),
+                Icon(Icons.brush_rounded, color: PmsTheme.primary, size: 16),
                 SizedBox(width: 8),
                 Text(
                   'Designer is Currently Working on this PR',
                   style: TextStyle(
-                    color: Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -3039,8 +3046,8 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
-            color: Color(0xFFFFFFFF),
-            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            color: PmsTheme.glassSurface,
+            border: Border(top: BorderSide(color: PmsTheme.glassBorder)),
           ),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
@@ -3103,8 +3110,8 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
-        color: Color(0xFFFFFFFF),
-        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        color: PmsTheme.glassSurface,
+        border: Border(top: BorderSide(color: PmsTheme.glassBorder)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -3114,10 +3121,10 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: Color(0xFFEFF6FF).withValues(alpha: 0.35),
+                color: PmsTheme.backgroundGradientStart.withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Color(0xFF2563EB).withValues(alpha: 0.6),
+                  color: PmsTheme.primary.withValues(alpha: 0.6),
                 ),
               ),
               child: Row(
@@ -3125,12 +3132,12 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Color(0xFF2563EB),
+                      color: PmsTheme.primary,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
                       Icons.print_rounded,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                       size: 16,
                     ),
                   ),
@@ -3144,7 +3151,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                               ? 'Sent to Print to ${activePO?.vendor?.name ?? 'Vendor'}'
                               : 'Sent to Print to XXXX (Printing Vendor)',
                           style: const TextStyle(
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -3155,7 +3162,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         Text(
                           '${activePO?.poNumber ?? ''} · Status: ${(activePO?.status ?? 'dispatched').replaceAll('_', ' ').toUpperCase()}',
                           style: const TextStyle(
-                            color: Color(0xFF2563EB),
+                            color: PmsTheme.primary,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),
@@ -3183,17 +3190,17 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Color(0xFF2563EB).withValues(alpha: 0.2),
+                          color: PmsTheme.primary.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: Color(0xFF2563EB).withValues(alpha: 0.5),
+                            color: PmsTheme.primary.withValues(alpha: 0.5),
                           ),
                         ),
                         child: const Text(
                           'View PO',
                           style: TextStyle(
                             fontSize: 10,
-                            color: Color(0xFF2563EB),
+                            color: PmsTheme.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -3237,7 +3244,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 color: Color(0xFFF5F3FF).withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Color(0xFF2563EB).withValues(alpha: 0.6),
+                  color: PmsTheme.primary.withValues(alpha: 0.6),
                 ),
               ),
               child: Row(
@@ -3245,12 +3252,12 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Color(0xFF2563EB),
+                      color: PmsTheme.primary,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
                       Icons.campaign_rounded,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                       size: 16,
                     ),
                   ),
@@ -3262,7 +3269,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         const Text(
                           'Forwarded for Post Publishing ✓',
                           style: TextStyle(
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -3272,7 +3279,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           Text(
                             'Posted on ${_formatDateTime(pr.postedAt)}',
                             style: const TextStyle(
-                              color: Color(0xFF475569),
+                              color: PmsTheme.textSecondary,
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
@@ -3393,7 +3400,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF2563EB), // Purple
+                      backgroundColor: PmsTheme.primary, // Purple
                       foregroundColor: Color(0xFFFFFFFF),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -3416,7 +3423,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF2563EB), // Blue
+                      backgroundColor: PmsTheme.primary, // Blue
                       foregroundColor: Color(0xFFFFFFFF),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -3436,7 +3443,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: Color(0xFFFFFFFF),
+        backgroundColor: PmsTheme.glassSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
@@ -3444,20 +3451,20 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             SizedBox(width: 8),
             Text(
               'Cancel Print Order',
-              style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+              style: TextStyle(color: PmsTheme.textPrimary, fontSize: 16),
             ),
           ],
         ),
         content: Text(
           'Are you sure you want to cancel print order ${activePO?.poNumber ?? ''} dispatched to ${activePO?.vendor?.name ?? 'vendor'}? PR status will revert to Approved.',
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+          style: const TextStyle(color: PmsTheme.textSecondary, fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
             child: const Text(
               'No, Keep Order',
-              style: TextStyle(color: Color(0xFF64748B)),
+              style: TextStyle(color: PmsTheme.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -3493,7 +3500,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: Color(0xFFFFFFFF),
+        backgroundColor: PmsTheme.glassSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
@@ -3501,20 +3508,20 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             SizedBox(width: 8),
             Text(
               'Cancel Post Request',
-              style: TextStyle(color: Color(0xFF0F172A), fontSize: 16),
+              style: TextStyle(color: PmsTheme.textPrimary, fontSize: 16),
             ),
           ],
         ),
         content: Text(
           'Are you sure you want to cancel the post publishing request for ${pr.prNumber}?',
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+          style: const TextStyle(color: PmsTheme.textSecondary, fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
             child: const Text(
               'No, Keep Post',
-              style: TextStyle(color: Color(0xFF64748B)),
+              style: TextStyle(color: PmsTheme.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -3550,19 +3557,19 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: Color(0xFFFFFFFF),
+        backgroundColor: PmsTheme.glassSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Color(0xFF2563EB).withValues(alpha: 0.2),
+                color: PmsTheme.primary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
                 Icons.campaign_rounded,
-                color: Color(0xFF2563EB),
+                color: PmsTheme.primary,
                 size: 20,
               ),
             ),
@@ -3570,7 +3577,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             const Text(
               'Submit Post Request',
               style: TextStyle(
-                color: Color(0xFF0F172A),
+                color: PmsTheme.textPrimary,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
@@ -3583,24 +3590,24 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           children: [
             Text(
               'Forward approved artwork for ${pr.prNumber} for digital & social media posting?',
-              style: const TextStyle(color: Color(0xFF475569), fontSize: 13),
+              style: const TextStyle(color: PmsTheme.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: remarksController,
               maxLines: 2,
-              style: const TextStyle(color: Color(0xFF0F172A), fontSize: 13),
+              style: const TextStyle(color: PmsTheme.textPrimary, fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'Optional instructions (e.g. publish on Instagram & Facebook)...',
                 hintStyle: const TextStyle(
-                  color: Color(0xFF64748B),
+                  color: PmsTheme.textSecondary,
                   fontSize: 12,
                 ),
                 filled: true,
-                fillColor: Color(0xFFF8FAFC),
+                fillColor: PmsTheme.background,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  borderSide: const BorderSide(color: PmsTheme.glassBorder),
                 ),
               ),
             ),
@@ -3611,7 +3618,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             onPressed: () => Navigator.pop(dialogCtx),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: Color(0xFF64748B)),
+              style: TextStyle(color: PmsTheme.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -3633,7 +3640,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    backgroundColor: Color(0xFFFFFFFF),
+                    backgroundColor: PmsTheme.glassSurface,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -3657,7 +3664,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         const Text(
                           'Thank You!',
                           style: TextStyle(
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
@@ -3667,7 +3674,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           'Post request received for ${pr.prNumber}.',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            color: Color(0xFF475569),
+                            color: PmsTheme.textSecondary,
                             fontSize: 13,
                           ),
                         ),
@@ -3690,7 +3697,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF2563EB),
+                            backgroundColor: PmsTheme.primary,
                             foregroundColor: Color(0xFFFFFFFF),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -3713,7 +3720,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF2563EB),
+              backgroundColor: PmsTheme.primary,
               foregroundColor: Color(0xFFFFFFFF),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -3761,8 +3768,8 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           return Container(
             height: MediaQuery.of(context).size.height * 0.9,
             decoration: const BoxDecoration(
-              color: Color(0xFFFFFFFF),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              color: PmsTheme.glassSurface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black54,
@@ -3778,7 +3785,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   height: 4,
                   margin: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: Color(0xFF475569),
+                    color: PmsTheme.textSecondary,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -3795,12 +3802,12 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Color(0xFF2563EB).withValues(alpha: 0.2),
+                              color: PmsTheme.primary.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Icon(
                               Icons.print_rounded,
-                              color: Color(0xFF2563EB),
+                              color: PmsTheme.primary,
                               size: 22,
                             ),
                           ),
@@ -3813,14 +3820,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
+                                  color: PmsTheme.textPrimary,
                                 ),
                               ),
                               Text(
                                 '${pr.prNumber} · ${pr.wing?.name ?? 'General Wing'}',
                                 style: const TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF64748B),
+                                  color: PmsTheme.textSecondary,
                                 ),
                               ),
                             ],
@@ -3829,12 +3836,12 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(modalCtx),
-                        icon: const Icon(Icons.close, color: Color(0xFF475569)),
+                        icon: const Icon(Icons.close, color: PmsTheme.textSecondary),
                       ),
                     ],
                   ),
                 ),
-                const Divider(color: Color(0xFFE2E8F0), height: 1),
+                const Divider(color: PmsTheme.glassBorder, height: 1),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(20),
@@ -3844,7 +3851,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         const Text(
                           'SELECT PRINTING VENDOR *',
                           style: TextStyle(
-                            color: Color(0xFF2563EB),
+                            color: PmsTheme.primary,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -3855,13 +3862,13 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Color(0xFFF8FAFC),
+                              color: PmsTheme.background,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Text(
                               'No vendors found. Please register a vendor first.',
                               style: TextStyle(
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                                 fontSize: 12,
                               ),
                             ),
@@ -3870,9 +3877,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14),
                             decoration: BoxDecoration(
-                              color: Color(0xFFF8FAFC),
+                              color: PmsTheme.background,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Color(0xFFE2E8F0)),
+                              border: Border.all(color: PmsTheme.glassBorder),
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<VendorModel>(
@@ -3885,7 +3892,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                     child: Text(
                                       '${v.name} (+91 ${v.mobile1})',
                                       style: const TextStyle(
-                                        color: Color(0xFF0F172A),
+                                        color: PmsTheme.textPrimary,
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -3904,7 +3911,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         const Text(
                           'PRODUCTS TO PRINT (ADJUST QTY & ATTACHMENTS)',
                           style: TextStyle(
-                            color: Color(0xFF2563EB),
+                            color: PmsTheme.primary,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -3924,9 +3931,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Color(0xFFF8FAFC),
+                            color: PmsTheme.background,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Color(0xFFE2E8F0)),
+                            border: Border.all(color: PmsTheme.glassBorder),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -3941,7 +3948,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                         const Text(
                                           'Target Wing (Read-Only):',
                                           style: TextStyle(
-                                            color: Color(0xFF64748B),
+                                            color: PmsTheme.textSecondary,
                                             fontSize: 10,
                                           ),
                                         ),
@@ -3949,7 +3956,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                         Text(
                                           pr.wing?.name ?? 'General Wing',
                                           style: const TextStyle(
-                                            color: Color(0xFF0F172A),
+                                            color: PmsTheme.textPrimary,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 12,
                                           ),
@@ -3965,7 +3972,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                         const Text(
                                           'Expected Delivery (Read-Only):',
                                           style: TextStyle(
-                                            color: Color(0xFF64748B),
+                                            color: PmsTheme.textSecondary,
                                             fontSize: 10,
                                           ),
                                         ),
@@ -3973,7 +3980,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                         Text(
                                           '${pr.expectedDeliveryDate ?? 'ASAP'} (${pr.expectedDeliveryTime ?? 'Anytime'})',
                                           style: const TextStyle(
-                                            color: Color(0xFF0F172A),
+                                            color: PmsTheme.textPrimary,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 12,
                                           ),
@@ -3986,13 +3993,13 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                               if (pr.remarks != null &&
                                   pr.remarks!.isNotEmpty) ...[
                                 const Divider(
-                                  color: Color(0xFFE2E8F0),
+                                  color: PmsTheme.glassBorder,
                                   height: 16,
                                 ),
                                 const Text(
                                   'Requester Remarks (Read-Only):',
                                   style: TextStyle(
-                                    color: Color(0xFF64748B),
+                                    color: PmsTheme.textSecondary,
                                     fontSize: 10,
                                   ),
                                 ),
@@ -4000,7 +4007,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                 Text(
                                   pr.remarks!,
                                   style: const TextStyle(
-                                    color: Color(0xFF475569),
+                                    color: PmsTheme.textSecondary,
                                     fontSize: 11,
                                   ),
                                 ),
@@ -4012,7 +4019,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                         const Text(
                           'PRINT ORDER REMARKS FOR VENDOR / PRINTER',
                           style: TextStyle(
-                            color: Color(0xFF2563EB),
+                            color: PmsTheme.primary,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -4023,21 +4030,21 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           controller: printOrderRemarksCtrl,
                           maxLines: 2,
                           style: const TextStyle(
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                             fontSize: 13,
                           ),
                           decoration: InputDecoration(
                             hintText: 'Specific instructions (e.g. 300 GSM Star Flex, 4 corner eyelets, urgent delivery)...',
                             hintStyle: const TextStyle(
-                              color: Color(0xFF64748B),
+                              color: PmsTheme.textSecondary,
                               fontSize: 12,
                             ),
                             filled: true,
-                            fillColor: Color(0xFFF8FAFC),
+                            fillColor: PmsTheme.background,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: const BorderSide(
-                                color: Color(0xFFE2E8F0),
+                                color: PmsTheme.glassBorder,
                               ),
                             ),
                           ),
@@ -4088,7 +4095,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                     content: Text(
                                       'Dispatching Print Order to Vendor...',
                                     ),
-                                    backgroundColor: Color(0xFF2563EB),
+                                    backgroundColor: PmsTheme.primary,
                                   ),
                                 );
 
@@ -4143,7 +4150,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF2563EB),
+                              backgroundColor: PmsTheme.primary,
                               foregroundColor: Color(0xFFFFFFFF),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
@@ -4173,9 +4180,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Color(0xFFF8FAFC),
+        color: PmsTheme.background,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Color(0xFFE2E8F0)),
+        border: Border.all(color: PmsTheme.glassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4186,14 +4193,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
-                  color: Color(0xFF2563EB).withValues(alpha: 0.2),
+                  color: PmsTheme.primary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Center(
                   child: Text(
                     '${idx + 1}',
                     style: const TextStyle(
-                      color: Color(0xFF2563EB),
+                      color: PmsTheme.primary,
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
@@ -4205,7 +4212,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 child: Text(
                   state.item.productName,
                   style: const TextStyle(
-                    color: Color(0xFF0F172A),
+                    color: PmsTheme.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
@@ -4221,14 +4228,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   controller: state.quantityCtrl,
                   keyboardType: TextInputType.number,
                   style: const TextStyle(
-                    color: Color(0xFF0F172A),
+                    color: PmsTheme.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
                   decoration: InputDecoration(
                     labelText: 'Quantity',
                     labelStyle: const TextStyle(
-                      color: Color(0xFF64748B),
+                      color: PmsTheme.textSecondary,
                       fontSize: 11,
                     ),
                     filled: true,
@@ -4239,7 +4246,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      borderSide: const BorderSide(color: PmsTheme.glassBorder),
                     ),
                   ),
                 ),
@@ -4249,13 +4256,13 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 child: TextField(
                   controller: state.sizeCtrl,
                   style: const TextStyle(
-                    color: Color(0xFF0F172A),
+                    color: PmsTheme.textPrimary,
                     fontSize: 13,
                   ),
                   decoration: InputDecoration(
                     labelText: 'Size / Dimension',
                     labelStyle: const TextStyle(
-                      color: Color(0xFF64748B),
+                      color: PmsTheme.textSecondary,
                       fontSize: 11,
                     ),
                     filled: true,
@@ -4266,7 +4273,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      borderSide: const BorderSide(color: PmsTheme.glassBorder),
                     ),
                   ),
                 ),
@@ -4312,7 +4319,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     },
                     child: const Icon(
                       Icons.close,
-                      color: Color(0xFF64748B),
+                      color: PmsTheme.textSecondary,
                       size: 14,
                     ),
                   ),
@@ -4324,15 +4331,16 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Color(0xFFFFFFFF),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
               ),
               child: Row(
                 children: [
                   const Icon(
                     Icons.image_outlined,
-                    color: Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                     size: 14,
                   ),
                   const SizedBox(width: 6),
@@ -4340,7 +4348,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     child: Text(
                       'Using Proof: ${state.defaultAttachmentName ?? 'Artwork'}',
                       style: const TextStyle(
-                        color: Color(0xFF475569),
+                        color: PmsTheme.textSecondary,
                         fontSize: 11,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -4376,8 +4384,8 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     style: TextStyle(fontSize: 11),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Color(0xFF2563EB),
-                    side: const BorderSide(color: Color(0xFF2563EB)),
+                    foregroundColor: PmsTheme.primary,
+                    side: const BorderSide(color: PmsTheme.primary),
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -4405,8 +4413,8 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     style: TextStyle(fontSize: 11),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Color(0xFF2563EB),
-                    side: const BorderSide(color: Color(0xFF2563EB)),
+                    foregroundColor: PmsTheme.primary,
+                    side: const BorderSide(color: PmsTheme.primary),
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -4429,21 +4437,21 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     String label = 'Pending Assignment';
 
     if (status == 'assigned_to_designer') {
-      bg = Color(0xFFEFF6FF).withValues(alpha: 0.4);
-      border = Color(0xFF2563EB);
-      text = Color(0xFF2563EB);
+      bg = PmsTheme.backgroundGradientStart.withValues(alpha: 0.4);
+      border = PmsTheme.primary;
+      text = PmsTheme.primary;
       icon = Icons.assignment_ind_rounded;
       label = 'Assigned';
     } else if (status == 'in_progress') {
-      bg = Color(0xFFEFF6FF).withValues(alpha: 0.4);
-      border = Color(0xFF2563EB);
-      text = Color(0xFF2563EB);
+      bg = PmsTheme.backgroundGradientStart.withValues(alpha: 0.4);
+      border = PmsTheme.primary;
+      text = PmsTheme.primary;
       icon = Icons.draw_rounded;
       label = 'In Progress';
     } else if (status == 'submitted_for_approval') {
       bg = Color(0xFFF5F3FF).withValues(alpha: 0.4);
-      border = Color(0xFF2563EB);
-      text = Color(0xFF475569);
+      border = PmsTheme.primary;
+      text = PmsTheme.textSecondary;
       icon = Icons.hourglass_top_rounded;
       label = 'Under Review';
     } else if (status == 'rejected_revision_needed') {
@@ -4459,15 +4467,15 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       icon = Icons.check_circle_rounded;
       label = 'Approved';
     } else if (status == 'sent_to_print') {
-      bg = Color(0xFFEFF6FF).withValues(alpha: 0.4);
-      border = Color(0xFF2563EB);
-      text = Color(0xFF2563EB);
+      bg = PmsTheme.backgroundGradientStart.withValues(alpha: 0.4);
+      border = PmsTheme.primary;
+      text = PmsTheme.primary;
       icon = Icons.print_rounded;
       label = 'Sent to Print';
     } else if (status == 'posted') {
       bg = Color(0xFFF5F3FF).withValues(alpha: 0.4);
-      border = Color(0xFF2563EB);
-      text = Color(0xFF475569);
+      border = PmsTheme.primary;
+      text = PmsTheme.textSecondary;
       icon = Icons.campaign_rounded;
       label = 'Posted ✓';
     } else if (status == 'completed') {

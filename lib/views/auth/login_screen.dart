@@ -4,7 +4,11 @@ import 'package:flutter/services.dart';
 
 import '../../repositories/user_repository.dart';
 import '../../services/permission_service.dart';
+import '../../theme/pms_theme.dart';
+import '../../widgets/app_gradient_background.dart';
 import '../../widgets/app_logo.dart';
+import '../../widgets/glass_card.dart';
+import '../../widgets/pms_status_chip.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
           message,
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
-        backgroundColor: isError ? Color(0xFFDC2626) : Color(0xFF059669),
+        backgroundColor: isError ? PmsTheme.error : PmsTheme.success,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -53,10 +57,10 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Row(
           children: [
-            Icon(Icons.block_rounded, color: Color(0xFFDC2626), size: 24),
+            Icon(Icons.block_rounded, color: PmsTheme.error, size: 24),
             SizedBox(width: 8),
             Text(
               'Account Inactive',
@@ -66,15 +70,15 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         content: Text(
           message,
-          style: const TextStyle(fontSize: 14, color: Color(0xFF334155)),
+          style: const TextStyle(fontSize: 14, color: PmsTheme.textSecondary),
         ),
         actions: [
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
+              backgroundColor: PmsTheme.error,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
             child: const Text('OK', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
@@ -245,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
-              backgroundColor: const Color(0xFF1E293B),
+              backgroundColor: PmsTheme.textPrimary,
               behavior: SnackBarBehavior.floating,
               duration: const Duration(seconds: 2),
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -263,8 +267,9 @@ class _LoginScreenState extends State<LoginScreen> {
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.opaque,
         child: Scaffold(
-        backgroundColor: Color(0xFFF8FAFC),
-        body: SafeArea(
+        backgroundColor: Colors.transparent,
+        body: AppGradientBackground(
+        child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -282,34 +287,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 26,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
                       letterSpacing: -0.5,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   const Text(
                     'PMS Admin · Real Mobile OTP',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 13, color: PmsTheme.textMuted),
                   ),
                   const SizedBox(height: 36),
 
                   // Login Card Container
-                  Container(
+                  GlassCard(
                     padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Color(0xFFFFFFFF),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Color(0xFFE2E8F0)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -320,7 +313,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF475569),
+                              color: PmsTheme.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -332,7 +325,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 1.2,
-                              color: Color(0xFF0F172A),
+                              color: PmsTheme.textPrimary,
                             ),
                             decoration: InputDecoration(
                               counterText: '',
@@ -343,32 +336,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF64748B),
+                                    color: PmsTheme.textMuted,
                                   ),
                                 ),
                               ),
                               prefixIconConstraints: const BoxConstraints(
                                 minWidth: 0,
                                 minHeight: 0,
-                              ),
-                              filled: true,
-                              fillColor: Color(0xFFF8FAFC),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF475569),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF2563EB),
-                                  width: 2,
-                                ),
                               ),
                             ),
                           ),
@@ -380,41 +354,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'Welcome to Prince Group',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF64748B),
+                                  color: PmsTheme.textMuted,
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 24),
 
-                          // Send OTP Button
-                          ElevatedButton(
+                          PmsGradientButton(
                             onPressed: _isLoading ? null : _sendOtp,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF2563EB),
-                              foregroundColor: Color(0xFFFFFFFF),
-                              padding: const EdgeInsets.symmetric(vertical: 15),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 2,
-                            ),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Color(0xFF0F172A),
-                                    ),
-                                  )
-                                : const Text(
-                                    'Send Real SMS OTP',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
+                            loading: _isLoading,
+                            label: 'Send Real SMS OTP',
                           ),
                         ] else ...[
                           // OTP Input Field
@@ -428,7 +378,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     'SMS Sent To:',
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: Color(0xFF64748B),
+                                      color: PmsTheme.textMuted,
                                     ),
                                   ),
                                   Text(
@@ -436,7 +386,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF0F172A),
+                                      color: PmsTheme.textPrimary,
                                     ),
                                   ),
                                 ],
@@ -452,7 +402,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   'Change',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF2563EB),
+                                    color: PmsTheme.primary,
                                   ),
                                 ),
                               ),
@@ -464,7 +414,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF475569),
+                              color: PmsTheme.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -477,33 +427,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontSize: 22,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 8,
-                              color: Color(0xFF0F172A),
+                              color: PmsTheme.textPrimary,
                             ),
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               counterText: '',
                               hintText: '••••••',
-                              hintStyle: const TextStyle(
-                                color: Color(0xFF475569),
+                              hintStyle: TextStyle(
+                                color: PmsTheme.textMuted,
                                 letterSpacing: 8,
-                              ),
-                              filled: true,
-                              fillColor: Color(0xFFF8FAFC),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 14,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF475569),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF2563EB),
-                                  width: 2,
-                                ),
                               ),
                             ),
                           ),
@@ -516,41 +447,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'Resend Code',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF2563EB),
+                                  color: PmsTheme.primary,
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(height: 16),
 
-                          // Verify Button
-                          ElevatedButton(
+                          PmsGradientButton(
                             onPressed: _isLoading ? null : _verifyOtp,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF2563EB),
-                              foregroundColor: Color(0xFFFFFFFF),
-                              padding: const EdgeInsets.symmetric(vertical: 15),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 2,
-                            ),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Color(0xFF0F172A),
-                                    ),
-                                  )
-                                : const Text(
-                                    'Verify Real OTP & Login',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
+                            loading: _isLoading,
+                            label: 'Verify Real OTP & Login',
                           ),
                         ],
                       ],
@@ -561,7 +468,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Text(
                     'PMS Admin • Prince Eduhub',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                    style: TextStyle(fontSize: 11, color: PmsTheme.textMuted),
                   ),
                 ],
               ),
@@ -571,6 +478,8 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     ),
   ),
+  ),
   );
 }
 }
+

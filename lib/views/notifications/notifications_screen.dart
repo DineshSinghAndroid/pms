@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/notification_model.dart';
 import '../../repositories/notification_repository.dart';
+import '../../theme/pms_theme.dart';
+import '../../widgets/app_gradient_background.dart';
 import '../purchase_requests/pr_details_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -105,7 +107,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void _showNotificationDetailsSheet(PmsNotificationItem item) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: PmsTheme.glassSurface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -137,7 +139,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
+                              color: PmsTheme.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -145,7 +147,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             item.timeAgo,
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF94A3B8),
+                              color: PmsTheme.textMuted,
                             ),
                           ),
                         ],
@@ -154,7 +156,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Divider(color: Color(0xFFE2E8F0)),
+                const Divider(color: PmsTheme.glassBorder),
                 const SizedBox(height: 12),
                 Text(
                   item.body.isNotEmpty ? item.body : 'No additional details.',
@@ -170,7 +172,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
+                      backgroundColor: PmsTheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -200,13 +202,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+    return AppGradientBackground(
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: PmsTheme.glassSurface,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0F172A), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: PmsTheme.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context, _unreadCount),
         ),
         title: Row(
@@ -216,7 +220,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: PmsTheme.textPrimary,
               ),
             ),
             if (_unreadCount > 0) ...[
@@ -224,7 +228,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB),
+                  color: PmsTheme.primary,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -243,11 +247,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           if (_unreadCount > 0)
             TextButton.icon(
               onPressed: _markAllAsRead,
-              icon: const Icon(Icons.done_all_rounded, size: 18, color: Color(0xFF2563EB)),
+              icon: const Icon(Icons.done_all_rounded, size: 18, color: PmsTheme.primary),
               label: const Text(
                 'Mark read',
                 style: TextStyle(
-                  color: Color(0xFF2563EB),
+                  color: PmsTheme.primary,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -260,7 +264,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         children: [
           // Filter Tabs (All / Unread)
           Container(
-            color: Colors.white,
+            color: PmsTheme.glassSurface,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
@@ -270,17 +274,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          const Divider(height: 1, color: PmsTheme.glassBorder),
 
           // Notifications List
           Expanded(
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF2563EB)),
+                    child: CircularProgressIndicator(color: PmsTheme.primary),
                   )
                 : RefreshIndicator(
                     onRefresh: _fetchNotifications,
-                    color: const Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                     child: _filteredList.isEmpty
                         ? _buildEmptyState()
                         : ListView.separated(
@@ -296,6 +300,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -307,15 +312,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFF1F5F9),
+          color: isSelected ? PmsTheme.primary.withValues(alpha: 0.14) : PmsTheme.glassSurface,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? PmsTheme.glassBorderActive : PmsTheme.glassBorder,
+          ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF64748B),
+            color: isSelected ? PmsTheme.primary : PmsTheme.textSecondary,
           ),
         ),
       ),
@@ -324,7 +332,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _buildNotificationCard(PmsNotificationItem item) {
     return Material(
-      color: item.isRead ? Colors.white : const Color(0xFFEFF6FF),
+      color: item.isRead ? Colors.white : PmsTheme.backgroundGradientStart,
       borderRadius: BorderRadius.circular(14),
       elevation: item.isRead ? 0.5 : 1.5,
       shadowColor: Colors.black.withValues(alpha: 0.05),
@@ -336,7 +344,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: item.isRead ? const Color(0xFFE2E8F0) : const Color(0xFFBFDBFE),
+              color: item.isRead ? PmsTheme.glassBorder : const Color(0xFFBFDBFE),
               width: item.isRead ? 0.8 : 1.2,
             ),
           ),
@@ -369,7 +377,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             style: TextStyle(
                               fontSize: 13.5,
                               fontWeight: item.isRead ? FontWeight.w600 : FontWeight.w800,
-                              color: const Color(0xFF0F172A),
+                              color: PmsTheme.textPrimary,
                               height: 1.2,
                             ),
                           ),
@@ -379,7 +387,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           item.timeAgo,
                           style: TextStyle(
                             fontSize: 11,
-                            color: item.isRead ? const Color(0xFF94A3B8) : const Color(0xFF2563EB),
+                            color: item.isRead ? PmsTheme.textMuted : PmsTheme.primary,
                             fontWeight: item.isRead ? FontWeight.normal : FontWeight.w600,
                           ),
                         ),
@@ -391,7 +399,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         item.body,
                         style: TextStyle(
                           fontSize: 12,
-                          color: item.isRead ? const Color(0xFF64748B) : const Color(0xFF334155),
+                          color: item.isRead ? PmsTheme.textSecondary : const Color(0xFF334155),
                           height: 1.35,
                         ),
                         maxLines: 3,
@@ -410,7 +418,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   height: 8,
                   margin: const EdgeInsets.only(top: 4),
                   decoration: const BoxDecoration(
-                    color: Color(0xFF2563EB),
+                    color: PmsTheme.primary,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -432,13 +440,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
-                color: Color(0xFFF1F5F9),
+                color: PmsTheme.bgSoft,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.notifications_off_outlined,
                 size: 48,
-                color: Color(0xFF94A3B8),
+                color: PmsTheme.textMuted,
               ),
             ),
             const SizedBox(height: 16),
@@ -458,7 +466,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 12.5,
-                color: Color(0xFF64748B),
+                color: PmsTheme.textSecondary,
                 height: 1.4,
               ),
             ),

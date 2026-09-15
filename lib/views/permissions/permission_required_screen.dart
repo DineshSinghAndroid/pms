@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../../services/permission_service.dart';
 import '../../widgets/app_logo.dart';
+import '../../widgets/app_gradient_background.dart';
+import '../../theme/pms_theme.dart';
 
 class PermissionRequiredScreen extends StatefulWidget {
   final VoidCallback onAllGranted;
@@ -96,8 +98,9 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen>
     );
 
     return Scaffold(
-      backgroundColor: Color(0xFFF8FAFC),
-      body: SafeArea(
+      backgroundColor: Colors.transparent,
+      body: AppGradientBackground(
+        child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -118,7 +121,7 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen>
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                      color: PmsTheme.textPrimary,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -130,7 +133,7 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen>
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64748B),
+                      color: PmsTheme.textSecondary,
                       height: 1.4,
                     ),
                   ),
@@ -158,9 +161,9 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen>
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFFFFFFF),
-                          borderRadius: BorderRadius.circular(16),
+          decoration: BoxDecoration(
+                          color: PmsTheme.glassSurface,
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isGranted
                                 ? Color(0xFF059669).withValues(alpha: 0.4)
@@ -200,7 +203,7 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen>
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xFF0F172A),
+                                          color: PmsTheme.textPrimary,
                                         ),
                                       ),
                                       Container(
@@ -256,7 +259,7 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen>
                                     perm.description,
                                     style: const TextStyle(
                                       fontSize: 11,
-                                      color: Color(0xFF64748B),
+                                      color: PmsTheme.textSecondary,
                                       height: 1.3,
                                     ),
                                   ),
@@ -279,8 +282,8 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen>
                                 width: 16,
                                 height: 16,
                                 child: CircularProgressIndicator(
+                                  color: Colors.white,
                                   strokeWidth: 2,
-                                  color: Color(0xFF0F172A),
                                 ),
                               )
                             : const Icon(Icons.verified_user_rounded, size: 18),
@@ -294,7 +297,7 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen>
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF2563EB),
+                          backgroundColor: PmsTheme.primary,
                           foregroundColor: Color(0xFFFFFFFF),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -316,8 +319,8 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen>
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Color(0xFF2563EB),
-                          side: const BorderSide(color: Color(0xFF2563EB)),
+                          foregroundColor: PmsTheme.primary,
+                          side: const BorderSide(color: PmsTheme.primary),
                           padding: const EdgeInsets.symmetric(vertical: 13),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -334,12 +337,12 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen>
                       icon: const Icon(
                         Icons.refresh_rounded,
                         size: 16,
-                        color: Color(0xFF64748B),
+                        color: PmsTheme.textSecondary,
                       ),
                       label: const Text(
                         'Re-check Status',
                         style: TextStyle(
-                          color: Color(0xFF64748B),
+                          color: PmsTheme.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -369,6 +372,7 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen>
           ),
         ),
       ),
+    ),
     );
   }
 }

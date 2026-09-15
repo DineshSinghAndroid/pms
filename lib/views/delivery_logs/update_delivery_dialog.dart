@@ -6,6 +6,7 @@ import 'package:pms/models/print_order_model.dart';
 import 'package:pms/models/user_model.dart';
 import 'package:pms/services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:pms/theme/pms_theme.dart';
 
 class UpdateDeliveryDialog extends StatefulWidget {
   final List<PrintOrderModel> printOrders;
@@ -150,7 +151,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: PmsTheme.glassSurface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Container(
@@ -161,9 +162,9 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: const BoxDecoration(
-                color: Color(0xFFF8FAFC),
+                color: PmsTheme.background,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                border: Border(bottom: BorderSide(color: PmsTheme.glassBorder)),
               ),
               child: Row(
                 children: [
@@ -191,14 +192,14 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                           ),
                         ),
                         Text(
                           'Log product shipment quantities & Challan number',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                           ),
                         ),
                       ],
@@ -208,7 +209,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(
                       Icons.close_rounded,
-                      color: Color(0xFF64748B),
+                      color: PmsTheme.textSecondary,
                       size: 20,
                     ),
                   ),
@@ -227,7 +228,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                     const Text(
                       '1. SELECT PRINT ORDER (PO) *',
                       style: TextStyle(
-                        color: Color(0xFF2563EB),
+                        color: PmsTheme.primary,
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
@@ -241,22 +242,22 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                         controller: _searchPOController,
                         onChanged: (_) => setState(() {}),
                         style: const TextStyle(
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                           fontSize: 13,
                         ),
                         decoration: InputDecoration(
                           hintText: 'Search by PO #, vendor, or wing...',
                           hintStyle: const TextStyle(
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             fontSize: 12,
                           ),
                           prefixIcon: const Icon(
                             Icons.search_rounded,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             size: 18,
                           ),
                           filled: true,
-                          fillColor: Color(0xFFF8FAFC),
+                          fillColor: PmsTheme.background,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 10,
@@ -264,13 +265,13 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: const BorderSide(
-                              color: Color(0xFFE2E8F0),
+                              color: PmsTheme.glassBorder,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: const BorderSide(
-                              color: Color(0xFFE2E8F0),
+                              color: PmsTheme.glassBorder,
                             ),
                           ),
                         ),
@@ -279,9 +280,9 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                       Container(
                         constraints: const BoxConstraints(maxHeight: 180),
                         decoration: BoxDecoration(
-                          color: Color(0xFFF8FAFC),
+                          color: PmsTheme.background,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Color(0xFFE2E8F0)),
+                          border: Border.all(color: PmsTheme.glassBorder),
                         ),
                         child: _filteredPOs.isEmpty
                             ? Padding(
@@ -294,7 +295,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                             ? 'All Print Orders are fully received!'
                                             : 'No Print Orders available to receive.'),
                                     style: const TextStyle(
-                                      color: Color(0xFF64748B),
+                                      color: PmsTheme.textSecondary,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -305,7 +306,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                 shrinkWrap: true,
                                 itemCount: _filteredPOs.length,
                                 separatorBuilder: (_, _) => const Divider(
-                                  color: Color(0xFFFFFFFF),
+                                  color: PmsTheme.glassSurface,
                                   height: 1,
                                 ),
                                 itemBuilder: (context, idx) {
@@ -315,7 +316,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                     title: Text(
                                       '${po.poNumber} · ${po.vendor?.name ?? "Vendor"}',
                                       style: const TextStyle(
-                                        color: Color(0xFF0F172A),
+                                        color: PmsTheme.textPrimary,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 12.5,
                                       ),
@@ -323,13 +324,13 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                     subtitle: Text(
                                       '${po.wing?.name ?? "Wing"} · ${po.items.length} Products · Status: ${po.status}',
                                       style: const TextStyle(
-                                        color: Color(0xFF64748B),
+                                        color: PmsTheme.textSecondary,
                                         fontSize: 11,
                                       ),
                                     ),
                                     trailing: const Icon(
                                       Icons.chevron_right_rounded,
-                                      color: Color(0xFF2563EB),
+                                      color: PmsTheme.primary,
                                       size: 18,
                                     ),
                                     onTap: () => _selectPO(po),
@@ -342,9 +343,9 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Color(0xFFF8FAFC),
+                          color: PmsTheme.background,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Color(0xFF2563EB)),
+                          border: Border.all(color: PmsTheme.primary),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,10 +362,10 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                           vertical: 3,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Color(0xFFFFFFFF),
+                                          color: PmsTheme.glassSurface,
                                           borderRadius: BorderRadius.circular(6),
                                           border: Border.all(
-                                            color: Color(0xFF475569),
+                                            color: PmsTheme.textSecondary,
                                           ),
                                         ),
                                         child: Text(
@@ -382,7 +383,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                         child: Text(
                                           _selectedPO!.vendor?.name ?? 'Vendor',
                                           style: const TextStyle(
-                                            color: Color(0xFF0F172A),
+                                            color: PmsTheme.textPrimary,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 13,
                                           ),
@@ -404,7 +405,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                   child: const Text(
                                     'Change PO',
                                     style: TextStyle(
-                                      color: Color(0xFF2563EB),
+                                      color: PmsTheme.primary,
                                       fontSize: 11,
                                     ),
                                   ),
@@ -415,7 +416,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                             Text(
                               'Target Wing: ${_selectedPO!.wing?.name ?? "General Wing"} · Delivery: ${_selectedPO!.expectedDeliveryDate ?? "ASAP"}',
                               style: const TextStyle(
-                                color: Color(0xFF64748B),
+                                color: PmsTheme.textSecondary,
                                 fontSize: 11,
                               ),
                             ),
@@ -443,7 +444,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                       const Text(
                         '2. PRODUCTS & QUANTITIES RECEIVED *',
                         style: TextStyle(
-                          color: Color(0xFF2563EB),
+                          color: PmsTheme.primary,
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.5,
@@ -463,9 +464,9 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                           return Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Color(0xFFF8FAFC),
+                              color: PmsTheme.background,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Color(0xFFE2E8F0)),
+                              border: Border.all(color: PmsTheme.glassBorder),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -480,7 +481,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                           Text(
                                             '#${idx + 1}. ${it.productName}',
                                             style: const TextStyle(
-                                              color: Color(0xFF0F172A),
+                                              color: PmsTheme.textPrimary,
                                               fontWeight: FontWeight.bold,
                                               fontSize: 13,
                                             ),
@@ -489,7 +490,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                           Text(
                                             'Size: ${it.size ?? "Standard"} · Ordered: ${it.quantity} · Already Recv: ${it.receivedQuantity}',
                                             style: const TextStyle(
-                                              color: Color(0xFF64748B),
+                                              color: PmsTheme.textSecondary,
                                               fontSize: 11,
                                             ),
                                           ),
@@ -511,14 +512,14 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                         tooltip: 'Download Proof',
                                         icon: const Icon(
                                           Icons.download_rounded,
-                                          color: Color(0xFF2563EB),
+                                          color: PmsTheme.primary,
                                           size: 18,
                                         ),
                                       ),
                                   ],
                                 ),
                                 const Divider(
-                                  color: Color(0xFFFFFFFF),
+                                  color: PmsTheme.glassSurface,
                                   height: 16,
                                 ),
                                 Row(
@@ -528,7 +529,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                     const Text(
                                       'Qty Received Now:',
                                       style: TextStyle(
-                                        color: Color(0xFF475569),
+                                        color: PmsTheme.textSecondary,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -543,7 +544,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                             keyboardType: TextInputType.number,
                                             textAlign: TextAlign.center,
                                             style: const TextStyle(
-                                              color: Color(0xFF0F172A),
+                                              color: PmsTheme.textPrimary,
                                               fontWeight: FontWeight.bold,
                                               fontSize: 13,
                                             ),
@@ -559,14 +560,14 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                                 borderRadius:
                                                     BorderRadius.circular(8),
                                                 borderSide: const BorderSide(
-                                                  color: Color(0xFFE2E8F0),
+                                                  color: PmsTheme.glassBorder,
                                                 ),
                                               ),
                                               enabledBorder: OutlineInputBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(8),
                                                 borderSide: const BorderSide(
-                                                  color: Color(0xFFE2E8F0),
+                                                  color: PmsTheme.glassBorder,
                                                 ),
                                               ),
                                             ),
@@ -576,7 +577,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                         Text(
                                           '/ ${it.quantity}',
                                           style: const TextStyle(
-                                            color: Color(0xFF64748B),
+                                            color: PmsTheme.textSecondary,
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -597,7 +598,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                       const Text(
                         '3. DELIVERY DETAILS',
                         style: TextStyle(
-                          color: Color(0xFF2563EB),
+                          color: PmsTheme.primary,
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.5,
@@ -609,7 +610,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                       TextField(
                         controller: _challanController,
                         style: const TextStyle(
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
@@ -621,21 +622,21 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                           ),
                           hintText: 'e.g. CH-2026-9812',
                           hintStyle: const TextStyle(
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             fontSize: 12,
                           ),
                           filled: true,
-                          fillColor: Color(0xFFF8FAFC),
+                          fillColor: PmsTheme.background,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: const BorderSide(
-                              color: Color(0xFFE2E8F0),
+                              color: PmsTheme.glassBorder,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: const BorderSide(
-                              color: Color(0xFFE2E8F0),
+                              color: PmsTheme.glassBorder,
                             ),
                           ),
                         ),
@@ -662,9 +663,9 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: Color(0xFFF8FAFC),
+                            color: PmsTheme.background,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Color(0xFFE2E8F0)),
+                            border: Border.all(color: PmsTheme.glassBorder),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -675,7 +676,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                   const Text(
                                     'Delivery Date',
                                     style: TextStyle(
-                                      color: Color(0xFF64748B),
+                                      color: PmsTheme.textSecondary,
                                       fontSize: 10,
                                     ),
                                   ),
@@ -683,7 +684,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                                   Text(
                                     '${_deliveryDate.day}/${_deliveryDate.month}/${_deliveryDate.year}',
                                     style: const TextStyle(
-                                      color: Color(0xFF0F172A),
+                                      color: PmsTheme.textPrimary,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
                                     ),
@@ -692,7 +693,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                               ),
                               const Icon(
                                 Icons.calendar_today_rounded,
-                                color: Color(0xFF2563EB),
+                                color: PmsTheme.primary,
                                 size: 18,
                               ),
                             ],
@@ -706,32 +707,32 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                         controller: _remarksController,
                         maxLines: 2,
                         style: const TextStyle(
-                          color: Color(0xFF0F172A),
+                          color: PmsTheme.textPrimary,
                           fontSize: 13,
                         ),
                         decoration: InputDecoration(
                           labelText: 'Remark / Delivery Note',
                           labelStyle: const TextStyle(
-                            color: Color(0xFF475569),
+                            color: PmsTheme.textSecondary,
                             fontSize: 12,
                           ),
                           hintText: 'e.g. Received partial 200 copies in good condition at gate...',
                           hintStyle: const TextStyle(
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             fontSize: 12,
                           ),
                           filled: true,
-                          fillColor: Color(0xFFF8FAFC),
+                          fillColor: PmsTheme.background,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: const BorderSide(
-                              color: Color(0xFFE2E8F0),
+                              color: PmsTheme.glassBorder,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: const BorderSide(
-                              color: Color(0xFFE2E8F0),
+                              color: PmsTheme.glassBorder,
                             ),
                           ),
                         ),
@@ -746,11 +747,11 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: const BoxDecoration(
-                color: Color(0xFFF8FAFC),
+                color: PmsTheme.background,
                 borderRadius: BorderRadius.vertical(
                   bottom: Radius.circular(20),
                 ),
-                border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+                border: Border(top: BorderSide(color: PmsTheme.glassBorder)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -759,7 +760,7 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                     onPressed: () => Navigator.pop(context),
                     child: const Text(
                       'Cancel',
-                      style: TextStyle(color: Color(0xFF64748B)),
+                      style: TextStyle(color: PmsTheme.textSecondary),
                     ),
                   ),
                   ElevatedButton.icon(

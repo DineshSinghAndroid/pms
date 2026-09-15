@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/api_service.dart';
+import '../../theme/pms_theme.dart';
 
 enum LegalDocType {
   privacyPolicy,
@@ -46,7 +47,7 @@ class LegalDocTabView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: PmsTheme.background,
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         child: Column(
@@ -56,16 +57,10 @@ class LegalDocTabView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                color: PmsTheme.glassSurface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: PmsTheme.glassBorder),
+                boxShadow: PmsTheme.glassShadow,
               ),
               child: Row(
                 children: [
@@ -73,14 +68,14 @@ class LegalDocTabView extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
+                      color: PmsTheme.backgroundGradientStart,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       type == LegalDocType.privacyPolicy
                           ? Icons.privacy_tip_outlined
                           : Icons.description_outlined,
-                      color: const Color(0xFF2563EB),
+                      color: PmsTheme.primary,
                       size: 24,
                     ),
                   ),
@@ -94,7 +89,7 @@ class LegalDocTabView extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
+                            color: PmsTheme.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -102,7 +97,7 @@ class LegalDocTabView extends StatelessWidget {
                           'Prince Eduhub PMS · Valid for 2026',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -117,7 +112,7 @@ class LegalDocTabView extends StatelessWidget {
                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
+                      backgroundColor: PmsTheme.primary,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -148,12 +143,12 @@ class LegalDocTabView extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
+                    colors: [PmsTheme.primaryDark, PmsTheme.primary],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                      color: PmsTheme.primary.withValues(alpha: 0.25),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -196,7 +191,7 @@ class LegalDocTabView extends StatelessWidget {
                       ),
                       child: const Icon(
                         Icons.arrow_forward_rounded,
-                        color: Colors.white,
+                        
                         size: 16,
                       ),
                     ),
@@ -335,23 +330,24 @@ class LegalDocTabView extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: PmsTheme.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: PmsTheme.glassBorder),
+        boxShadow: PmsTheme.glassShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: const Color(0xFF2563EB)),
+              Icon(icon, size: 18, color: PmsTheme.primary),
               const SizedBox(width: 8),
               Text(
                 title,
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: PmsTheme.textPrimary,
                 ),
               ),
             ],
@@ -370,7 +366,7 @@ class LegalDocTabView extends StatelessWidget {
         text,
         style: const TextStyle(
           fontSize: 12,
-          color: Color(0xFF475569),
+          color: PmsTheme.textSecondary,
           height: 1.5,
         ),
       ),
@@ -383,11 +379,11 @@ class LegalDocTabView extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
+          const Text('• ', style: TextStyle(color: PmsTheme.primary, fontWeight: FontWeight.bold)),
           Expanded(
             child: RichText(
               text: TextSpan(
-                style: const TextStyle(fontSize: 12, color: Color(0xFF475569), height: 1.4),
+                style: const TextStyle(fontSize: 12, color: PmsTheme.textSecondary, height: 1.4),
                 children: [
                   TextSpan(text: '$title: ', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
                   TextSpan(text: desc),

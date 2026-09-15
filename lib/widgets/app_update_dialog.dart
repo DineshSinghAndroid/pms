@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/app_update_info.dart';
+import '../theme/pms_theme.dart';
 
 class AppUpdateDialog extends StatelessWidget {
   final AppUpdateInfo updateInfo;
@@ -48,7 +49,7 @@ class AppUpdateDialog extends StatelessWidget {
       child: Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         elevation: 16,
-        backgroundColor: Colors.white,
+        backgroundColor: PmsTheme.glassSurface,
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
@@ -76,13 +77,13 @@ class AppUpdateDialog extends StatelessWidget {
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: PmsTheme.glassSurface,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
                             color: (isForce
                                     ? const Color(0xFFE11D48)
-                                    : const Color(0xFF4F46E5))
+                                    : PmsTheme.primary)
                                 .withValues(alpha: 0.18),
                             blurRadius: 16,
                             offset: const Offset(0, 6),
@@ -95,7 +96,7 @@ class AppUpdateDialog extends StatelessWidget {
                             : Icons.rocket_launch_rounded,
                         color: isForce
                             ? const Color(0xFFDC2626)
-                            : const Color(0xFF4F46E5),
+                            : PmsTheme.primary,
                         size: 32,
                       ),
                     ),
@@ -128,7 +129,7 @@ class AppUpdateDialog extends StatelessWidget {
                             size: 13,
                             color: isForce
                                 ? const Color(0xFFB91C1C)
-                                : const Color(0xFF1D4ED8),
+                                : PmsTheme.primaryDark,
                           ),
                           const SizedBox(width: 5),
                           Text(
@@ -139,7 +140,7 @@ class AppUpdateDialog extends StatelessWidget {
                               letterSpacing: 0.6,
                               color: isForce
                                   ? const Color(0xFFB91C1C)
-                                  : const Color(0xFF1D4ED8),
+                                  : PmsTheme.primaryDark,
                             ),
                           ),
                         ],
@@ -158,7 +159,7 @@ class AppUpdateDialog extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                        color: PmsTheme.textPrimary,
                         letterSpacing: -0.3,
                       ),
                     ),
@@ -176,9 +177,9 @@ class AppUpdateDialog extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: PmsTheme.background,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: PmsTheme.glassBorder),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -191,7 +192,7 @@ class AppUpdateDialog extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
-                                  color: Color(0xFF64748B),
+                                  color: PmsTheme.textSecondary,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -207,7 +208,7 @@ class AppUpdateDialog extends StatelessWidget {
                           ),
                           const Icon(
                             Icons.arrow_forward_rounded,
-                            color: Color(0xFF94A3B8),
+                            color: PmsTheme.textMuted,
                             size: 18,
                           ),
                           Column(
@@ -218,7 +219,7 @@ class AppUpdateDialog extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
-                                  color: Color(0xFF64748B),
+                                  color: PmsTheme.textSecondary,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -244,7 +245,7 @@ class AppUpdateDialog extends StatelessWidget {
                           Icon(
                             Icons.receipt_long_rounded,
                             size: 14,
-                            color: Color(0xFF64748B),
+                            color: PmsTheme.textSecondary,
                           ),
                           SizedBox(width: 6),
                           Text(
@@ -252,7 +253,7 @@ class AppUpdateDialog extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF475569),
+                              color: PmsTheme.textSecondary,
                             ),
                           ),
                         ],
@@ -262,9 +263,9 @@ class AppUpdateDialog extends StatelessWidget {
                         constraints: const BoxConstraints(maxHeight: 120),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
+                          color: PmsTheme.bgSoft,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: PmsTheme.glassBorder),
                         ),
                         child: SingleChildScrollView(
                           child: Text(
@@ -330,12 +331,12 @@ class AppUpdateDialog extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isForce
                             ? const Color(0xFFE11D48)
-                            : const Color(0xFF4F46E5),
+                            : PmsTheme.primary,
                         foregroundColor: Colors.white,
                         elevation: 3,
                         shadowColor: (isForce
                                 ? const Color(0xFFE11D48)
-                                : const Color(0xFF4F46E5))
+                                : PmsTheme.primary)
                             .withValues(alpha: 0.4),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -350,7 +351,7 @@ class AppUpdateDialog extends StatelessWidget {
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(),
                         style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF64748B),
+                          foregroundColor: PmsTheme.textSecondary,
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
