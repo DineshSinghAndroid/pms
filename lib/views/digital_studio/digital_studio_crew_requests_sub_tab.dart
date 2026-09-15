@@ -37,8 +37,20 @@ class _DigitalStudioCrewRequestsSubTabState
     extends State<DigitalStudioCrewRequestsSubTab> {
   String _selectedStatus = 'all';
 
-  bool get canAllot =>
-      widget.isSuperAdmin || widget.isManager || widget.isDigitalStudioIncharge;
+  bool get canAllot {
+    final r = (widget.currentUser?.role ?? '').toLowerCase().trim();
+    return widget.isSuperAdmin ||
+        widget.currentUser?.isSuperAdmin == true ||
+        widget.isManager ||
+        widget.isDigitalStudioIncharge ||
+        r == 'superadmin' ||
+        r == 'super admin' ||
+        r == 'super_admin' ||
+        r == 'admin' ||
+        r == 'manager' ||
+        r == 'digital studio incharge' ||
+        r == 'digital_studio_incharge';
+  }
 
   bool get canRequest =>
       widget.isSuperAdmin || widget.isManager || widget.isWingIncharge;
@@ -158,45 +170,67 @@ class _DigitalStudioCrewRequestsSubTabState
 
               // 3. Request List
               Expanded(
-                child: filteredRequests.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                child: RefreshIndicator(
+                  color: const Color(0xFF2563EB),
+                  onRefresh: () async {
+                    context.read<DigitalStudioBloc>().add(
+                          RefreshDigitalStudioEvent(
+                            phone: widget.currentUser?.phone,
+                          ),
+                        );
+                    await context.read<DigitalStudioBloc>().stream.firstWhere(
+                          (s) => s is DigitalStudioLoaded || s is DigitalStudioError,
+                        );
+                  },
+                  child: filteredRequests.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           children: [
-                            Icon(
-                              Icons.checklist_rtl_outlined,
-                              size: 48,
-                              color: Colors.grey.shade400,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No crew requests found',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontWeight: FontWeight.w600,
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.4,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.checklist_rtl_outlined,
+                                      size: 48,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'No crew requests found',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
+                        )
+                      : ListView.separated(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          itemCount: filteredRequests.length,
+                          separatorBuilder: (ctx, i) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final req = filteredRequests[index];
+                            return _buildRequestCard(
+                              context,
+                              req,
+                              state.crewMembers,
+                              state.availableAssets,
+                              allRequests: state.crewRequests,
+                            );
+                          },
                         ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
-                        ),
-                        itemCount: filteredRequests.length,
-                        separatorBuilder: (ctx, i) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final req = filteredRequests[index];
-                          return _buildRequestCard(
-                            context,
-                            req,
-                            state.crewMembers,
-                            state.availableAssets,
-                            allRequests: state.crewRequests,
-                          );
-                        },
-                      ),
+                ),
               ),
             ],
           );
@@ -502,7 +536,7 @@ class _DigitalStudioCrewRequestsSubTabState
             alignment: WrapAlignment.end,
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 8,
-            runSpacing: 6,
+            runSpacing: 8,
             children: [
               if (canAllot && (req.isPending || req.isAllotted)) ...[
                 ElevatedButton.icon(
@@ -513,13 +547,33 @@ class _DigitalStudioCrewRequestsSubTabState
                     availableAssets,
                     allRequests,
                   ),
-                  icon: const Icon(Icons.person_add_alt_1, size: 15),
-                  label: Text(req.isPending ? 'Allot Crew & Assets' : 'Re-allot'),
+                  icon: Icon(
+                    req.isPending
+                        ? Icons.person_add_alt_1_rounded
+                        : Icons.swap_horiz_rounded,
+                    size: 18,
+                  ),
+                  label: Text(
+                    req.isPending ? 'Allot Crew & Equipment' : 'Re-allot Crew & Gear',
+                  ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B5CF6),
+                    backgroundColor: req.isPending
+                        ? const Color(0xFF7C3AED)
+                        : const Color(0xFF6366F1),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    elevation: 2,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.2,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ],
@@ -530,8 +584,18 @@ class _DigitalStudioCrewRequestsSubTabState
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3B82F6),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    elevation: 1.5,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   child: const Text('Start Work'),
                 ),
@@ -543,8 +607,18 @@ class _DigitalStudioCrewRequestsSubTabState
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    elevation: 1.5,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   child: const Text('Mark Completed'),
                 ),
@@ -552,7 +626,7 @@ class _DigitalStudioCrewRequestsSubTabState
 
               if (canAllot && !req.isCompleted && !req.isCancelled)
                 IconButton(
-                  icon: const Icon(Icons.cancel_outlined, color: Colors.red, size: 20),
+                  icon: const Icon(Icons.cancel_outlined, color: Colors.red, size: 22),
                   tooltip: 'Cancel Request',
                   onPressed: () => _updateRequestStatus(context, req, 'cancelled'),
                 ),

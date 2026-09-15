@@ -11,8 +11,9 @@ import '../../models/wing_model.dart';
 
 class UsersTabView extends StatefulWidget {
   final bool isSuperAdmin;
+  final String? userPhone;
 
-  const UsersTabView({super.key, this.isSuperAdmin = true});
+  const UsersTabView({super.key, this.isSuperAdmin = true, this.userPhone});
 
   @override
   State<UsersTabView> createState() => _UsersTabViewState();
@@ -22,6 +23,18 @@ class _UsersTabViewState extends State<UsersTabView> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedRoleFilter = 'All';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = context.read<UserBloc>().state;
+      if (state is! UserLoaded || state.users.isEmpty) {
+        debugPrint('👥 [UsersTabView] Auto-fetching users for phone: ${widget.userPhone}');
+        context.read<UserBloc>().add(FetchUsersEvent(phone: widget.userPhone));
+      }
+    });
+  }
 
   final List<String> _roles = [
     'All',
@@ -123,7 +136,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                     _buildTextField(
                       controller: phoneCtrl,
                       label: 'Phone Number (Login OTP) *',
-                      hint: '7414055310',
+                      hint: '1234567890',
                       keyboardType: TextInputType.phone,
                       prefix: '+91 ',
                     ),
@@ -372,11 +385,11 @@ class _UsersTabViewState extends State<UsersTabView> {
 
                         if (user != null) {
                           context.read<UserBloc>().add(
-                            UpdateUserEvent(userId: user.id, payload: payload),
+                            UpdateUserEvent(userId: user.id, payload: payload, phone: widget.userPhone),
                           );
                         } else {
                           context.read<UserBloc>().add(
-                            CreateUserEvent(payload),
+                            CreateUserEvent(payload, phone: widget.userPhone),
                           );
                         }
 
@@ -424,7 +437,7 @@ class _UsersTabViewState extends State<UsersTabView> {
   }
 
   void _confirmDelete(BuildContext context, UserModel user) {
-    if (user.phone == '7414055310') {
+    if (user.phone == '') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Cannot delete the primary Superadmin account.'),
@@ -460,7 +473,7 @@ class _UsersTabViewState extends State<UsersTabView> {
             ),
             ElevatedButton(
               onPressed: () {
-                context.read<UserBloc>().add(DeleteUserEvent(user.id));
+                context.read<UserBloc>().add(DeleteUserEvent(user.id, phone: widget.userPhone));
                 Navigator.pop(dialogCtx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -559,12 +572,20 @@ class _UsersTabViewState extends State<UsersTabView> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return RefreshIndicator(
+      color: const Color(0xFF2563EB),
+      onRefresh: () async {
+        context.read<UserBloc>().add(RefreshUsersEvent(phone: widget.userPhone));
+        await context.read<UserBloc>().stream.firstWhere(
+              (state) => state is UserLoaded || state is UserError,
+            );
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Section Header & Add Action
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -747,7 +768,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                       const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: () {
-                          context.read<UserBloc>().add(const FetchUsersEvent());
+                          context.read<UserBloc>().add(FetchUsersEvent(phone: widget.userPhone));
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xFFB91C1C),
@@ -816,6 +837,7 @@ class _UsersTabViewState extends State<UsersTabView> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -930,10 +952,10 @@ class _UsersTabViewState extends State<UsersTabView> {
               ),
               const Spacer(),
               InkWell(
-                onTap: widget.isSuperAdmin && user.phone != '7414055310'
+                onTap: widget.isSuperAdmin && !user.isSuperAdmin
                     ? () {
                         context.read<UserBloc>().add(
-                          ToggleUserActiveEvent(user.id),
+                          ToggleUserActiveEvent(user.id, phone: widget.userPhone),
                         );
                       }
                     : null,
@@ -1036,7 +1058,7 @@ class _UsersTabViewState extends State<UsersTabView> {
                     ),
                   ),
                 ),
-                if (user.phone != '7414055310') ...[
+                if (!user.isSuperAdmin) ...[
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     onPressed: () => _confirmDelete(context, user),

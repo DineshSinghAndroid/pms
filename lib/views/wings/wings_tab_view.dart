@@ -270,12 +270,20 @@ class _WingsTabViewState extends State<WingsTabView> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return RefreshIndicator(
+      color: const Color(0xFFD97706),
+      onRefresh: () async {
+        context.read<WingBloc>().add(const RefreshWingsEvent());
+        await context.read<WingBloc>().stream.firstWhere(
+              (state) => state is WingLoaded || state is WingError,
+            );
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -479,6 +487,7 @@ class _WingsTabViewState extends State<WingsTabView> {
           ),
         ],
       ),
+    ),
     );
   }
 

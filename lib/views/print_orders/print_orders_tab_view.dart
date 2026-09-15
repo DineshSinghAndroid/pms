@@ -48,7 +48,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
       widget.isSuperAdmin ||
       _role == 'superadmin' ||
       _role == 'super admin' ||
-      _cleanPhone == '7414055310';
+      _cleanPhone == '';
 
   bool get isManager => _role == 'manager';
   bool get isVendor => _role == 'vendor';

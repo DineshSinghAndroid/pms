@@ -11,7 +11,6 @@ import 'bloc/product_type/product_type_bloc.dart';
 import 'bloc/product_type/product_type_event.dart';
 import 'bloc/purchase_request/purchase_request_bloc.dart';
 import 'bloc/user/user_bloc.dart';
-import 'bloc/user/user_event.dart';
 import 'bloc/vendor/vendor_bloc.dart';
 import 'bloc/vendor/vendor_event.dart';
 import 'bloc/wing/wing_bloc.dart';
@@ -114,8 +113,7 @@ class PmsApp extends StatelessWidget {
           ),
           BlocProvider<UserBloc>(
             create: (context) =>
-                UserBloc(repository: context.read<UserRepository>())
-                  ..add(const FetchUsersEvent()),
+                UserBloc(repository: context.read<UserRepository>()),
           ),
           BlocProvider<PurchaseRequestBloc>(
             create: (context) => PurchaseRequestBloc(

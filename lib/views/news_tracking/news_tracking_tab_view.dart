@@ -35,7 +35,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
   int? _selectedSizeId;
 
   String get _actingPhone =>
-      widget.currentUser?.phone ?? widget.userPhone ?? '7414055310';
+      widget.currentUser?.phone ?? widget.userPhone ?? '';
 
   @override
   void initState() {

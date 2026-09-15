@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../repositories/user_repository.dart';
 import '../../services/permission_service.dart';
 import '../../widgets/app_logo.dart';
 
@@ -13,7 +15,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _phoneController = TextEditingController(
-    text: '8905165310',
+    text: '',
   );
   final TextEditingController _otpController = TextEditingController();
 
@@ -21,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   String _verificationId = '';
   int? _resendToken;
+  DateTime? _lastBackPressTime;
 
   @override
   void dispose() {
@@ -40,6 +43,42 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: isError ? Color(0xFFDC2626) : Color(0xFF059669),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  void _showInactiveDialog([String message = 'Your user account is marked inactive. Contact Super Admin.']) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.block_rounded, color: Color(0xFFDC2626), size: 24),
+            SizedBox(width: 8),
+            Text(
+              'Account Inactive',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(fontSize: 14, color: Color(0xFF334155)),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('OK', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
@@ -66,7 +105,24 @@ class _LoginScreenState extends State<LoginScreen> {
         forceResendingToken: _resendToken,
         verificationCompleted: (PhoneAuthCredential credential) async {
           try {
-            await FirebaseAuth.instance.signInWithCredential(credential);
+            final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+            final phone = userCredential.user?.phoneNumber ?? fullPhoneNumber;
+            final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+            try {
+              final repo = UserRepository();
+              final profile = await repo.getProfile(cleanPhone);
+              if (profile != null && !profile.isActive && !profile.isSuperAdmin) {
+                await FirebaseAuth.instance.signOut();
+                setState(() => _isLoading = false);
+                _showInactiveDialog();
+                return;
+              }
+            } on InactiveUserException catch (e) {
+              await FirebaseAuth.instance.signOut();
+              setState(() => _isLoading = false);
+              _showInactiveDialog(e.message);
+              return;
+            }
           } catch (e) {
             debugPrint("Auto-sign in error: $e");
           }
@@ -110,7 +166,29 @@ class _LoginScreenState extends State<LoginScreen> {
         smsCode: smsCode,
       );
 
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      final phone = userCredential.user?.phoneNumber ?? '+91${_phoneController.text.trim()}';
+      final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+
+      // Verify active status before granting access
+      try {
+        final repo = UserRepository();
+        final profile = await repo.getProfile(cleanPhone);
+        if (profile != null && !profile.isActive && !profile.isSuperAdmin) {
+          await FirebaseAuth.instance.signOut();
+          setState(() => _isLoading = false);
+          _showInactiveDialog();
+          return;
+        }
+      } on InactiveUserException catch (e) {
+        await FirebaseAuth.instance.signOut();
+        setState(() => _isLoading = false);
+        _showInactiveDialog(e.message);
+        return;
+      } catch (e) {
+        debugPrint('Profile pre-check note: $e');
+      }
+
       _showSnackBar('Authentication successful! Checking permissions...');
       await PermissionService.requestAllPermissionsOneByOne();
     } on FirebaseAuthException catch (e) {
@@ -131,10 +209,60 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      behavior: HitTestBehavior.opaque,
-      child: Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
+
+        // If in OTP state, return to mobile number entry
+        if (_isOtpSent) {
+          setState(() {
+            _isOtpSent = false;
+            _otpController.clear();
+          });
+          return;
+        }
+
+        // Double-tap to exit confirmation
+        final now = DateTime.now();
+        if (_lastBackPressTime == null ||
+            now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+          _lastBackPressTime = now;
+          ScaffoldMessenger.of(context).removeCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.exit_to_app_rounded, color: Colors.white, size: 20),
+                  SizedBox(width: 10),
+                  Text(
+                    'Press back again to exit',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: const Color(0xFF1E293B),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+          return;
+        }
+
+        SystemNavigator.pop();
+      },
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Scaffold(
         backgroundColor: Color(0xFFF8FAFC),
         body: SafeArea(
         child: Center(
@@ -249,7 +377,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Super Admin: 7414055310',
+                                'Welcome to Prince Group',
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: Color(0xFF64748B),
@@ -442,6 +570,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     ),
+  ),
   );
 }
 }

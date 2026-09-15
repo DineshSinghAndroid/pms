@@ -5,12 +5,47 @@ import '../services/api_service.dart';
 
 class ProductTypeRepository {
   final ApiService _apiService;
+  static List<ProductTypeModel>? _cachedProductTypes;
+  static DateTime? _lastFetch;
+  static Future<List<ProductTypeModel>>? _inFlightFuture;
 
   ProductTypeRepository({ApiService? apiService})
     : _apiService = apiService ?? ApiService();
 
+  static List<ProductTypeModel>? get cachedProductTypes => _cachedProductTypes;
+
   /// Fetch all product types (optionally filtered by categoryId)
-  Future<List<ProductTypeModel>> getProductTypes({int? categoryId}) async {
+  Future<List<ProductTypeModel>> getProductTypes({
+    int? categoryId,
+    bool forceRefresh = false,
+  }) async {
+    if (categoryId == null &&
+        !forceRefresh &&
+        _cachedProductTypes != null &&
+        _cachedProductTypes!.isNotEmpty &&
+        _lastFetch != null &&
+        DateTime.now().difference(_lastFetch!) < const Duration(minutes: 10)) {
+      return _cachedProductTypes!;
+    }
+
+    if (categoryId == null && _inFlightFuture != null) {
+      return await _inFlightFuture!;
+    }
+
+    if (categoryId == null) {
+      _inFlightFuture = _fetchProductTypes(null);
+      try {
+        final res = await _inFlightFuture!;
+        return res;
+      } finally {
+        _inFlightFuture = null;
+      }
+    }
+
+    return _fetchProductTypes(categoryId);
+  }
+
+  Future<List<ProductTypeModel>> _fetchProductTypes(int? categoryId) async {
     try {
       final response = await _apiService.client.get(
         '/api/product-types',
@@ -24,21 +59,37 @@ class ProductTypeRepository {
             : Map<String, dynamic>.from(response.data as Map);
 
         final List<dynamic> dataList = body['data'] as List<dynamic>? ?? [];
-        return dataList
+        final list = dataList
             .map(
               (item) => ProductTypeModel.fromJson(item as Map<String, dynamic>),
             )
             .toList();
+
+        if (categoryId == null) {
+          _cachedProductTypes = list;
+          _lastFetch = DateTime.now();
+        }
+        return list;
       } else {
         throw Exception('Failed to load product types: ${response.statusCode}');
       }
     } on DioException catch (e) {
+      if (categoryId == null &&
+          _cachedProductTypes != null &&
+          _cachedProductTypes!.isNotEmpty) {
+        return _cachedProductTypes!;
+      }
       throw Exception(
         e.response?.data?['message'] ??
             e.message ??
             'Network error loading product types',
       );
     } catch (e) {
+      if (categoryId == null &&
+          _cachedProductTypes != null &&
+          _cachedProductTypes!.isNotEmpty) {
+        return _cachedProductTypes!;
+      }
       throw Exception('Unexpected error: $e');
     }
   }

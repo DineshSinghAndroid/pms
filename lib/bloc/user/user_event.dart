@@ -8,46 +8,58 @@ abstract class UserEvent extends Equatable {
 }
 
 class FetchUsersEvent extends UserEvent {
-  const FetchUsersEvent();
+  final String? phone;
+  const FetchUsersEvent({this.phone});
+
+  @override
+  List<Object?> get props => [phone];
 }
 
 class RefreshUsersEvent extends UserEvent {
-  const RefreshUsersEvent();
+  final String? phone;
+  const RefreshUsersEvent({this.phone});
+
+  @override
+  List<Object?> get props => [phone];
 }
 
 class CreateUserEvent extends UserEvent {
   final Map<String, dynamic> payload;
+  final String? phone;
 
-  const CreateUserEvent(this.payload);
+  const CreateUserEvent(this.payload, {this.phone});
 
   @override
-  List<Object?> get props => [payload];
+  List<Object?> get props => [payload, phone];
 }
 
 class UpdateUserEvent extends UserEvent {
   final int userId;
   final Map<String, dynamic> payload;
+  final String? phone;
 
-  const UpdateUserEvent({required this.userId, required this.payload});
+  const UpdateUserEvent({required this.userId, required this.payload, this.phone});
 
   @override
-  List<Object?> get props => [userId, payload];
+  List<Object?> get props => [userId, payload, phone];
 }
 
 class DeleteUserEvent extends UserEvent {
   final int userId;
+  final String? phone;
 
-  const DeleteUserEvent(this.userId);
+  const DeleteUserEvent(this.userId, {this.phone});
 
   @override
-  List<Object?> get props => [userId];
+  List<Object?> get props => [userId, phone];
 }
 
 class ToggleUserActiveEvent extends UserEvent {
   final int userId;
+  final String? phone;
 
-  const ToggleUserActiveEvent(this.userId);
+  const ToggleUserActiveEvent(this.userId, {this.phone});
 
   @override
-  List<Object?> get props => [userId];
+  List<Object?> get props => [userId, phone];
 }

@@ -149,12 +149,9 @@ class _PermissionRequiredScreenState extends State<PermissionRequiredScreen>
                   else ...[
                     // List of Permission Cards
                     ..._permissionStatuses.map((perm) {
-                      IconData icon = Icons.camera_alt_rounded;
-                      if (perm.type == AppPermissionType.gallery) {
-                        icon = Icons.photo_library_rounded;
-                      } else if (perm.type == AppPermissionType.location) {
-                        icon = Icons.location_on_rounded;
-                      }
+                      final IconData icon = perm.type == AppPermissionType.location
+                          ? Icons.location_on_rounded
+                          : Icons.camera_alt_rounded;
 
                       final isGranted = perm.isGranted;
 

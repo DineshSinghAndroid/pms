@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pms/bloc/print_order/print_order_bloc.dart';
+import 'package:pms/bloc/print_order/print_order_event.dart';
 import 'package:pms/bloc/print_order/print_order_state.dart';
 import 'package:pms/models/print_order_model.dart';
 import 'package:pms/models/user_model.dart';
+import 'package:pms/repositories/print_order_repository.dart';
 import 'package:pms/services/api_service.dart';
 import 'package:pms/views/delivery_logs/update_delivery_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -52,7 +54,7 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
   bool get isSuperAdmin =>
       _role == 'superadmin' ||
       _role == 'super admin' ||
-      _cleanPhone == '7414055310';
+      _cleanPhone == '';
 
   bool get isManager => _role == 'manager';
 
@@ -103,6 +105,25 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
   }
 
 
+
+  Future<void> _handleRefresh() async {
+    try {
+      final updated = await PrintOrderRepository().getPrintOrderDetails(_po.id);
+      if (mounted) {
+        setState(() {
+          _po = updated;
+        });
+      }
+    } catch (_) {}
+
+    if (mounted) {
+      if (_cleanPhone.isNotEmpty) {
+        context.read<PrintOrderBloc>().add(FetchPrintOrders(phone: _cleanPhone));
+      } else {
+        context.read<PrintOrderBloc>().add(const FetchPrintOrders());
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -161,34 +182,39 @@ class _PrintOrderDetailsScreenState extends State<PrintOrderDetailsScreen> {
             ),
           ],
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Vendor Info Card
-              _buildVendorCard(),
-              const SizedBox(height: 14),
-
-              // Target Wing & Delivery Target
-              _buildDeliveryCard(),
-              const SizedBox(height: 14),
-
-              // Production Remarks (if present)
-              if (_po.printOrderRemarks != null &&
-                  _po.printOrderRemarks!.isNotEmpty) ...[
-                _buildRemarksCard(),
+        body: RefreshIndicator(
+          color: const Color(0xFF2563EB),
+          onRefresh: _handleRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Vendor Info Card
+                _buildVendorCard(),
                 const SizedBox(height: 14),
+
+                // Target Wing & Delivery Target
+                _buildDeliveryCard(),
+                const SizedBox(height: 14),
+
+                // Production Remarks (if present)
+                if (_po.printOrderRemarks != null &&
+                    _po.printOrderRemarks!.isNotEmpty) ...[
+                  _buildRemarksCard(),
+                  const SizedBox(height: 14),
+                ],
+
+                // Products List
+                _buildProductsList(),
+                const SizedBox(height: 14),
+
+                // Activity Timeline
+                _buildActivityTimeline(),
+                const SizedBox(height: 80),
               ],
-
-              // Products List
-              _buildProductsList(),
-              const SizedBox(height: 14),
-
-              // Activity Timeline
-              _buildActivityTimeline(),
-              const SizedBox(height: 80),
-            ],
+            ),
           ),
         ),
         bottomNavigationBar: _buildBottomActionBar(),

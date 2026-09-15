@@ -264,7 +264,7 @@ class LegalDocTabView extends StatelessWidget {
           children: [
             _buildParagraph('Prince Eduhub, Palwas Road / Piprali Road, Sikar, Rajasthan - 332001'),
             _buildParagraph('Email: info@princeeduhub.com'),
-            _buildParagraph('Phone: +91 7414055310'),
+            _buildParagraph('Phone: +91 '),
           ],
         ),
       ],

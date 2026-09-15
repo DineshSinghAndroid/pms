@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../bloc/category/category_bloc.dart';
@@ -22,6 +23,9 @@ import '../../bloc/news_tracking/news_tracking_bloc.dart';
 import '../../bloc/news_tracking/news_tracking_event.dart';
 import '../../models/user_model.dart';
 import '../../repositories/user_repository.dart';
+import '../../repositories/purchase_request_repository.dart';
+import '../../repositories/product_type_repository.dart';
+import '../../repositories/wing_repository.dart';
 import '../../bloc/payment/payment_bloc.dart';
 import '../../bloc/payment/payment_event.dart';
 import '../categories/categories_tab_view.dart';
@@ -41,7 +45,9 @@ import '../vendors/vendors_tab_view.dart';
 import '../wings/wings_tab_view.dart';
 import '../legal/legal_doc_tab_view.dart';
 import '../../repositories/notification_repository.dart';
+import '../../services/api_service.dart';
 import '../../services/notification_service.dart';
+import '../../services/app_update_service.dart';
 import '../../widgets/app_logo.dart';
 import '../notifications/notifications_screen.dart';
 
@@ -54,35 +60,67 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final NotificationRepository _notificationRepo = NotificationRepository();
   NavMenu _selectedMenu = NavMenu.dashboard;
+  DateTime? _lastBackPressTime;
   UserModel? _userProfile;
   bool _isLoadingProfile = true;
+  bool _isAccountInactive = false;
+  String _inactiveMessage = 'Your user account is marked inactive. Contact Super Admin.';
   int _unreadNotificationCount = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     NotificationService.instance.onNotificationReceived = () {
       if (mounted) _fetchUnreadCount();
     };
     _loadUserProfile();
+    _checkAppUpdate();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     NotificationService.instance.onNotificationReceived = null;
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _selectedMenu == NavMenu.dashboard) {
+      _checkAppUpdate();
+    }
+  }
+
+  void _checkAppUpdate() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        debugPrint('📲 [HomeScreen] Checking app update on home page arrival...');
+        AppUpdateService().checkForUpdate(context);
+      }
+    });
   }
 
   Future<void> _loadUserProfile() async {
     final phone = widget.user.phoneNumber ?? '';
     final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+    final standardPhone = cleanPhone.length > 10 ? cleanPhone.substring(cleanPhone.length - 10) : cleanPhone;
+    if (standardPhone.isNotEmpty) {
+      ApiService.setUserPhone(standardPhone);
+    }
 
     try {
       final repo = context.read<UserRepository>();
       final profile = await repo.getProfile(cleanPhone);
+      final isSuper = profile?.isSuperAdmin ?? false;
+      if (profile != null && !profile.isActive && !isSuper) {
+        throw const InactiveUserException();
+      }
+
       if (mounted) {
         setState(() {
           _userProfile = profile;
@@ -125,25 +163,57 @@ class _HomeScreenState extends State<HomeScreen> {
         if (isSuperAdmin || isManager) {
           context.read<NewsTrackingBloc>().add(FetchNewsTrackingDataEvent(phone: cleanPhone));
         }
+
+        if (isSuperAdmin) {
+          debugPrint('👑 [HomeScreen] SuperAdmin detected. Fetching users directory...');
+          context.read<UserBloc>().add(FetchUsersEvent(phone: standardPhone));
+        }
+
+        // Pre-fetch active designers so the Assign button opens instantly with 0ms delay
+        final roleLower = (_userProfile?.role ?? '').toLowerCase().trim();
+        if (isSuperAdmin || isManager || isDigitalStudioIncharge || roleLower == 'admin') {
+          debugPrint('🎨 [HomeScreen] Pre-fetching designers for PR assignment...');
+          PurchaseRequestRepository().getDesigners();
+        }
+
+        // Pre-fetch product types and wings so Create PR opens instantly with 0ms delay
+        if (isSuperAdmin || isManager || isWingIncharge || roleLower == 'admin') {
+          debugPrint('📦 [HomeScreen] Pre-fetching Product Types and Wings for PR creation...');
+          context.read<ProductTypeBloc>().add(const FetchProductTypesEvent());
+          context.read<WingBloc>().add(const FetchWingsEvent());
+          ProductTypeRepository().getProductTypes();
+          WingRepository().getWings();
+        }
+
+        // Check for app update as soon as user profile loads on home page
+        _checkAppUpdate();
+      }
+    } on InactiveUserException catch (e) {
+      if (mounted) {
+        setState(() {
+          _isAccountInactive = true;
+          _inactiveMessage = e.message;
+          _isLoadingProfile = false;
+        });
+        await FirebaseAuth.instance.signOut();
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isLoadingProfile = false;
         });
+        _checkAppUpdate();
       }
     }
   }
 
-  bool get isSuperAdmin {
-    final r = _userProfile?.role.toLowerCase() ?? '';
-    if (r == 'superadmin' || r == 'super admin') {
-      return true;
-    }
-    final phone = widget.user.phoneNumber ?? '';
-    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
-    return cleanPhone.endsWith('7414055310');
-  }
+  bool get isSuperAdmin => _userProfile?.isSuperAdmin ?? false;
+  bool get isAdmin =>
+      isSuperAdmin ||
+      _userProfile?.role.toLowerCase() == 'admin' ||
+      _userProfile?.role.toLowerCase() == 'administrator' ||
+      _userProfile?.role.toLowerCase() == 'superadmin' ||
+      _userProfile?.role.toLowerCase() == 'super_admin';
 
   bool get isManager => _userProfile?.role.toLowerCase() == 'manager';
   bool get isDesigner =>
@@ -165,6 +235,9 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _selectedMenu = menu;
     });
+    if (menu == NavMenu.dashboard) {
+      _checkAppUpdate();
+    }
   }
 
   void _refreshCurrentTab() {
@@ -203,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<NewsTrackingBloc>().add(FetchNewsTrackingDataEvent(phone: cleanPhone));
       }
       if (isSuperAdmin) {
-        context.read<UserBloc>().add(const RefreshUsersEvent());
+        context.read<UserBloc>().add(RefreshUsersEvent(phone: cleanPhone));
       }
       if (isSuperAdmin || isManager || isStoreIncharge) {
         context.read<PrintOrderBloc>().add(const FetchDeliveryLogsEvent());
@@ -238,13 +311,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody() {
+    final effectiveUserPhone = widget.user.phoneNumber ?? _userProfile?.phone ?? '';
+
     switch (_selectedMenu) {
       case NavMenu.dashboard:
         return DashboardTabView(
           isSuperAdmin: isSuperAdmin,
           isDesigner: isDesigner,
           userProfile: _userProfile,
-          userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+          userPhone: effectiveUserPhone,
           onNavigate: (menu) {
             setState(() {
               _selectedMenu = menu;
@@ -258,7 +333,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 isSuperAdmin: isSuperAdmin,
                 isDesigner: isDesigner,
                 userProfile: _userProfile,
-                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+                userPhone: effectiveUserPhone,
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.purchaseRequests:
@@ -271,11 +346,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 isSuperAdmin: isSuperAdmin,
                 isDesigner: isDesigner,
                 userProfile: _userProfile,
-                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+                userPhone: effectiveUserPhone,
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.printOrders:
-        return (!isDigitalStudioIncharge && !isDigitalStudioEmployee && (isSuperAdmin || isStoreIncharge || isManager || isDesigner || isWingIncharge || _userProfile?.role.toLowerCase() == 'vendor'))
+        return (!isDigitalStudioIncharge && !isDigitalStudioEmployee && (isSuperAdmin || isStoreIncharge || isManager || isDesigner || _userProfile?.role.toLowerCase() == 'vendor'))
             ? PrintOrdersTabView(
                 isSuperAdmin: isSuperAdmin || isStoreIncharge || isManager,
                 isDesigner: isDesigner,
@@ -285,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 isSuperAdmin: isSuperAdmin,
                 isDesigner: isDesigner,
                 userProfile: _userProfile,
-                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+                userPhone: effectiveUserPhone,
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.deliveryLogs:
@@ -298,7 +373,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 isSuperAdmin: isSuperAdmin,
                 isDesigner: isDesigner,
                 userProfile: _userProfile,
-                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+                userPhone: effectiveUserPhone,
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.payments:
@@ -311,7 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 isSuperAdmin: isSuperAdmin,
                 isDesigner: isDesigner,
                 userProfile: _userProfile,
-                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+                userPhone: effectiveUserPhone,
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.postOrders:
@@ -325,7 +400,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 isSuperAdmin: isSuperAdmin,
                 isDesigner: isDesigner,
                 userProfile: _userProfile,
-                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+                userPhone: effectiveUserPhone,
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.digitalStudio:
@@ -347,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 isSuperAdmin: isSuperAdmin,
                 isDesigner: isDesigner,
                 userProfile: _userProfile,
-                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+                userPhone: effectiveUserPhone,
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.newsTracking:
@@ -355,13 +430,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ? NewsTrackingTabView(
                 currentUser: _userProfile,
                 isSuperAdmin: isSuperAdmin,
-                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+                userPhone: effectiveUserPhone,
               )
             : DashboardTabView(
                 isSuperAdmin: isSuperAdmin,
                 isDesigner: isDesigner,
                 userProfile: _userProfile,
-                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+                userPhone: effectiveUserPhone,
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.categories:
@@ -371,7 +446,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 isSuperAdmin: isSuperAdmin,
                 isDesigner: isDesigner,
                 userProfile: _userProfile,
-                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+                userPhone: effectiveUserPhone,
               );
       case NavMenu.productTypes:
         return isSuperAdmin
@@ -380,7 +455,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 isSuperAdmin: isSuperAdmin,
                 isDesigner: isDesigner,
                 userProfile: _userProfile,
-                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+                userPhone: effectiveUserPhone,
               );
       case NavMenu.wings:
         return isSuperAdmin
@@ -389,19 +464,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 isSuperAdmin: isSuperAdmin,
                 isDesigner: isDesigner,
                 userProfile: _userProfile,
-                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+                userPhone: effectiveUserPhone,
               );
       case NavMenu.users:
         return isSuperAdmin
-            ? const UsersTabView()
+            ? UsersTabView(
+                isSuperAdmin: true,
+                userPhone: effectiveUserPhone,
+              )
             : DashboardTabView(
                 isSuperAdmin: isSuperAdmin,
                 isDesigner: isDesigner,
                 userProfile: _userProfile,
-                userPhone: widget.user.phoneNumber ?? '+91 7414055310',
+                userPhone: effectiveUserPhone,
               );
       case NavMenu.settings:
-        return const SettingsTabView();
+        return SettingsTabView(
+          isSuperAdmin: isSuperAdmin,
+          isAdmin: isAdmin,
+          userPhone: effectiveUserPhone,
+        );
       case NavMenu.privacyPolicy:
         return const LegalDocTabView(type: LegalDocType.privacyPolicy);
       case NavMenu.termsAndConditions:
@@ -411,6 +493,75 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isAccountInactive) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFEE2E2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.block_rounded,
+                      size: 44,
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Account Inactive',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _inactiveMessage,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF64748B),
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      await FirebaseAuth.instance.signOut();
+                    },
+                    icon: const Icon(Icons.logout_rounded, size: 18),
+                    label: const Text(
+                      'Back to Login',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFDC2626),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     if (_isLoadingProfile) {
       return const Scaffold(
         backgroundColor: Color(0xFFF8FAFC),
@@ -453,8 +604,66 @@ class _HomeScreenState extends State<HomeScreen> {
         ? _userProfile!.name.trim()
         : (isSuperAdmin ? 'Super Admin' : roleTitle);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
+
+        // 1. If side drawer is open, close it
+        if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+          _scaffoldKey.currentState?.closeDrawer();
+          return;
+        }
+
+        // 2. If user is on a sub-view / other tab, return to Dashboard first
+        if (_selectedMenu != NavMenu.dashboard) {
+          setState(() {
+            _selectedMenu = NavMenu.dashboard;
+          });
+          _checkAppUpdate();
+          return;
+        }
+
+        // 3. Double-back press confirmation within 2 seconds
+        final now = DateTime.now();
+        if (_lastBackPressTime == null ||
+            now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+          _lastBackPressTime = now;
+          ScaffoldMessenger.of(context).removeCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.exit_to_app_rounded, color: Colors.white, size: 20),
+                  SizedBox(width: 10),
+                  Text(
+                    'Press back again to exit',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: const Color(0xFF1E293B),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+          return;
+        }
+
+        // User pressed back twice within 2 seconds
+        SystemNavigator.pop();
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFFFFF),
         elevation: 0,
@@ -593,6 +802,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: _buildBody(),
+      ),
     );
   }
 }

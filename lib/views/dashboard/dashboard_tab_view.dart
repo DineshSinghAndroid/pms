@@ -3,12 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../bloc/digital_studio/digital_studio_bloc.dart';
+import '../../bloc/digital_studio/digital_studio_event.dart';
 import '../../bloc/digital_studio/digital_studio_state.dart';
 import '../../bloc/payment/payment_bloc.dart';
+import '../../bloc/payment/payment_event.dart';
 import '../../bloc/payment/payment_state.dart';
 import '../../bloc/print_order/print_order_bloc.dart';
+import '../../bloc/print_order/print_order_event.dart';
 import '../../bloc/print_order/print_order_state.dart';
 import '../../bloc/purchase_request/purchase_request_bloc.dart';
+import '../../bloc/purchase_request/purchase_request_event.dart';
 import '../../bloc/purchase_request/purchase_request_state.dart';
 import '../../models/digital_studio_crew_request_model.dart';
 import '../../models/user_model.dart';
@@ -34,13 +38,14 @@ class DashboardTabView extends StatelessWidget {
 
   bool get _isSuperAdmin {
     if (isSuperAdmin) return true;
-    final r = userProfile?.role.toLowerCase() ?? '';
-    if (r == 'superadmin' || r == 'super admin') return true;
-    final clean = userPhone.replaceAll(RegExp(r'\D'), '');
-    return clean.endsWith('7414055310');
+    final r = userProfile?.role.toLowerCase().trim() ?? '';
+    if (r == 'superadmin' || r == 'super admin' || r == 'super_admin') return true;
+    return userProfile?.isSuperAdmin ?? false;
   }
 
-  bool get _isManager => userProfile?.role.toLowerCase() == 'manager';
+  bool get _isManager =>
+      userProfile?.role.toLowerCase().trim() == 'manager' ||
+      userProfile?.role.toLowerCase().trim() == 'admin';
   bool get _isDesigner =>
       isDesigner ||
       userProfile?.role == 'Designer' ||
@@ -77,38 +82,82 @@ class DashboardTabView extends StatelessWidget {
     return '${userProfile?.role ?? 'User'} Portal';
   }
 
+  Future<void> _handleRefresh(BuildContext context) async {
+    final cleanPhone = (userProfile?.phone ?? userPhone)
+        .replaceAll(RegExp(r'^\+?91'), '')
+        .replaceAll(RegExp(r'\D'), '');
+
+    if (_isDigitalStudioIncharge || _isDigitalStudioEmployee) {
+      context.read<DigitalStudioBloc>().add(RefreshDigitalStudioEvent(phone: cleanPhone));
+    }
+
+    if (_isDesigner) {
+      context.read<PurchaseRequestBloc>().add(
+        FetchPurchaseRequestsEvent(
+          designerId: userProfile?.id,
+          phone: cleanPhone,
+        ),
+      );
+      context.read<PrintOrderBloc>().add(FetchPrintOrders(phone: cleanPhone));
+    } else if (_isWingIncharge) {
+      context.read<PurchaseRequestBloc>().add(
+        FetchPurchaseRequestsEvent(phone: cleanPhone),
+      );
+      context.read<PrintOrderBloc>().add(FetchPrintOrders(phone: cleanPhone));
+    } else if (_isStoreIncharge) {
+      context.read<PurchaseRequestBloc>().add(const FetchPurchaseRequestsEvent());
+      context.read<PrintOrderBloc>().add(FetchPrintOrders(phone: cleanPhone));
+      context.read<PrintOrderBloc>().add(const FetchDeliveryLogsEvent());
+    } else if (_isVendor) {
+      context.read<PrintOrderBloc>().add(FetchPrintOrders(phone: cleanPhone));
+    } else {
+      // Super Admin, Manager
+      context.read<PurchaseRequestBloc>().add(const FetchPurchaseRequestsEvent());
+      context.read<PrintOrderBloc>().add(FetchPrintOrders(phone: cleanPhone));
+      context.read<PaymentBloc>().add(const FetchPaymentsEvent());
+      context.read<PaymentBloc>().add(const FetchEligiblePaymentItemsEvent());
+      context.read<DigitalStudioBloc>().add(RefreshDigitalStudioEvent(phone: cleanPhone));
+    }
+
+    await Future.delayed(const Duration(milliseconds: 600));
+  }
+
   @override
   Widget build(BuildContext context) {
     final phone = userProfile?.phone ?? userPhone;
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // 1. Welcome Header Banner
-          _buildHeaderBanner(phone),
+    return RefreshIndicator(
+      color: const Color(0xFF2563EB),
+      onRefresh: () => _handleRefresh(context),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. Welcome Header Banner
+            _buildHeaderBanner(phone),
 
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // 2. Role-Based Content Sections
-          if (_isDesigner)
-            _buildDesignerSection(context)
-          else if (_isStoreIncharge)
-            _buildStoreInchargeSection(context)
-          else if (_isWingIncharge)
-            _buildWingInchargeSection(context)
-          else if (_isVendor)
-            _buildVendorSection(context)
-          else if (_isDigitalStudioIncharge)
-            _buildStudioInchargeSection(context)
-          else if (_isDigitalStudioEmployee)
-            _buildStudioEmployeeSection(context)
-          else
-            // Super Admin, Manager
-            _buildAdminAndManagementSection(context),
-        ],
+            // 2. Role-Based Content Sections
+            if (_isDesigner)
+              _buildDesignerSection(context)
+            else if (_isStoreIncharge)
+              _buildStoreInchargeSection(context)
+            else if (_isWingIncharge)
+              _buildWingInchargeSection(context)
+            else if (_isVendor)
+              _buildVendorSection(context)
+            else if (_isDigitalStudioIncharge)
+              _buildStudioInchargeSection(context)
+            else if (_isDigitalStudioEmployee)
+              _buildStudioEmployeeSection(context)
+            else
+              // Super Admin, Manager
+              _buildAdminAndManagementSection(context),
+          ],
+        ),
       ),
     );
   }

@@ -15,10 +15,15 @@ import '../../bloc/user/user_bloc.dart';
 import '../../bloc/user/user_state.dart';
 import '../../bloc/wing/wing_bloc.dart';
 import '../../bloc/wing/wing_state.dart';
+import '../../bloc/product_type/product_type_event.dart';
+import '../../bloc/wing/wing_event.dart';
 import '../../models/product_type_model.dart';
 import '../../models/purchase_request_model.dart';
 import '../../models/user_model.dart';
 import '../../models/wing_model.dart';
+import '../../repositories/product_type_repository.dart';
+import '../../repositories/purchase_request_repository.dart';
+import '../../repositories/wing_repository.dart';
 import 'pr_details_screen.dart';
 
 class PurchaseRequestsTabView extends StatefulWidget {
@@ -46,7 +51,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
       widget.isSuperAdmin ||
       widget.currentUser?.role.toLowerCase() == 'superadmin' ||
       widget.currentUser?.role.toLowerCase() == 'super admin' ||
-      widget.currentUser?.phone == '7414055310';
+      widget.currentUser?.phone == '';
   bool get isManager =>
       widget.currentUser?.role.toLowerCase() == 'manager';
   bool get isAdminOrManager => isSuperAdmin || isManager;
@@ -72,6 +77,15 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
   void initState() {
     super.initState();
     _fetchPRs();
+    _preloadPrDependencies();
+  }
+
+  void _preloadPrDependencies() {
+    PurchaseRequestRepository().getDesigners();
+    context.read<ProductTypeBloc>().add(const FetchProductTypesEvent());
+    context.read<WingBloc>().add(const FetchWingsEvent());
+    ProductTypeRepository().getProductTypes();
+    WingRepository().getWings();
   }
 
   @override
@@ -79,6 +93,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
     super.didUpdateWidget(oldWidget);
     if (widget.currentUser != oldWidget.currentUser) {
       _fetchPRs();
+      _preloadPrDependencies();
     }
   }
 
@@ -111,22 +126,66 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
   }
 
   // ================= CREATE PURCHASE REQUEST MODAL =================
-  void _showCreatePRForm(BuildContext context) {
-    final ptState = context.read<ProductTypeBloc>().state;
-    final wingState = context.read<WingBloc>().state;
+  void _showCreatePRForm(BuildContext context) async {
+    // 1. Check cached repositories or Bloc states
+    List<ProductTypeModel> allProductTypes =
+        ProductTypeRepository.cachedProductTypes ?? [];
+    if (allProductTypes.isEmpty) {
+      final ptState = context.read<ProductTypeBloc>().state;
+      if (ptState is ProductTypeLoaded && ptState.productTypes.isNotEmpty) {
+        allProductTypes = ptState.productTypes;
+      }
+    }
 
-    final allProductTypes = ptState is ProductTypeLoaded
-        ? ptState.productTypes
-        : <ProductTypeModel>[];
-    final allWings = wingState is WingLoaded ? wingState.wings : <WingModel>[];
+    List<WingModel> allWings = WingRepository.cachedWings ?? [];
+    if (allWings.isEmpty) {
+      final wingState = context.read<WingBloc>().state;
+      if (wingState is WingLoaded && wingState.wings.isNotEmpty) {
+        allWings = wingState.wings;
+      }
+    }
+
+    // 2. If either is still empty, fetch asynchronously with a quick loading indicator (NEVER show premature error!)
+    if (allProductTypes.isEmpty || allWings.isEmpty) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFDC2626)),
+        ),
+      );
+      try {
+        final ptFuture = allProductTypes.isEmpty
+            ? ProductTypeRepository().getProductTypes()
+            : Future.value(allProductTypes);
+        final wingFuture = allWings.isEmpty
+            ? WingRepository().getWings()
+            : Future.value(allWings);
+        final fetchedPTs = await ptFuture;
+        final fetchedWings = await wingFuture;
+        allProductTypes = fetchedPTs;
+        allWings = fetchedWings;
+      } catch (e) {
+        debugPrint('Error loading PR dependencies: $e');
+      } finally {
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+      }
+    }
+
+    if (!context.mounted) return;
 
     List<WingModel> availableWings = allWings;
     if (widget.currentUser?.isWingIncharge == true) {
-      final assignedIds = widget.currentUser!.assignedWings.map((w) => w.id).toSet();
+      final assignedIds =
+          widget.currentUser!.assignedWings.map((w) => w.id).toSet();
       if (assignedIds.isNotEmpty) {
-        availableWings = allWings.where((w) => assignedIds.contains(w.id)).toList();
+        availableWings =
+            allWings.where((w) => assignedIds.contains(w.id)).toList();
       }
-      if (availableWings.isEmpty && widget.currentUser!.assignedWings.isNotEmpty) {
+      if (availableWings.isEmpty &&
+          widget.currentUser!.assignedWings.isNotEmpty) {
         availableWings = widget.currentUser!.assignedWings;
       }
     }
@@ -135,11 +194,12 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            widget.currentUser?.isWingIncharge == true
+            widget.currentUser?.isWingIncharge == true && availableWings.isEmpty
                 ? 'No assigned wings found for your Wing Incharge account. Please contact Super Admin.'
-                : 'Please ensure Product Types and Wings are loaded.',
+                : 'Unable to load Product Types or Wings from server. Please check internet connection.',
           ),
           backgroundColor: const Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -163,15 +223,20 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
       builder: (modalCtx) {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 20,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => FocusScope.of(ctx).unfocus(),
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 20,
+                  bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 20,
+                ),
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -277,8 +342,9 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                             onPressed: chosenPickerProduct == null
                                 ? null
                                 : () {
+                                    FocusScope.of(ctx).unfocus();
                                     setModalState(() {
-                                      itemsList.add({
+                                      itemsList.insert(0, {
                                         'product_type_id':
                                             chosenPickerProduct!.id,
                                         'product_name':
@@ -999,37 +1065,74 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                   ],
                 ),
               ),
-            );
-          },
-        );
-      },
-    );
-  }
+            ),
+          );
+        },
+      );
+    },
+  );
+}
 
   // ================= ASSIGN DESIGNER MODAL =================
   void _showAssignDesignerDialog(
     BuildContext context,
     PurchaseRequestModel pr,
-  ) {
-    final userState = context.read<UserBloc>().state;
-    final allUsers = userState is UserLoaded ? userState.users : <UserModel>[];
-    final designers = allUsers
-        .where((u) => u.role == 'Designer' && u.isActive)
-        .toList();
+  ) async {
+    List<UserModel> designers = PurchaseRequestRepository.cachedDesigners ?? [];
+
+    // Fallback to UserBloc if cache is empty
+    if (designers.isEmpty) {
+      final userState = context.read<UserBloc>().state;
+      if (userState is UserLoaded) {
+        designers = userState.users
+            .where((u) =>
+                (u.isDesigner ||
+                    u.role.toLowerCase().contains('designer') ||
+                    u.role.toLowerCase().contains('studio')) &&
+                u.isActive)
+            .toList();
+      }
+    }
+
+    // If still empty (e.g. cold start / fast tap), fetch from server
+    if (designers.isEmpty) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFD97706)),
+        ),
+      );
+      try {
+        designers = await PurchaseRequestRepository().getDesigners();
+      } catch (e) {
+        debugPrint('Error fetching designers: $e');
+      } finally {
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+      }
+    }
+
+    if (!context.mounted) return;
 
     if (designers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'No Designer users found. Please create a user with role "Designer" first.',
+            'No active Designer users found. Please create or activate a Designer in Admin Portal.',
           ),
           backgroundColor: Color(0xFFD97706),
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
 
-    int chosenDesignerId = designers.first.id;
+    int chosenDesignerId = pr.assignedDesignerId ?? designers.first.id;
+    if (!designers.any((d) => d.id == chosenDesignerId)) {
+      chosenDesignerId = designers.first.id;
+    }
 
     showDialog(
       context: context,
@@ -1037,7 +1140,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return AlertDialog(
-              backgroundColor: Color(0xFFFFFFFF),
+              backgroundColor: const Color(0xFFFFFFFF),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
@@ -1049,11 +1152,14 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                     size: 20,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    'Assign PR ${pr.prNumber}',
-                    style: const TextStyle(
-                      color: Color(0xFF0F172A),
-                      fontSize: 16,
+                  Expanded(
+                    child: Text(
+                      'Assign PR ${pr.prNumber}',
+                      style: const TextStyle(
+                        color: Color(0xFF0F172A),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -1076,24 +1182,25 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Color(0xFFF8FAFC),
+                      color: const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Color(0xFFE2E8F0)),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<int>(
                         value: chosenDesignerId,
                         isExpanded: true,
-                        dropdownColor: Color(0xFFFFFFFF),
+                        dropdownColor: const Color(0xFFFFFFFF),
                         style: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF0F172A),
                           fontWeight: FontWeight.bold,
                         ),
                         items: designers.map((d) {
+                          final roleLabel = d.role == 'Designer' ? '' : ' [${d.role}]';
                           return DropdownMenuItem<int>(
                             value: d.id,
-                            child: Text('${d.name} (${d.phone})'),
+                            child: Text('${d.name}$roleLabel (${d.phone})'),
                           );
                         }).toList(),
                         onChanged: (val) {
@@ -1128,13 +1235,13 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                         content: Text(
                           '✓ PR ${pr.prNumber} assigned to Designer!',
                         ),
-                        backgroundColor: Color(0xFF059669),
+                        backgroundColor: const Color(0xFF059669),
                       ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFD97706),
-                    foregroundColor: Color(0xFFFFFFFF),
+                    backgroundColor: const Color(0xFFD97706),
+                    foregroundColor: const Color(0xFFFFFFFF),
                   ),
                   child: const Text('Confirm Assignment'),
                 ),
@@ -1148,14 +1255,23 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Top Header
-          Row(
+    return RefreshIndicator(
+      color: const Color(0xFF2563EB),
+      onRefresh: () async {
+        _fetchPRs();
+        _preloadPrDependencies();
+        await context.read<PurchaseRequestBloc>().stream.firstWhere(
+          (s) => s is PurchaseRequestLoaded || s is PurchaseRequestError,
+        );
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Top Header
+            Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
@@ -1533,8 +1649,9 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildScopeTab({
     required String title,
@@ -1954,95 +2071,146 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                     const SizedBox(height: 10),
 
                     // Assigned Designer & Quick View Bar
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Color(0xFFE2E8F0)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                pr.assignedDesigner != null
-                                    ? Icons.brush_rounded
-                                    : Icons.person_off_outlined,
-                                color: pr.assignedDesigner != null
-                                    ? primaryColor
-                                    : Color(0xFFD97706),
-                                size: 15,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                pr.assignedDesigner != null
-                                    ? 'Designer: \n${pr.assignedDesigner!.name}'
-                                    : 'Unassigned',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: pr.assignedDesigner != null
-                                      ? Color(0xFF0F172A)
-                                      : Color(0xFFD97706),
-                                ),
-                              ),
-                            ],
+                    // Assigned Designer & Quick View Bar
+                    Builder(
+                      builder: (context) {
+                        final roleLower = (widget.currentUser?.role ?? '').toLowerCase().trim();
+                        final bool canAssignPR = widget.isSuperAdmin ||
+                            widget.currentUser?.isSuperAdmin == true ||
+                            roleLower == 'superadmin' ||
+                            roleLower == 'super admin' ||
+                            roleLower == 'super_admin' ||
+                            roleLower == 'admin' ||
+                            roleLower == 'manager' ||
+                            roleLower == 'digital studio incharge' ||
+                            roleLower == 'digital_studio_incharge';
+
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
                           ),
-                          Row(
+                          child: Column(
                             children: [
-                              if (widget.isSuperAdmin ||
-                                  widget.currentUser?.role.toLowerCase() == 'manager' ||
-                                  widget.currentUser?.role == 'Digital Studio Incharge')
-                                OutlinedButton(
-                                  onPressed: () =>
-                                      _showAssignDesignerDialog(context, pr),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Color(0xFFD97706),
-                                    side: const BorderSide(
-                                      color: Color(0xFFD97706),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: pr.assignedDesigner != null
+                                              ? const Color(0xFFEEF2FF)
+                                              : const Color(0xFFFFFBEB),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(
+                                          pr.assignedDesigner != null
+                                              ? Icons.brush_rounded
+                                              : Icons.person_off_outlined,
+                                          color: pr.assignedDesigner != null
+                                              ? primaryColor
+                                              : const Color(0xFFD97706),
+                                          size: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            pr.assignedDesigner != null
+                                                ? 'ASSIGNED DESIGNER'
+                                                : 'DESIGNER STATUS',
+                                            style: const TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: Color(0xFF64748B),
+                                              letterSpacing: 0.4,
+                                            ),
+                                          ),
+                                          Text(
+                                            pr.assignedDesigner != null
+                                                ? pr.assignedDesigner!.name
+                                                : 'Unassigned',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: pr.assignedDesigner != null
+                                                  ? const Color(0xFF0F172A)
+                                                  : const Color(0xFFD97706),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'View Details',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: primaryColor,
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right_rounded,
+                                        color: primaryColor,
+                                        size: 18,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              if (canAssignPR) ...[
+                                const SizedBox(height: 10),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () =>
+                                        _showAssignDesignerDialog(context, pr),
+                                    icon: Icon(
+                                      pr.assignedDesigner != null
+                                          ? Icons.swap_horiz_rounded
+                                          : Icons.person_add_alt_1_rounded,
+                                      size: 18,
+                                      color: Colors.white,
                                     ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
+                                    label: Text(
+                                      pr.assignedDesigner != null
+                                          ? 'Re-assign Designer'
+                                          : 'Assign Designer',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.2,
+                                      ),
                                     ),
-                                    minimumSize: const Size(0, 24),
-                                    textStyle: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: pr.assignedDesigner != null
+                                          ? const Color(0xFF4F46E5)
+                                          : const Color(0xFFD97706),
+                                      foregroundColor: Colors.white,
+                                      elevation: 2,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 10,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
                                     ),
                                   ),
-                                  child: Text(
-                                    pr.assignedDesigner != null
-                                        ? 'Re-assign'
-                                        : 'Assign',
-                                  ),
                                 ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'View Details',
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryColor,
-                                ),
-                              ),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                color: primaryColor,
-                                size: 17,
-                              ),
+                              ],
                             ],
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ],
                 ),

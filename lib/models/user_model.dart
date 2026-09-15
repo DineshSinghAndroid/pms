@@ -29,7 +29,11 @@ class UserModel extends Equatable {
       email: json['email'] as String?,
       phone: json['phone'] as String? ?? '',
       role: json['role'] as String? ?? 'manager',
-      isActive: json['is_active'] as bool? ?? true,
+      isActive: json['is_active'] == null
+          ? true
+          : (json['is_active'] == true ||
+              json['is_active'] == 1 ||
+              json['is_active'] == '1'),
       assignedWings: (json['assigned_wings'] as List<dynamic>?)
               ?.map((w) => WingModel.fromJson(w as Map<String, dynamic>))
               .toList() ??
@@ -53,11 +57,12 @@ class UserModel extends Equatable {
     };
   }
 
-  bool get isSuperAdmin =>
-      role.toLowerCase() == 'superadmin' ||
-      role.toLowerCase() == 'super_admin' ||
-      role == 'Super Admin' ||
-      phone == '7414055310';
+  bool get isSuperAdmin {
+    final r = role.toLowerCase().trim();
+    return r == 'superadmin' ||
+        r == 'super admin' ||
+        r == 'super_admin';
+  }
   bool get isDesigner =>
       role == 'Designer' || role.toLowerCase() == 'designer';
   bool get isDigitalStudioIncharge =>

@@ -8,9 +8,15 @@ import '../services/api_service.dart';
 
 class PurchaseRequestRepository {
   final ApiService _apiService;
+  static List<UserModel>? _cachedDesigners;
+  static DateTime? _lastDesignersFetch;
+  static Future<List<UserModel>>? _inFlightDesignersFuture;
 
   PurchaseRequestRepository({ApiService? apiService})
     : _apiService = apiService ?? ApiService();
+
+  /// Synchronous access to pre-loaded designers
+  static List<UserModel>? get cachedDesigners => _cachedDesigners;
 
   Future<List<PurchaseRequestModel>> getPurchaseRequests({
     int? designerId,
@@ -81,7 +87,31 @@ class PurchaseRequestRepository {
     }
   }
 
-  Future<List<UserModel>> getDesigners() async {
+  /// Get active designers with automatic in-memory caching and deduplication
+  Future<List<UserModel>> getDesigners({bool forceRefresh = false}) async {
+    if (!forceRefresh &&
+        _cachedDesigners != null &&
+        _cachedDesigners!.isNotEmpty &&
+        _lastDesignersFetch != null &&
+        DateTime.now().difference(_lastDesignersFetch!) <
+            const Duration(minutes: 10)) {
+      return _cachedDesigners!;
+    }
+
+    if (_inFlightDesignersFuture != null) {
+      return await _inFlightDesignersFuture!;
+    }
+
+    _inFlightDesignersFuture = _fetchDesigners();
+    try {
+      final res = await _inFlightDesignersFuture!;
+      return res;
+    } finally {
+      _inFlightDesignersFuture = null;
+    }
+  }
+
+  Future<List<UserModel>> _fetchDesigners() async {
     try {
       final response = await _apiService.client.get('/api/designers');
       if (response.statusCode == 200 && response.data != null) {
@@ -90,18 +120,29 @@ class PurchaseRequestRepository {
             : Map<String, dynamic>.from(response.data as Map);
 
         final List<dynamic> dataList = body['data'] as List<dynamic>? ?? [];
-        return dataList
+        final designers = dataList
             .map((item) => UserModel.fromJson(item as Map<String, dynamic>))
+            .where((u) => u.isActive)
             .toList();
+
+        _cachedDesigners = designers;
+        _lastDesignersFetch = DateTime.now();
+        return designers;
       }
-      return [];
+      return _cachedDesigners ?? [];
     } on DioException catch (e) {
+      if (_cachedDesigners != null && _cachedDesigners!.isNotEmpty) {
+        return _cachedDesigners!;
+      }
       throw Exception(
         e.response?.data?['message'] ??
             e.message ??
             'Network error loading designers',
       );
     } catch (e) {
+      if (_cachedDesigners != null && _cachedDesigners!.isNotEmpty) {
+        return _cachedDesigners!;
+      }
       throw Exception('Unexpected error: $e');
     }
   }

@@ -265,39 +265,61 @@ class _DigitalStudioAssetsSubTabState extends State<DigitalStudioAssetsSubTab> {
 
               // 4. Asset List
               Expanded(
-                child: filteredAssets.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                child: RefreshIndicator(
+                  color: const Color(0xFF2563EB),
+                  onRefresh: () async {
+                    context.read<DigitalStudioBloc>().add(
+                          RefreshDigitalStudioEvent(
+                            phone: widget.currentUser?.phone,
+                          ),
+                        );
+                    await context.read<DigitalStudioBloc>().stream.firstWhere(
+                          (s) => s is DigitalStudioLoaded || s is DigitalStudioError,
+                        );
+                  },
+                  child: filteredAssets.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           children: [
-                            Icon(
-                              Icons.inventory_2_outlined,
-                              size: 48,
-                              color: Colors.grey.shade400,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No assets found matching filters',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontWeight: FontWeight.w600,
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.4,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.inventory_2_outlined,
+                                      size: 48,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'No assets found matching filters',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
+                        )
+                      : ListView.separated(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          itemCount: filteredAssets.length,
+                          separatorBuilder: (ctx, i) => const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final asset = filteredAssets[index];
+                            return _buildAssetCard(context, asset);
+                          },
                         ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        itemCount: filteredAssets.length,
-                        separatorBuilder: (ctx, i) => const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final asset = filteredAssets[index];
-                          return _buildAssetCard(context, asset);
-                        },
-                      ),
+                ),
               ),
             ],
           );

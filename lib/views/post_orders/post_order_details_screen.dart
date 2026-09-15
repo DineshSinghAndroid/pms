@@ -6,6 +6,7 @@ import '../../bloc/purchase_request/purchase_request_bloc.dart';
 import '../../bloc/purchase_request/purchase_request_event.dart';
 import '../../models/purchase_request_model.dart';
 import '../../models/user_model.dart';
+import '../../repositories/purchase_request_repository.dart';
 import '../../services/api_service.dart';
 
 class PostOrderDetailsScreen extends StatefulWidget {
@@ -27,6 +28,26 @@ class PostOrderDetailsScreen extends StatefulWidget {
 }
 
 class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
+  late PurchaseRequestModel _pr;
+
+  @override
+  void initState() {
+    super.initState();
+    _pr = widget.postOrder;
+  }
+
+  Future<void> _handleRefresh() async {
+    try {
+      final updated = await PurchaseRequestRepository()
+          .getPurchaseRequestDetails(_pr.id);
+      if (mounted) {
+        setState(() {
+          _pr = updated;
+        });
+      }
+    } catch (_) {}
+  }
+
   String _getAttachmentUrl(String? path) {
     if (path == null || path.isEmpty) return '';
     if (path.startsWith('http://') || path.startsWith('https://')) return path;
@@ -188,7 +209,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pr = widget.postOrder;
+    final pr = _pr;
     final artworkUrl = _getAttachmentUrl(pr.artworkFilePath);
     final isImg = _isImage(pr.artworkFilePath);
     final posterName =
@@ -245,13 +266,17 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Publishing Status Card
-            Container(
+      body: RefreshIndicator(
+        color: const Color(0xFF2563EB),
+        onRefresh: _handleRefresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Publishing Status Card
+              Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Color(0xFFF5F3FF).withValues(alpha: 0.3),
@@ -720,6 +745,7 @@ class _PostOrderDetailsScreenState extends State<PostOrderDetailsScreen> {
           ],
         ),
       ),
+    ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: const BoxDecoration(

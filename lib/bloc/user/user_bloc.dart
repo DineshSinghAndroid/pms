@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../repositories/user_repository.dart';
@@ -20,12 +21,16 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     FetchUsersEvent event,
     Emitter<UserState> emit,
   ) async {
+    debugPrint('🔄 [UserBloc] FetchUsersEvent triggered (phone: ${event.phone})');
     emit(const UserLoading());
     try {
-      final users = await repository.getUsers();
+      final users = await repository.getUsers(phone: event.phone);
+      debugPrint('✅ [UserBloc] Emitting UserLoaded with ${users.length} users');
       emit(UserLoaded(users: users));
     } catch (e) {
-      emit(UserError(errorMessage: e.toString().replaceAll('Exception: ', '')));
+      final cleanErr = e.toString().replaceAll('Exception: ', '');
+      debugPrint('❌ [UserBloc] Emitting UserError: $cleanErr');
+      emit(UserError(errorMessage: cleanErr));
     }
   }
 
@@ -33,11 +38,15 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     RefreshUsersEvent event,
     Emitter<UserState> emit,
   ) async {
+    debugPrint('🔄 [UserBloc] RefreshUsersEvent triggered (phone: ${event.phone})');
     try {
-      final users = await repository.getUsers();
+      final users = await repository.getUsers(phone: event.phone);
+      debugPrint('✅ [UserBloc] Refreshed ${users.length} users');
       emit(UserLoaded(users: users));
     } catch (e) {
-      emit(UserError(errorMessage: e.toString().replaceAll('Exception: ', '')));
+      final cleanErr = e.toString().replaceAll('Exception: ', '');
+      debugPrint('❌ [UserBloc] Refresh error: $cleanErr');
+      emit(UserError(errorMessage: cleanErr));
     }
   }
 
@@ -45,9 +54,10 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     CreateUserEvent event,
     Emitter<UserState> emit,
   ) async {
+    debugPrint('🔄 [UserBloc] CreateUserEvent: ${event.payload}');
     try {
-      await repository.createUser(event.payload);
-      final users = await repository.getUsers();
+      await repository.createUser(event.payload, phone: event.phone);
+      final users = await repository.getUsers(phone: event.phone);
       emit(UserLoaded(users: users));
     } catch (e) {
       emit(UserError(errorMessage: e.toString().replaceAll('Exception: ', '')));
@@ -58,9 +68,10 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     UpdateUserEvent event,
     Emitter<UserState> emit,
   ) async {
+    debugPrint('🔄 [UserBloc] UpdateUserEvent: ID ${event.userId}');
     try {
-      await repository.updateUser(event.userId, event.payload);
-      final users = await repository.getUsers();
+      await repository.updateUser(event.userId, event.payload, phone: event.phone);
+      final users = await repository.getUsers(phone: event.phone);
       emit(UserLoaded(users: users));
     } catch (e) {
       emit(UserError(errorMessage: e.toString().replaceAll('Exception: ', '')));
@@ -71,9 +82,10 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     DeleteUserEvent event,
     Emitter<UserState> emit,
   ) async {
+    debugPrint('🔄 [UserBloc] DeleteUserEvent: ID ${event.userId}');
     try {
-      await repository.deleteUser(event.userId);
-      final users = await repository.getUsers();
+      await repository.deleteUser(event.userId, phone: event.phone);
+      final users = await repository.getUsers(phone: event.phone);
       emit(UserLoaded(users: users));
     } catch (e) {
       emit(UserError(errorMessage: e.toString().replaceAll('Exception: ', '')));
@@ -84,10 +96,11 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     ToggleUserActiveEvent event,
     Emitter<UserState> emit,
   ) async {
+    debugPrint('🔄 [UserBloc] ToggleUserActiveEvent: ID ${event.userId}');
     if (state is UserLoaded) {
       final currentList = (state as UserLoaded).users;
       try {
-        final updatedUser = await repository.toggleUserActive(event.userId);
+        final updatedUser = await repository.toggleUserActive(event.userId, phone: event.phone);
         final updatedList = currentList.map((u) {
           return u.id == updatedUser.id ? updatedUser : u;
         }).toList();

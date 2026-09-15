@@ -12,6 +12,8 @@ import '../../bloc/purchase_request/purchase_request_bloc.dart';
 import '../../bloc/purchase_request/purchase_request_event.dart';
 import '../../bloc/purchase_request/purchase_request_state.dart';
 import '../../models/print_order_model.dart';
+import '../../bloc/user/user_bloc.dart';
+import '../../bloc/user/user_state.dart';
 import '../../models/purchase_request_model.dart';
 import '../../models/user_model.dart';
 import '../../models/vendor_model.dart';
@@ -38,18 +40,34 @@ class PRDetailsScreen extends StatefulWidget {
 }
 
 class _PRDetailsScreenState extends State<PRDetailsScreen> {
-  bool get isDesigner => widget.currentUser?.role == 'Designer';
-  bool get isManager => widget.currentUser?.role.toLowerCase() == 'manager';
+  bool get isDesigner =>
+      widget.currentUser?.role.toLowerCase().trim() == 'designer';
+  bool get isManager =>
+      widget.currentUser?.role.toLowerCase().trim() == 'manager';
   bool get isSuperAdmin =>
       widget.isSuperAdmin ||
-      widget.currentUser?.role.toLowerCase() == 'superadmin' ||
-      widget.currentUser?.role.toLowerCase() == 'super admin' ||
-      widget.currentUser?.phone == '7414055310';
-  bool get isAdminOrManager => isSuperAdmin || isManager;
+      widget.currentUser?.isSuperAdmin == true ||
+      widget.currentUser?.role.toLowerCase().trim() == 'superadmin' ||
+      widget.currentUser?.role.toLowerCase().trim() == 'super admin' ||
+      widget.currentUser?.role.toLowerCase().trim() == 'super_admin';
+  bool get isAdmin =>
+      widget.currentUser?.role.toLowerCase().trim() == 'admin';
   bool get isDigitalStudioIncharge =>
-      widget.currentUser?.role == 'Digital Studio Incharge';
+      widget.currentUser?.role.toLowerCase().trim() == 'digital studio incharge' ||
+      widget.currentUser?.role.toLowerCase().trim() == 'digital_studio_incharge';
+  bool get canAssignDesigner =>
+      isSuperAdmin || isAdmin || isManager || isDigitalStudioIncharge;
+  bool get isAdminOrManager => isSuperAdmin || isAdmin || isManager;
   bool get canReviewArtwork => isAdminOrManager;
   bool get canWorkOnArtwork => isDesigner;
+
+  @override
+  void initState() {
+    super.initState();
+    if (canAssignDesigner) {
+      PurchaseRequestRepository().getDesigners();
+    }
+  }
 
   String _getAttachmentUrl(String? path) {
     if (path == null || path.isEmpty) return '';
@@ -887,12 +905,273 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     );
   }
 
+  // ================= ASSIGN DESIGNER MODAL =================
+  void _showAssignDesignerDialog(
+    BuildContext context,
+    PurchaseRequestModel pr,
+  ) async {
+    List<UserModel> designers = PurchaseRequestRepository.cachedDesigners ?? [];
+
+    if (designers.isEmpty) {
+      final userState = context.read<UserBloc>().state;
+      if (userState is UserLoaded) {
+        designers = userState.users
+            .where((u) =>
+                (u.isDesigner ||
+                    u.role.toLowerCase().contains('designer') ||
+                    u.role.toLowerCase().contains('studio')) &&
+                u.isActive)
+            .toList();
+      }
+    }
+
+    if (designers.isEmpty) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFD97706)),
+        ),
+      );
+      try {
+        designers = await PurchaseRequestRepository().getDesigners();
+      } catch (e) {
+        debugPrint('Error fetching designers: $e');
+      } finally {
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+      }
+    }
+
+    if (!context.mounted) return;
+
+    if (designers.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No active Designer users found. Please create or activate a Designer in Admin Portal.',
+          ),
+          backgroundColor: Color(0xFFD97706),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    int chosenDesignerId = pr.assignedDesignerId ?? designers.first.id;
+    if (!designers.any((d) => d.id == chosenDesignerId)) {
+      chosenDesignerId = designers.first.id;
+    }
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFFFFFFFF),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.person_pin_rounded,
+                      color: Color(0xFFD97706),
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          pr.assignedDesigner != null
+                              ? 'Re-assign Designer'
+                              : 'Assign Designer',
+                          style: const TextStyle(
+                            color: Color(0xFF0F172A),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          pr.prNumber,
+                          style: const TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 11,
+                            fontFamily: 'monospace',
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Select a Designer for Wing "${pr.wing?.name ?? 'General'}":',
+                    style: const TextStyle(
+                      color: Color(0xFF475569),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: chosenDesignerId,
+                        isExpanded: true,
+                        dropdownColor: const Color(0xFFFFFFFF),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        items: designers.map((d) {
+                          final roleLabel = d.role == 'Designer' ? '' : ' [${d.role}]';
+                          return DropdownMenuItem<int>(
+                            value: d.id,
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.brush_rounded,
+                                  size: 16,
+                                  color: Color(0xFFD97706),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${d.name}$roleLabel (${d.phone})',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setDialogState(() => chosenDesignerId = val);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogCtx),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(dialogCtx);
+                    context.read<PurchaseRequestBloc>().add(
+                          AssignDesignerEvent(
+                            prId: pr.id,
+                            designerId: chosenDesignerId,
+                          ),
+                        );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '✓ PR ${pr.prNumber} assigned to Designer!',
+                        ),
+                        backgroundColor: const Color(0xFF059669),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.check_circle_rounded, size: 16),
+                  label: const Text(
+                    'Confirm Assignment',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD97706),
+                    foregroundColor: const Color(0xFFFFFFFF),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _handleRefresh() async {
+    final bloc = context.read<PurchaseRequestBloc>();
+    if (widget.currentUser != null && widget.currentUser!.role == 'Designer') {
+      bloc.add(
+        FetchPurchaseRequestsEvent(
+          designerId: widget.currentUser!.id,
+          phone: widget.currentUser!.phone,
+        ),
+      );
+    } else if (widget.currentUser != null &&
+        widget.currentUser!.isWingIncharge) {
+      bloc.add(
+        FetchPurchaseRequestsEvent(
+          phone: widget.currentUser!.phone,
+        ),
+      );
+    } else {
+      bloc.add(const FetchPurchaseRequestsEvent());
+    }
+
+    try {
+      await PurchaseRequestRepository().getPurchaseRequestDetails(widget.prId);
+    } catch (_) {}
+
+    await bloc.stream.firstWhere(
+      (s) => s is PurchaseRequestLoaded || s is PurchaseRequestError,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: Color(0xFFFFFFFF),
+        backgroundColor: const Color(0xFFFFFFFF),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
@@ -924,10 +1203,19 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 .where((x) => x.id == widget.prId)
                 .toList();
             if (prList.isEmpty) {
-              return const Center(
-                child: Text(
-                  'Purchase Request not found.',
-                  style: TextStyle(color: Color(0xFF64748B)),
+              return RefreshIndicator(
+                color: const Color(0xFF2563EB),
+                onRefresh: _handleRefresh,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Purchase Request not found. Pull to refresh.',
+                      style: TextStyle(color: Color(0xFF64748B)),
+                    ),
+                  ),
                 ),
               );
             }
@@ -936,10 +1224,19 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             return _buildPRDetailsContent(context, pr);
           }
 
-          return const Center(
-            child: Text(
-              'Error loading PR details.',
-              style: TextStyle(color: Color(0xFF64748B)),
+          return RefreshIndicator(
+            color: const Color(0xFF2563EB),
+            onRefresh: _handleRefresh,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.7,
+                alignment: Alignment.center,
+                child: const Text(
+                  'Error loading PR details. Pull to retry.',
+                  style: TextStyle(color: Color(0xFF64748B)),
+                ),
+              ),
             ),
           );
         },
@@ -951,13 +1248,17 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     return Column(
       children: [
         Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 1. TOP PR HEADER & SUMMARY CARD
-                _buildHeaderCard(pr),
+          child: RefreshIndicator(
+            color: const Color(0xFF2563EB),
+            onRefresh: _handleRefresh,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 1. TOP PR HEADER & SUMMARY CARD
+                  _buildHeaderCard(pr),
 
                 const SizedBox(height: 12),
 
@@ -977,6 +1278,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             ),
           ),
         ),
+      ),
 
         // 5. STICKY BOTTOM ACTION FOOTER
         _buildBottomActionBar(context, pr),
@@ -1077,33 +1379,99 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
 
           // Assigned Designer
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Color(0xFFE2E8F0)),
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.brush_rounded,
-                  color: Color(0xFFD97706),
-                  size: 15,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: pr.assignedDesigner != null
+                        ? const Color(0xFFEEF2FF)
+                        : const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
                     pr.assignedDesigner != null
-                        ? 'Designer: ${pr.assignedDesigner!.name} (${pr.assignedDesigner!.phone})'
-                        : 'Designer: Unassigned',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                        ? Icons.brush_rounded
+                        : Icons.person_off_outlined,
+                    color: pr.assignedDesigner != null
+                        ? const Color(0xFF4F46E5)
+                        : const Color(0xFFD97706),
+                    size: 18,
                   ),
                 ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pr.assignedDesigner != null
+                            ? 'ASSIGNED DESIGNER'
+                            : 'DESIGNER STATUS',
+                        style: const TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        pr.assignedDesigner != null
+                            ? '${pr.assignedDesigner!.name} (${pr.assignedDesigner!.phone})'
+                            : 'Unassigned (Assignment Needed)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: pr.assignedDesigner != null
+                              ? const Color(0xFF0F172A)
+                              : const Color(0xFFD97706),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                if (canAssignDesigner) ...[
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: () => _showAssignDesignerDialog(context, pr),
+                    icon: Icon(
+                      pr.assignedDesigner != null
+                          ? Icons.swap_horiz_rounded
+                          : Icons.person_add_alt_1_rounded,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      pr.assignedDesigner != null ? 'Re-assign' : 'Assign',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: pr.assignedDesigner != null
+                          ? const Color(0xFF4F46E5)
+                          : const Color(0xFFD97706),
+                      foregroundColor: Colors.white,
+                      elevation: 1.5,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1480,6 +1848,173 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 ),
               ),
             ),
+          ],
+        ),
+      );
+    }
+
+    if (pr.status == 'pending_assignment') {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFBEB),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFFCD34D),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD97706).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.pending_actions_rounded,
+                    color: Color(0xFFD97706),
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Designer Assignment Pending',
+                        style: TextStyle(
+                          color: Color(0xFF92400E),
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Assign an active Designer to begin artwork creation.',
+                        style: TextStyle(
+                          color: Color(0xFFB45309),
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (canAssignDesigner) ...[
+              const SizedBox(height: 14),
+              ElevatedButton.icon(
+                onPressed: () => _showAssignDesignerDialog(context, pr),
+                icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                label: const Text(
+                  'Assign Designer to this PR',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD97706),
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    if (pr.status == 'assigned_to_designer') {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFF6FF).withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.4),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.palette_outlined,
+                    color: Color(0xFF2563EB),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pr.assignedDesigner != null
+                            ? 'Assigned to: ${pr.assignedDesigner!.name}'
+                            : 'Assigned to Designer',
+                        style: const TextStyle(
+                          color: Color(0xFF1E40AF),
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Pending Work Start by Designer',
+                        style: TextStyle(
+                          color: Color(0xFF3B82F6),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (canAssignDesigner) ...[
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                onPressed: () => _showAssignDesignerDialog(context, pr),
+                icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                label: const Text(
+                  'Re-assign to Another Designer',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4F46E5),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       );
@@ -2207,27 +2742,82 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           padding: const EdgeInsets.all(16),
           color: const Color(0xFFFFFFFF),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: const Color(0xFFFFFBEB),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFFD97706).withValues(alpha: 0.5),
+                color: const Color(0xFFFCD34D),
+                width: 1.5,
               ),
             ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(Icons.hourglass_empty_rounded, color: Color(0xFFD97706), size: 16),
-                SizedBox(width: 8),
-                Text(
-                  'Waiting for Admin to Assign Designer',
-                  style: TextStyle(
-                    color: Color(0xFFD97706),
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD97706).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.pending_actions_rounded,
+                        color: Color(0xFFD97706),
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Designer Assignment Pending',
+                            style: TextStyle(
+                              color: Color(0xFF92400E),
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Assign an active Designer so they can begin creating artwork.',
+                            style: TextStyle(
+                              color: Color(0xFFB45309),
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
+                if (canAssignDesigner) ...[
+                  const SizedBox(height: 14),
+                  ElevatedButton.icon(
+                    onPressed: () => _showAssignDesignerDialog(context, pr),
+                    icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                    label: const Text(
+                      'Assign Designer to this PR',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD97706),
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -2238,31 +2828,84 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
           padding: const EdgeInsets.all(16),
           color: const Color(0xFFFFFFFF),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF).withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFFEFF6FF).withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.5),
+                color: const Color(0xFF2563EB).withValues(alpha: 0.4),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.palette_outlined, color: Color(0xFF2563EB), size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  pr.assignedDesigner != null
-                      ? 'Assigned to Designer: \n${pr.assignedDesigner!.name} (Pending Work Start)'
-                      : 'Assigned to Designer \n(Pending Work Start)',
-                  style: const TextStyle(
-                    color: Color(0xFF2563EB),
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.palette_outlined,
+                        color: Color(0xFF2563EB),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            pr.assignedDesigner != null
+                                ? 'Assigned to Designer: ${pr.assignedDesigner!.name}'
+                                : 'Assigned to Designer',
+                            style: const TextStyle(
+                              color: Color(0xFF1E40AF),
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Pending Work Start by Designer',
+                            style: TextStyle(
+                              color: Color(0xFF3B82F6),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
+                if (canAssignDesigner) ...[
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: () => _showAssignDesignerDialog(context, pr),
+                    icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                    label: const Text(
+                      'Re-assign to Another Designer',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4F46E5),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      elevation: 1,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
               ],
-
             ),
           ),
         );

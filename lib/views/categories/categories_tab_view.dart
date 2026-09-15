@@ -265,12 +265,20 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return RefreshIndicator(
+      color: const Color(0xFF2563EB),
+      onRefresh: () async {
+        context.read<CategoryBloc>().add(const RefreshCategoriesEvent());
+        await context.read<CategoryBloc>().stream.firstWhere(
+              (state) => state is CategoryLoaded || state is CategoryError,
+            );
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -475,6 +483,7 @@ class _CategoriesTabViewState extends State<CategoriesTabView> {
           ),
         ],
       ),
+    ),
     );
   }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:firebase_core/firebase_core.dart';
@@ -36,6 +37,7 @@ class NotificationService {
   );
 
   GlobalKey<NavigatorState>? _navigatorKey;
+  OverlayEntry? _currentTopBanner;
   String? _currentUserPhone;
   String? _currentToken;
   bool _isInitialized = false;
@@ -292,58 +294,70 @@ class NotificationService {
       debugPrint('Error showing local notification: $e');
     }
 
-    // 2. Also display floating interactive in-app snackbar
-    final context = _navigatorKey?.currentContext;
-    if (context == null || !context.mounted) return;
-
-    final prIdStr = data['pr_id']?.toString();
-    final prId = prIdStr != null ? int.tryParse(prIdStr) : null;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 6),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF0F172A),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
-        ),
-        content: Row(
-          children: [
-            const Icon(Icons.notifications_active, color: Color(0xFF60A5FA), size: 24),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
-                  ),
-                  if (body.isNotEmpty)
-                    Text(
-                      body,
-                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        action: prId != null
-            ? SnackBarAction(
-                label: 'VIEW PR',
-                textColor: const Color(0xFF60A5FA),
-                onPressed: () {
-                  _navigateToPR(prId);
-                },
-              )
-            : null,
-      ),
+    // 2. Display interactive top-bar notification banner (no bottom popup)
+    _showTopBarNotificationBanner(
+      title: title,
+      body: body,
+      data: data,
     );
+  }
+
+  /// Display heads-up top bar banner overlay
+  void _showTopBarNotificationBanner({
+    required String title,
+    required String body,
+    required Map<String, dynamic> data,
+  }) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final navState = _navigatorKey?.currentState;
+      final overlay = navState?.overlay;
+      if (overlay == null) return;
+
+      _dismissCurrentBanner();
+
+      final prIdStr = data['pr_id']?.toString();
+      final prId = prIdStr != null ? int.tryParse(prIdStr) : null;
+
+      late OverlayEntry entry;
+      entry = OverlayEntry(
+        builder: (context) => _TopNotificationBannerWidget(
+          title: title,
+          body: body,
+          prId: prId,
+          onDismiss: () {
+            if (_currentTopBanner == entry) {
+              try {
+                entry.remove();
+              } catch (_) {}
+              _currentTopBanner = null;
+            }
+          },
+          onTap: () {
+            if (_currentTopBanner == entry) {
+              try {
+                entry.remove();
+              } catch (_) {}
+              _currentTopBanner = null;
+            }
+            if (prId != null) {
+              _navigateToPR(prId);
+            } else {
+              _handleNotificationClick(data);
+            }
+          },
+        ),
+      );
+
+      _currentTopBanner = entry;
+      overlay.insert(entry);
+    });
+  }
+
+  void _dismissCurrentBanner() {
+    try {
+      _currentTopBanner?.remove();
+    } catch (_) {}
+    _currentTopBanner = null;
   }
 
   /// Handle navigation on notification tap
@@ -369,5 +383,228 @@ class NotificationService {
         ),
       );
     }
+  }
+}
+
+/// Interactive heads-up notification banner that slides down from the top bar
+class _TopNotificationBannerWidget extends StatefulWidget {
+  final String title;
+  final String body;
+  final int? prId;
+  final VoidCallback onDismiss;
+  final VoidCallback onTap;
+
+  const _TopNotificationBannerWidget({
+    required this.title,
+    required this.body,
+    this.prId,
+    required this.onDismiss,
+    required this.onTap,
+  });
+
+  @override
+  State<_TopNotificationBannerWidget> createState() =>
+      _TopNotificationBannerWidgetState();
+}
+
+class _TopNotificationBannerWidgetState
+    extends State<_TopNotificationBannerWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+  Timer? _dismissTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+      reverseDuration: const Duration(milliseconds: 240),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, -1.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    ));
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOut,
+      reverseCurve: Curves.easeIn,
+    ));
+
+    _animController.forward();
+
+    // Auto dismiss after 5.5 seconds
+    _dismissTimer = Timer(const Duration(milliseconds: 5500), () {
+      _closeBanner();
+    });
+  }
+
+  void _closeBanner() {
+    if (!mounted) return;
+    _dismissTimer?.cancel();
+    _animController.reverse().then((_) {
+      if (mounted) {
+        widget.onDismiss();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _dismissTimer?.cancel();
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final topPadding = mediaQuery.padding.top;
+
+    return Positioned(
+      top: topPadding > 0 ? topPadding + 4 : 12,
+      left: 12,
+      right: 12,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: GestureDetector(
+            onTap: () {
+              _dismissTimer?.cancel();
+              _animController.reverse().then((_) {
+                widget.onTap();
+              });
+            },
+            onVerticalDragUpdate: (details) {
+              if (details.primaryDelta != null && details.primaryDelta! < -3) {
+                _closeBanner();
+              }
+            },
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFF0284C7).withValues(alpha: 0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.notifications_active_rounded,
+                        color: Color(0xFF38BDF8),
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              letterSpacing: -0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (widget.body.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.body,
+                              style: const TextStyle(
+                                color: Color(0xFF94A3B8),
+                                fontSize: 11.5,
+                                height: 1.25,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (widget.prId != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0284C7),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'VIEW',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded,
+                          size: 18, color: Color(0xFF64748B)),
+                      padding: const EdgeInsets.only(left: 4),
+                      constraints: const BoxConstraints(),
+                      splashRadius: 16,
+                      onPressed: _closeBanner,
+                      tooltip: 'Dismiss',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

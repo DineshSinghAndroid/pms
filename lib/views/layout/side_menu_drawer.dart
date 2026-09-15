@@ -91,7 +91,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
     final userPhone =
         widget.userProfile?.phone ??
         widget.user.phoneNumber ??
-        '+91 7414055310';
+        '';
     final roleName =
         widget.userProfile?.role ??
         (widget.isSuperAdmin
@@ -223,7 +223,6 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                               widget.isDesigner ||
                               isStoreIncharge ||
                               isManager ||
-                              isWingIncharge ||
                               widget.userProfile?.role.toLowerCase() ==
                                   'vendor'))
                         BlocBuilder<PrintOrderBloc, PrintOrderState>(

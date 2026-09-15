@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../bloc/category/category_bloc.dart';
+import '../../bloc/category/category_event.dart';
 import '../../bloc/category/category_state.dart';
 import '../../bloc/product_type/product_type_bloc.dart';
 import '../../bloc/product_type/product_type_event.dart';
@@ -359,12 +360,23 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return RefreshIndicator(
+      color: const Color(0xFF059669),
+      onRefresh: () async {
+        context.read<ProductTypeBloc>().add(
+              RefreshProductTypesEvent(categoryId: _selectedCategoryId),
+            );
+        context.read<CategoryBloc>().add(const RefreshCategoriesEvent());
+        await context.read<ProductTypeBloc>().stream.firstWhere(
+              (state) => state is ProductTypeLoaded || state is ProductTypeError,
+            );
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -638,6 +650,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
           ),
         ],
       ),
+    ),
     );
   }
 
