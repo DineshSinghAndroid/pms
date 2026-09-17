@@ -214,10 +214,8 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
     final timeCtrl = TextEditingController(text: '04:00 PM');
     final remarksCtrl = TextEditingController();
     ProductTypeModel? chosenPickerProduct;
-    final productSearchCtrl = TextEditingController();
-    final productSearchFocus = FocusNode();
 
-    showModalBottomSheet(
+    final payload = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: PmsTheme.glassSurface,
@@ -227,10 +225,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
       builder: (modalCtx) {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
-            return GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => FocusScope.of(ctx).unfocus(),
-              child: Padding(
+            return Padding(
                 padding: EdgeInsets.only(
                   left: 20,
                   right: 20,
@@ -239,7 +234,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                 ),
                 child: SingleChildScrollView(
                   keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
+                      ScrollViewKeyboardDismissBehavior.manual,
                   child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -299,9 +294,9 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                           ),
                           const SizedBox(height: 8),
                           SearchableTypeahead<ProductTypeModel>(
+                            key: ValueKey('pr-product-${itemsList.length}'),
                             items: allProductTypes,
-                            controller: productSearchCtrl,
-                            focusNode: productSearchFocus,
+                            selected: chosenPickerProduct,
                             hintText: 'Type name or product code...',
                             displayString: (pt) =>
                                 '[${pt.productCode ?? '000000'}] ${pt.name} (${pt.category?.name ?? ''})',
@@ -346,7 +341,6 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                         'pickedSize': null,
                                       });
                                       chosenPickerProduct = null;
-                                      productSearchCtrl.clear();
                                     });
                                   },
                             icon: const Icon(Icons.add_box_rounded, size: 16),
@@ -1017,18 +1011,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                                 'phone': widget.currentUser?.phone,
                               };
 
-                              context.read<PurchaseRequestBloc>().add(
-                                CreatePurchaseRequestEvent(payload),
-                              );
-                              Navigator.pop(modalCtx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    '✓ Purchase Request created successfully!',
-                                  ),
-                                  backgroundColor: Color(0xFFDC2626),
-                                ),
-                              );
+                              Navigator.pop(modalCtx, payload);
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFFDC2626),
@@ -1049,15 +1032,35 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                   ],
                 ),
               ),
-            ),
-          );
-        },
-      );
-    },
-    ).whenComplete(() {
-      productSearchCtrl.dispose();
-      productSearchFocus.dispose();
-    });
+            );
+          },
+        );
+      },
+    );
+
+    // Let the sheet finish unmounting before disposing controllers or
+    // starting the save request (loading overlay must not overlap the modal).
+    await Future<void>.delayed(Duration.zero);
+
+    for (final it in itemsList) {
+      (it['quantity_ctrl'] as TextEditingController?)?.dispose();
+      (it['size_ctrl'] as TextEditingController?)?.dispose();
+      (it['attachment_ctrl'] as TextEditingController?)?.dispose();
+    }
+    timeCtrl.dispose();
+    remarksCtrl.dispose();
+
+    if (payload == null || !context.mounted) return;
+
+    context.read<PurchaseRequestBloc>().add(
+      CreatePurchaseRequestEvent(payload),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✓ Purchase Request created successfully!'),
+        backgroundColor: Color(0xFFDC2626),
+      ),
+    );
   }
 
   // ================= ASSIGN DESIGNER MODAL =================
@@ -1065,6 +1068,18 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
     BuildContext context,
     PurchaseRequestModel pr,
   ) async {
+    if (pr.isDesignerAssignmentLocked) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${pr.prNumber} is already ${pr.status.replaceAll('_', ' ')} and cannot be reassigned.',
+          ),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
     List<UserModel> designers = PurchaseRequestRepository.cachedDesigners ?? [];
 
     // Fallback to UserBloc if cache is empty
@@ -1887,6 +1902,27 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                       ],
                     ),
 
+                    const SizedBox(height: 4),
+
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.person_outline_rounded,
+                          size: 13,
+                          color: PmsTheme.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Created By: ${pr.createdByUser?.name ?? 'Admin'}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: PmsTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+
                     const SizedBox(height: 10),
 
                     // Items summary or Locked Indicator for Designers
@@ -2064,15 +2100,16 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                     Builder(
                       builder: (context) {
                         final roleLower = (widget.currentUser?.role ?? '').toLowerCase().trim();
-                        final bool canAssignPR = widget.isSuperAdmin ||
-                            widget.currentUser?.isSuperAdmin == true ||
-                            roleLower == 'superadmin' ||
-                            roleLower == 'super admin' ||
-                            roleLower == 'super_admin' ||
-                            roleLower == 'admin' ||
-                            roleLower == 'manager' ||
-                            roleLower == 'digital studio incharge' ||
-                            roleLower == 'digital_studio_incharge';
+                        final bool canAssignPR = (widget.isSuperAdmin ||
+                                widget.currentUser?.isSuperAdmin == true ||
+                                roleLower == 'superadmin' ||
+                                roleLower == 'super admin' ||
+                                roleLower == 'super_admin' ||
+                                roleLower == 'admin' ||
+                                roleLower == 'manager' ||
+                                roleLower == 'digital studio incharge' ||
+                                roleLower == 'digital_studio_incharge') &&
+                            !pr.isDesignerAssignmentLocked;
 
                         return Container(
                           padding: const EdgeInsets.all(12),

@@ -52,7 +52,7 @@ class _DigitalStudioManagementTabViewState
   void initState() {
     super.initState();
     if (!isWingInchargeOnly) {
-      final tabCount = isDigitalStudioEmployee ? 2 : 3;
+      const tabCount = 3;
       _tabController = TabController(length: tabCount, vsync: this);
       _tabController!.addListener(() {
         if (_tabController!.indexIsChanging || _tabController!.index != _currentTabIndex) {
@@ -79,7 +79,7 @@ class _DigitalStudioManagementTabViewState
   Widget build(BuildContext context) {
     if (isWingInchargeOnly) {
       return Scaffold(
-        backgroundColor: PmsTheme.background,
+        backgroundColor: Colors.transparent,
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -180,7 +180,7 @@ class _DigitalStudioManagementTabViewState
         }
 
         return Scaffold(
-          backgroundColor: PmsTheme.background,
+          backgroundColor: Colors.transparent,
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -296,7 +296,22 @@ class _DigitalStudioManagementTabViewState
                           ),
                           tabs: isDigitalStudioEmployee
                               ? [
-                                  // Tab 0: Calendar for Employee
+                                  // Tab 0: Requests for Employee
+                                  Tab(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                          Icon(Icons.assignment_turned_in_outlined, size: 15),
+                                          SizedBox(width: 4),
+                                          Text('My Duty Requests'),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  // Tab 1: Calendar for Employee
                                   Tab(
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,
@@ -311,7 +326,7 @@ class _DigitalStudioManagementTabViewState
                                       ),
                                     ),
                                   ),
-                                  // Tab 1: Assigned Assets for Employee
+                                  // Tab 2: Assigned Assets for Employee
                                   Tab(
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,
@@ -330,7 +345,7 @@ class _DigitalStudioManagementTabViewState
                                                 vertical: 1.5,
                                               ),
                                               decoration: BoxDecoration(
-                                                color: _currentTabIndex == 1
+                                                color: _currentTabIndex == 2
                                                     ? PmsTheme.primary.withValues(alpha: 0.1)
                                                     : PmsTheme.glassBorder,
                                                 borderRadius: BorderRadius.circular(10),
@@ -340,7 +355,7 @@ class _DigitalStudioManagementTabViewState
                                                 style: TextStyle(
                                                   fontSize: 10,
                                                   fontWeight: FontWeight.bold,
-                                                  color: _currentTabIndex == 1
+                                                  color: _currentTabIndex == 2
                                                       ? PmsTheme.primary
                                                       : PmsTheme.textSecondary,
                                                 ),
@@ -458,7 +473,16 @@ class _DigitalStudioManagementTabViewState
                     controller: _tabController!,
                     children: isDigitalStudioEmployee
                         ? [
-                            // Tab 0: Schedule Calendar for Employee
+                            // Tab 0: Requests Queue for Employee (shows assigned tasks + Start Work button)
+                            DigitalStudioCrewRequestsSubTab(
+                              currentUser: widget.currentUser,
+                              isSuperAdmin: widget.isSuperAdmin,
+                              isManager: widget.isManager,
+                              isDigitalStudioIncharge: widget.isDigitalStudioIncharge,
+                              isWingIncharge: widget.isWingIncharge,
+                            ),
+
+                            // Tab 1: Schedule Calendar for Employee
                             DigitalStudioCalendarSubTab(
                               currentUser: widget.currentUser,
                               isSuperAdmin: widget.isSuperAdmin,
@@ -467,7 +491,7 @@ class _DigitalStudioManagementTabViewState
                               isDesigner: widget.isDesigner,
                             ),
 
-                            // Tab 1: Assigned Assets for Employee
+                            // Tab 2: Assigned Assets for Employee
                             DigitalStudioAssetsSubTab(
                               currentUser: widget.currentUser,
                               isSuperAdmin: widget.isSuperAdmin,

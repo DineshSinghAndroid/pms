@@ -34,7 +34,7 @@ class PmsStatusChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 8,
               fontWeight: FontWeight.w700,
               color: tone,
               letterSpacing: 0.2,

@@ -5,6 +5,9 @@ class WingModel extends Equatable {
   final String name;
   final String? code;
   final String? location;
+  final double? latitude;
+  final double? longitude;
+  final int geofenceRadiusMeters;
   final DateTime? createdAt;
 
   const WingModel({
@@ -12,6 +15,9 @@ class WingModel extends Equatable {
     required this.name,
     this.code,
     this.location,
+    this.latitude,
+    this.longitude,
+    this.geofenceRadiusMeters = 200,
     this.createdAt,
   });
 
@@ -21,6 +27,9 @@ class WingModel extends Equatable {
       name: json['name'] as String? ?? '',
       code: json['code'] as String?,
       location: json['location'] as String?,
+      latitude: json['latitude'] != null ? double.tryParse(json['latitude'].toString()) : null,
+      longitude: json['longitude'] != null ? double.tryParse(json['longitude'].toString()) : null,
+      geofenceRadiusMeters: json['geofence_radius_meters'] as int? ?? 200,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
@@ -33,10 +42,13 @@ class WingModel extends Equatable {
       'name': name,
       'code': code,
       'location': location,
+      'latitude': latitude,
+      'longitude': longitude,
+      'geofence_radius_meters': geofenceRadiusMeters,
       'created_at': createdAt?.toIso8601String(),
     };
   }
 
   @override
-  List<Object?> get props => [id, name, code, location, createdAt];
+  List<Object?> get props => [id, name, code, location, latitude, longitude, geofenceRadiusMeters, createdAt];
 }

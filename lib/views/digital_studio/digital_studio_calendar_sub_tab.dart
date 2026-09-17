@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../bloc/digital_studio/digital_studio_bloc.dart';
 import '../../bloc/digital_studio/digital_studio_event.dart';
@@ -1246,6 +1247,48 @@ class _DigitalStudioCalendarSubTabState
             ),
           ],
 
+          // Action Buttons for Allotted & In-Progress Events (Start Work / Mark Completed)
+          if (!event.isCompleted && !event.isCancelled && !event.isInProgress) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _updateRequestStatus(event, 'in_progress'),
+                icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                label: const Text('Start Work (GPS Verify)'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3B82F6),
+                  foregroundColor: Colors.white,
+                  elevation: 1.5,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          if (event.isInProgress) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _updateRequestStatus(event, 'completed'),
+                icon: const Icon(Icons.check_circle_outline, size: 18),
+                label: const Text('Mark Completed'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: PmsTheme.success,
+                  foregroundColor: Colors.white,
+                  elevation: 1.5,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+          ],
+
           // Quick Action for Pending Requests
           if (_canManage && event.isPending) ...[
             const SizedBox(height: 12),
@@ -1286,6 +1329,32 @@ class _DigitalStudioCalendarSubTabState
 
     final availableAssets = state.availableAssets;
     final allCrew = state.crewMembers;
+
+    final reqStart = req.reportingDateTime;
+    final reqEnd = req.eventEndTime;
+
+    final overlappingReqs = state.crewRequests.where((r) {
+      if (r.id == req.id) return false;
+      if (!r.isAllotted && !r.isInProgress) return false;
+      return r.reportingDateTime.isBefore(reqEnd) && r.eventEndTime.isAfter(reqStart);
+    }).toList();
+
+    final busyCrewMap = <int, String>{};
+    final busyAssetMap = <int, String>{};
+
+    for (final r in overlappingReqs) {
+      final wingName = r.wing?.name ?? 'Wing';
+      final requesterName = r.requestedBy?.name ?? 'Wing Staff';
+      final timeStr = '${DateFormat('hh:mm a').format(r.reportingDateTime)} - ${DateFormat('hh:mm a').format(r.eventEndTime)}';
+      final infoStr = 'Allotted to "$wingName" (By: $requesterName) for "${r.eventName}" [$timeStr]';
+
+      for (final emp in r.allottedEmployees) {
+        busyCrewMap[emp.id] = infoStr;
+      }
+      for (final ast in r.allottedAssets) {
+        busyAssetMap[ast.id] = infoStr;
+      }
+    }
 
     showDialog(
       context: context,
@@ -1423,6 +1492,30 @@ class _DigitalStudioCalendarSubTabState
                     return;
                   }
 
+                  for (final empId in selectedEmpIds) {
+                    if (busyCrewMap.containsKey(empId) && !req.allottedEmployees.any((e) => e.id == empId)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Crew member is already allotted: ${busyCrewMap[empId]}'),
+                          backgroundColor: Colors.red.shade700,
+                        ),
+                      );
+                      return;
+                    }
+                  }
+
+                  for (final astId in selectedAssetIds) {
+                    if (busyAssetMap.containsKey(astId) && !req.allottedAssets.any((a) => a.id == astId)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Equipment/Product is already allotted: ${busyAssetMap[astId]}'),
+                          backgroundColor: Colors.red.shade700,
+                        ),
+                      );
+                      return;
+                    }
+                  }
+
                   context.read<DigitalStudioBloc>().add(
                         AllotCrewRequestEvent(
                           requestId: req.id,
@@ -1443,6 +1536,169 @@ class _DigitalStudioCalendarSubTabState
             ],
           );
         },
+      ),
+    );
+  }
+
+  Future<void> _updateRequestStatus(
+    DigitalStudioCrewRequestModel req,
+    String status,
+  ) async {
+    double? lat;
+    double? lng;
+
+    if (status == 'in_progress') {
+      try {
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) {
+          if (!mounted) return;
+          _showLocationErrorDialog(
+            'Location Services Disabled',
+            'Please enable Location Services (GPS) on your device to mark work as started.',
+          );
+          return;
+        }
+
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+          if (permission == LocationPermission.denied) {
+            if (!mounted) return;
+            _showLocationErrorDialog(
+              'Location Permission Denied',
+              'Location permission is required to verify your presence at the wing location before starting work.',
+            );
+            return;
+          }
+        }
+
+        if (permission == LocationPermission.deniedForever) {
+          if (!mounted) return;
+          _showLocationErrorDialog(
+            'Location Permission Permanently Denied',
+            'Location permissions are permanently denied in device settings. Please enable location permissions in app settings to proceed.',
+          );
+          return;
+        }
+      } catch (e) {
+        if (!mounted) return;
+        _showLocationErrorDialog(
+          'App Rebuild Required',
+          'Native location plugin bindings not registered in running app build: ${e.toString()}\n\nPlease stop and rebuild/restart the app from Android Studio / Xcode / terminal (flutter run) to link native iOS GPS drivers.',
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    'Acquiring GPS Location...',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 15),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        Navigator.of(context, rootNavigator: true).pop();
+        _showLocationErrorDialog(
+          'GPS Acquisition Failed',
+          'Unable to acquire current location: ${e.toString()}',
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+
+      lat = position.latitude;
+      lng = position.longitude;
+
+      if (req.wing != null &&
+          req.wing!.latitude != null &&
+          req.wing!.longitude != null) {
+        double distanceMeters = Geolocator.distanceBetween(
+          lat,
+          lng,
+          req.wing!.latitude!,
+          req.wing!.longitude!,
+        );
+
+        double maxAllowedMeters = req.wing!.geofenceRadiusMeters.toDouble();
+
+        if (distanceMeters > maxAllowedMeters) {
+          _showLocationErrorDialog(
+            '📍 Out of Geofence Boundary',
+            'You are currently ${distanceMeters.toStringAsFixed(1)} meters away from ${req.wing?.name ?? "the Wing"}.\n\nYou must be within ${maxAllowedMeters.toStringAsFixed(0)} meters of the Wing boundary to start work.',
+          );
+          return;
+        }
+      }
+    }
+
+    if (!mounted) return;
+
+    context.read<DigitalStudioBloc>().add(
+          UpdateCrewRequestStatusEvent(
+            requestId: req.id,
+            status: status,
+            phone: widget.currentUser?.phone,
+            latitude: lat,
+            longitude: lng,
+          ),
+        );
+  }
+
+  void _showLocationErrorDialog(
+    String title,
+    String message,
+  ) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        content: Text(message, style: const TextStyle(fontSize: 14)),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: PmsTheme.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }

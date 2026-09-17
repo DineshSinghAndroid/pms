@@ -38,11 +38,14 @@ class NotificationService {
   );
 
   GlobalKey<NavigatorState>? _navigatorKey;
-  OverlayEntry? _currentTopBanner;
   String? _currentUserPhone;
   String? _currentToken;
   bool _isInitialized = false;
   VoidCallback? onNotificationReceived;
+
+  /// In-app heads-up banner. Rendered by [InAppNotificationBannerLayer]
+  /// as a sibling of the navigator (not an OverlayEntry).
+  final ValueNotifier<_InAppBannerData?> _banner = ValueNotifier(null);
 
   void setNavigatorKey(GlobalKey<NavigatorState> key) {
     _navigatorKey = key;
@@ -303,62 +306,17 @@ class NotificationService {
     );
   }
 
-  /// Display heads-up top bar banner overlay
+  /// Display heads-up top bar notification banner.
   void _showTopBarNotificationBanner({
     required String title,
     required String body,
     required Map<String, dynamic> data,
   }) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final navState = _navigatorKey?.currentState;
-      final overlay = navState?.overlay;
-      if (overlay == null) return;
-
-      _dismissCurrentBanner();
-
-      final prIdStr = data['pr_id']?.toString();
-      final prId = prIdStr != null ? int.tryParse(prIdStr) : null;
-
-      late OverlayEntry entry;
-      entry = OverlayEntry(
-        builder: (context) => _TopNotificationBannerWidget(
-          title: title,
-          body: body,
-          prId: prId,
-          onDismiss: () {
-            if (_currentTopBanner == entry) {
-              try {
-                entry.remove();
-              } catch (_) {}
-              _currentTopBanner = null;
-            }
-          },
-          onTap: () {
-            if (_currentTopBanner == entry) {
-              try {
-                entry.remove();
-              } catch (_) {}
-              _currentTopBanner = null;
-            }
-            if (prId != null) {
-              _navigateToPR(prId);
-            } else {
-              _handleNotificationClick(data);
-            }
-          },
-        ),
-      );
-
-      _currentTopBanner = entry;
-      overlay.insert(entry);
-    });
+    _banner.value = _InAppBannerData(title: title, body: body, data: data);
   }
 
-  void _dismissCurrentBanner() {
-    try {
-      _currentTopBanner?.remove();
-    } catch (_) {}
-    _currentTopBanner = null;
+  void dismissBanner() {
+    _banner.value = null;
   }
 
   /// Handle navigation on notification tap
@@ -396,6 +354,7 @@ class _TopNotificationBannerWidget extends StatefulWidget {
   final VoidCallback onTap;
 
   const _TopNotificationBannerWidget({
+    super.key,
     required this.title,
     required this.body,
     this.prId,
@@ -470,141 +429,208 @@ class _TopNotificationBannerWidgetState
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final topPadding = mediaQuery.padding.top;
-
-    return Positioned(
-      top: topPadding > 0 ? topPadding + 4 : 12,
-      left: 12,
-      right: 12,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: GestureDetector(
-            onTap: () {
-              _dismissTimer?.cancel();
-              _animController.reverse().then((_) {
-                widget.onTap();
-              });
-            },
-            onVerticalDragUpdate: (details) {
-              if (details.primaryDelta != null && details.primaryDelta! < -3) {
-                _closeBanner();
-              }
-            },
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: PmsTheme.textPrimary,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.35),
-                      blurRadius: 18,
-                      offset: const Offset(0, 6),
-                    ),
-                    BoxShadow(
-                      color: const Color(0xFF0284C7).withValues(alpha: 0.15),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: GestureDetector(
+          onTap: () {
+            _dismissTimer?.cancel();
+            _animController.reverse().then((_) {
+              widget.onTap();
+            });
+          },
+          onVerticalDragUpdate: (details) {
+            if (details.primaryDelta != null && details.primaryDelta! < -3) {
+              _closeBanner();
+            }
+          },
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              decoration: BoxDecoration(
+                color: PmsTheme.textPrimary,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
+                  width: 1.2,
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.4),
-                          width: 1,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.notifications_active_rounded,
-                        color: Color(0xFF38BDF8),
-                        size: 22,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFF0284C7).withValues(alpha: 0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF0284C7).withValues(alpha: 0.4),
+                        width: 1,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                    child: const Icon(
+                      Icons.notifications_active_rounded,
+                      color: Color(0xFF38BDF8),
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            letterSpacing: -0.2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (widget.body.isNotEmpty) ...[
+                          const SizedBox(height: 2),
                           Text(
-                            widget.title,
+                            widget.body,
                             style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                              letterSpacing: -0.2,
+                              color: PmsTheme.textMuted,
+                              fontSize: 11.5,
+                              height: 1.25,
                             ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (widget.body.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              widget.body,
-                              style: const TextStyle(
-                                color: PmsTheme.textMuted,
-                                fontSize: 11.5,
-                                height: 1.25,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
                         ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (widget.prId != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 9, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0284C7),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'VIEW',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.3,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    if (widget.prId != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 9, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0284C7),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          'VIEW',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.3,
-                          ),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _closeBanner,
+                    child: const Padding(
+                      padding: EdgeInsets.only(left: 4),
+                      child: SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: Icon(
+                          Icons.close_rounded,
+                          color: Colors.white,
+                          size: 18,
                         ),
                       ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
-                      padding: const EdgeInsets.only(left: 4),
-                      constraints: const BoxConstraints(),
-                      splashRadius: 16,
-                      onPressed: _closeBanner,
-                      tooltip: 'Dismiss',
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _InAppBannerData {
+  final String title;
+  final String body;
+  final Map<String, dynamic> data;
+
+  const _InAppBannerData({
+    required this.title,
+    required this.body,
+    required this.data,
+  });
+
+  int? get prId {
+    final raw = data['pr_id']?.toString();
+    return raw != null ? int.tryParse(raw) : null;
+  }
+}
+
+/// Top-of-screen in-app banner. Must sit beside the navigator in a Stack,
+/// never as an OverlayEntry (those collide with modal sheets).
+class InAppNotificationBannerLayer extends StatelessWidget {
+  const InAppNotificationBannerLayer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<_InAppBannerData?>(
+      valueListenable: NotificationService.instance._banner,
+      builder: (context, data, _) {
+        if (data == null) return const SizedBox.shrink();
+        final media = MediaQuery.of(context);
+        final width = media.size.width - 24;
+        return Align(
+          alignment: Alignment.topCenter,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              12,
+              media.padding.top > 0 ? media.padding.top + 4 : 12,
+              12,
+              0,
+            ),
+            child: SizedBox(
+              width: width > 0 ? width : media.size.width,
+              child: _TopNotificationBannerWidget(
+                key: ValueKey('${data.title}|${data.body}|${data.prId ?? ''}'),
+                title: data.title,
+                body: data.body,
+                prId: data.prId,
+                onDismiss: NotificationService.instance.dismissBanner,
+                onTap: () {
+                  final prId = data.prId;
+                  final payload = data.data;
+                  NotificationService.instance.dismissBanner();
+                  if (prId != null) {
+                    NotificationService.instance._navigateToPR(prId);
+                  } else {
+                    NotificationService.instance
+                        ._handleNotificationClick(payload);
+                  }
+                },
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

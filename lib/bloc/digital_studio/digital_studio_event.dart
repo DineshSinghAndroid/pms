@@ -139,14 +139,18 @@ class AllotCrewRequestEvent extends DigitalStudioEvent {
 class UpdateCrewRequestStatusEvent extends DigitalStudioEvent {
   final int requestId;
   final String status;
+  final double? latitude;
+  final double? longitude;
   final String? phone;
 
   const UpdateCrewRequestStatusEvent({
     required this.requestId,
     required this.status,
+    this.latitude,
+    this.longitude,
     this.phone,
   });
 
   @override
-  List<Object?> get props => [requestId, status, phone];
+  List<Object?> get props => [requestId, status, latitude, longitude, phone];
 }

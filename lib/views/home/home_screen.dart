@@ -48,6 +48,7 @@ import '../../repositories/notification_repository.dart';
 import '../../services/api_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/app_update_service.dart';
+import '../../services/user_location_sync_service.dart';
 import '../../widgets/app_logo.dart';
 import '../../widgets/app_gradient_background.dart';
 import '../../widgets/pms_status_chip.dart';
@@ -83,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     };
     _loadUserProfile();
     _checkAppUpdate();
+    UserLocationSyncService().syncCurrentLocation(source: 'app_launch');
   }
 
   @override
@@ -498,7 +500,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     if (_isAccountInactive) {
       return Scaffold(
-        backgroundColor: PmsTheme.background,
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           child: Center(
             child: Padding(

@@ -122,7 +122,7 @@ class PurchaseRequestRepository {
         final List<dynamic> dataList = body['data'] as List<dynamic>? ?? [];
         final designers = dataList
             .map((item) => UserModel.fromJson(item as Map<String, dynamic>))
-            .where((u) => u.isActive)
+            .where((u) => u.isActive && (u.isDesigner || u.role.toLowerCase().contains('designer')))
             .toList();
 
         _cachedDesigners = designers;

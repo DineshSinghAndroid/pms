@@ -171,6 +171,9 @@ class PurchaseRequestModel extends Equatable {
   final DateTime? postedAt;
   final int? postedByUserId;
   final String? postRemarks;
+  final String? finalDesignType;
+  final String? finalDesignUrl;
+  final String? finalDesignName;
   final UserModel? postedByUser;
   final PrintOrderModel? activePrintOrder;
   final List<PrintOrderModel> printOrders;
@@ -207,6 +210,9 @@ class PurchaseRequestModel extends Equatable {
     this.postedAt,
     this.postedByUserId,
     this.postRemarks,
+    this.finalDesignType,
+    this.finalDesignUrl,
+    this.finalDesignName,
     this.postedByUser,
     this.activePrintOrder,
     this.printOrders = const [],
@@ -220,6 +226,15 @@ class PurchaseRequestModel extends Equatable {
     this.activities = const [],
     this.createdAt,
   });
+
+  /// Designer assignment is closed once the PR has left the design stage.
+  bool get isDesignerAssignmentLocked {
+    const locked = {'sent_to_print', 'posted', 'completed'};
+    if (locked.contains(status)) return true;
+    if (isPosted) return true;
+    if (activePrintOrder != null) return true;
+    return false;
+  }
 
   factory PurchaseRequestModel.fromJson(Map<String, dynamic> json) {
     var rawItems = json['items'];
@@ -296,6 +311,9 @@ class PurchaseRequestModel extends Equatable {
           : null,
       postedByUserId: json['posted_by_user_id'] as int?,
       postRemarks: json['post_remarks'] as String?,
+      finalDesignType: json['final_design_type'] as String?,
+      finalDesignUrl: json['final_design_url'] as String?,
+      finalDesignName: json['final_design_name'] as String?,
       postedByUser:
           json['posted_by_user'] != null &&
               json['posted_by_user'] is Map<String, dynamic>

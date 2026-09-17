@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../theme/pms_theme.dart';
 
-/// Type-to-filter picker used for long product / crew / asset lists.
-class SearchableTypeahead<T extends Object> extends StatelessWidget {
+/// Inline type-to-filter picker. Uses an embedded list (not an overlay) so it
+/// works inside modal bottom sheets and nested scroll views.
+class SearchableTypeahead<T extends Object> extends StatefulWidget {
   final List<T> items;
   final String Function(T item) displayString;
   final bool Function(T item, String query) matches;
@@ -11,7 +12,8 @@ class SearchableTypeahead<T extends Object> extends StatelessWidget {
   final TextEditingController? controller;
   final FocusNode? focusNode;
   final String hintText;
-  final int maxResults;
+  final T? selected;
+  final double resultsHeight;
 
   const SearchableTypeahead({
     super.key,
@@ -22,34 +24,112 @@ class SearchableTypeahead<T extends Object> extends StatelessWidget {
     this.controller,
     this.focusNode,
     this.hintText = 'Type to search...',
-    this.maxResults = 40,
+    this.selected,
+    this.resultsHeight = 220,
   });
 
-  Iterable<T> _optionsFor(String query) {
-    final q = query.trim().toLowerCase();
-    final filtered = q.isEmpty
-        ? items
-        : items.where((item) => matches(item, q)).toList();
-    if (filtered.length <= maxResults) return filtered;
-    return filtered.take(maxResults);
+  @override
+  State<SearchableTypeahead<T>> createState() => _SearchableTypeaheadState<T>();
+}
+
+class _SearchableTypeaheadState<T extends Object>
+    extends State<SearchableTypeahead<T>> {
+  late TextEditingController _controller;
+  late FocusNode _focusNode;
+  bool _ownsController = false;
+  bool _ownsFocus = false;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _ownsController = widget.controller == null;
+    _ownsFocus = widget.focusNode == null;
+    _controller = widget.controller ?? TextEditingController();
+    _focusNode = widget.focusNode ?? FocusNode();
+    _query = _controller.text;
+    _controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant SearchableTypeahead<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      _controller.removeListener(_onControllerChanged);
+      if (_ownsController) {
+        _controller.dispose();
+      }
+      _ownsController = widget.controller == null;
+      _controller = widget.controller ?? TextEditingController();
+      _query = _controller.text;
+      _controller.addListener(_onControllerChanged);
+    }
+    if (oldWidget.focusNode != widget.focusNode) {
+      final previous = _focusNode;
+      final ownedPrevious = _ownsFocus;
+      _ownsFocus = widget.focusNode == null;
+      _focusNode = widget.focusNode ?? FocusNode();
+      if (ownedPrevious) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          previous.dispose();
+        });
+      }
+    }
+  }
+
+  void _onControllerChanged() {
+    if (!mounted) return;
+    if (_query == _controller.text) return;
+    setState(() => _query = _controller.text);
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onControllerChanged);
+    if (_ownsController) {
+      _controller.dispose();
+    }
+    if (_ownsFocus) {
+      _focusNode.dispose();
+    }
+    super.dispose();
+  }
+
+  List<T> get _filtered {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return widget.items;
+    return widget.items.where((item) => widget.matches(item, q)).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return RawAutocomplete<T>(
-      textEditingController: controller,
-      focusNode: focusNode,
-      displayStringForOption: displayString,
-      optionsBuilder: (textEditingValue) => _optionsFor(textEditingValue.text),
-      onSelected: onSelected,
-      fieldViewBuilder: (context, textController, fieldFocus, onFieldSubmitted) {
-        return TextField(
-          controller: textController,
-          focusNode: fieldFocus,
-          onSubmitted: (_) => onFieldSubmitted(),
+    final filtered = _filtered;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _controller,
+          focusNode: _focusNode,
+          textInputAction: TextInputAction.search,
           decoration: InputDecoration(
-            hintText: hintText,
+            hintText: widget.hintText,
             prefixIcon: const Icon(Icons.search_rounded, size: 20),
+            suffixIcon: _query.isNotEmpty
+                ? GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      _controller.clear();
+                      if (_focusNode.canRequestFocus) {
+                        _focusNode.requestFocus();
+                      }
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Icon(Icons.close_rounded, size: 18),
+                    ),
+                  )
+                : null,
             isDense: true,
             filled: true,
             fillColor: PmsTheme.glassSurface,
@@ -71,53 +151,97 @@ class SearchableTypeahead<T extends Object> extends StatelessWidget {
             ),
           ),
           style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary),
-        );
-      },
-      optionsViewBuilder: (context, onSelectedOption, options) {
-        return Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 6,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: widget.resultsHeight,
+          decoration: BoxDecoration(
             color: PmsTheme.glassSurface,
             borderRadius: BorderRadius.circular(14),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 240, minWidth: 280),
-              child: options.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: Text(
-                        'No matching items',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: PmsTheme.textSecondary,
+            border: Border.all(color: PmsTheme.glassBorder),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: filtered.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      _query.trim().isEmpty
+                          ? 'No products available'
+                          : 'No products match "$_query"',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: PmsTheme.textSecondary,
+                      ),
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.manual,
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final item = filtered[index];
+                    final isSelected = widget.selected == item;
+                    return Material(
+                      color: isSelected
+                          ? PmsTheme.primary.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          widget.onSelected(item);
+                          _focusNode.unfocus();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  widget.displayString(item),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    color: isSelected
+                                        ? PmsTheme.primary
+                                        : PmsTheme.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                const Icon(
+                                  Icons.check_circle_rounded,
+                                  size: 16,
+                                  color: PmsTheme.primary,
+                                ),
+                            ],
+                          ),
                         ),
                       ),
-                    )
-                  : ListView.separated(
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      itemCount: options.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final option = options.elementAt(index);
-                        return ListTile(
-                          dense: true,
-                          title: Text(
-                            displayString(option),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: PmsTheme.textPrimary,
-                            ),
-                          ),
-                          onTap: () => onSelectedOption(option),
-                        );
-                      },
-                    ),
+                    );
+                  },
+                ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(
+            '${filtered.length} of ${widget.items.length} products',
+            style: const TextStyle(
+              fontSize: 11,
+              color: PmsTheme.textMuted,
+              fontWeight: FontWeight.w600,
             ),
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 }

@@ -68,7 +68,7 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: PmsTheme.background,
+        backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [

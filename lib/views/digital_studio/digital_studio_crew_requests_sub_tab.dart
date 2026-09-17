@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../bloc/digital_studio/digital_studio_bloc.dart';
 import '../../bloc/digital_studio/digital_studio_event.dart';
@@ -90,6 +91,14 @@ class _DigitalStudioCrewRequestsSubTabState
             if (_selectedStatus == 'all') return true;
             return req.status.toLowerCase() == _selectedStatus.toLowerCase();
           }).toList();
+
+          filteredRequests.sort((a, b) {
+            final dtA = a.createdAt ?? a.reportingDateTime;
+            final dtB = b.createdAt ?? b.reportingDateTime;
+            final cmp = dtB.compareTo(dtA);
+            if (cmp != 0) return cmp;
+            return b.id.compareTo(a.id);
+          });
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -432,6 +441,30 @@ class _DigitalStudioCrewRequestsSubTabState
               color: PmsTheme.textPrimary,
             ),
           ),
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Requested By: ${req.requestedBy?.name ?? 'Wing Staff'}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: PmsTheme.textSecondary,
+                  ),
+                ),
+              ),
+              if (req.createdAt != null)
+                Text(
+                  'Req: ${DateFormat('dd MMM, hh:mm a').format(req.createdAt!)}',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.blueGrey.shade600,
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(height: 6),
 
           // Date & Time
@@ -528,6 +561,36 @@ class _DigitalStudioCrewRequestsSubTabState
             ),
           ],
 
+          if (req.workStartedAt != null || req.workStartVerified) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.location_on, size: 14, color: Color(0xFF059669)),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      'Work Started: ${req.workStartedAt != null ? DateFormat('dd MMM, hh:mm a').format(req.workStartedAt!.toLocal()) : ''}'
+                      '${req.workStartDistanceMeters != null ? ' (GPS Verified: ${req.workStartDistanceMeters!.toStringAsFixed(0)}m from Wing)' : ''}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF065F46),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 12),
           const Divider(height: 1),
           const SizedBox(height: 8),
@@ -579,9 +642,11 @@ class _DigitalStudioCrewRequestsSubTabState
                 ),
               ],
 
-              if (canAllot && req.isAllotted) ...[
-                ElevatedButton(
-                  onPressed: () => _updateRequestStatus(context, req, 'in_progress'),
+              if (!req.isCompleted && !req.isCancelled && !req.isInProgress) ...[
+                ElevatedButton.icon(
+                  onPressed: () => _updateRequestStatus(req, 'in_progress'),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                  label: const Text('Start Work'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3B82F6),
                     foregroundColor: Colors.white,
@@ -598,13 +663,14 @@ class _DigitalStudioCrewRequestsSubTabState
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text('Start Work'),
                 ),
               ],
 
-              if (canAllot && req.isInProgress) ...[
-                ElevatedButton(
-                  onPressed: () => _updateRequestStatus(context, req, 'completed'),
+              if (req.isInProgress) ...[
+                ElevatedButton.icon(
+                  onPressed: () => _updateRequestStatus(req, 'completed'),
+                  icon: const Icon(Icons.check_circle_outline, size: 18),
+                  label: const Text('Mark Completed'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: PmsTheme.success,
                     foregroundColor: Colors.white,
@@ -621,7 +687,6 @@ class _DigitalStudioCrewRequestsSubTabState
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text('Mark Completed'),
                 ),
               ],
 
@@ -629,7 +694,7 @@ class _DigitalStudioCrewRequestsSubTabState
                 IconButton(
                   icon: const Icon(Icons.cancel_outlined, color: Colors.red, size: 22),
                   tooltip: 'Cancel Request',
-                  onPressed: () => _updateRequestStatus(context, req, 'cancelled'),
+                  onPressed: () => _updateRequestStatus(req, 'cancelled'),
                 ),
             ],
           ),
@@ -883,8 +948,8 @@ class _DigitalStudioCrewRequestsSubTabState
                           'wing_id': selectedWing!.id,
                           'event_name': eventNameController.text.trim(),
                           'required_crew_count': int.tryParse(crewCountController.text) ?? 1,
-                          'reporting_date_time': startDateTime.toIso8601String(),
-                          'event_end_time': endDateTime.toIso8601String(),
+                          'reporting_date_time': DateFormat('yyyy-MM-dd HH:mm:ss').format(startDateTime),
+                          'event_end_time': DateFormat('yyyy-MM-dd HH:mm:ss').format(endDateTime),
                           if (remarksController.text.trim().isNotEmpty)
                             'remarks': remarksController.text.trim(),
                         },
@@ -925,11 +990,16 @@ class _DigitalStudioCrewRequestsSubTabState
     final busyAssetMap = <int, String>{};
 
     for (final r in overlappingReqs) {
+      final wingName = r.wing?.name ?? 'Wing';
+      final requesterName = r.requestedBy?.name ?? 'Wing Staff';
+      final timeStr = '${DateFormat('hh:mm a').format(r.reportingDateTime)} - ${DateFormat('hh:mm a').format(r.eventEndTime)}';
+      final infoStr = 'Allotted to "$wingName" (By: $requesterName) for "${r.eventName}" [$timeStr]';
+
       for (final emp in r.allottedEmployees) {
-        busyCrewMap[emp.id] = r.eventName;
+        busyCrewMap[emp.id] = infoStr;
       }
       for (final ast in r.allottedAssets) {
-        busyAssetMap[ast.id] = r.eventName;
+        busyAssetMap[ast.id] = infoStr;
       }
     }
 
@@ -1331,17 +1401,171 @@ class _DigitalStudioCrewRequestsSubTabState
     );
   }
 
-  void _updateRequestStatus(
-    BuildContext context,
+  Future<void> _updateRequestStatus(
     DigitalStudioCrewRequestModel req,
     String status,
-  ) {
+  ) async {
+    double? lat;
+    double? lng;
+
+    if (status == 'in_progress') {
+      try {
+        // 1. Check if location service is enabled
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) {
+          if (!mounted) return;
+          _showLocationErrorDialog(
+            'Location Services Disabled',
+            'Please enable Location Services (GPS) on your device to mark work as started.',
+          );
+          return;
+        }
+
+        // 2. Check location permissions
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+          if (permission == LocationPermission.denied) {
+            if (!mounted) return;
+            _showLocationErrorDialog(
+              'Location Permission Denied',
+              'Location permission is required to verify your presence at the wing location before starting work.',
+            );
+            return;
+          }
+        }
+
+        if (permission == LocationPermission.deniedForever) {
+          if (!mounted) return;
+          _showLocationErrorDialog(
+            'Location Permission Permanently Denied',
+            'Location permissions are permanently denied in device settings. Please enable location permissions in app settings to proceed.',
+          );
+          return;
+        }
+      } catch (e) {
+        if (!mounted) return;
+        _showLocationErrorDialog(
+          'App Rebuild Required',
+          'Native location plugin bindings not registered in running app build: ${e.toString()}\n\nPlease stop and rebuild/restart the app from Android Studio / Xcode / terminal (flutter run) to link native iOS GPS drivers.',
+        );
+        return;
+      }
+
+      // Show loader dialog while acquiring GPS coordinates
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    'Acquiring GPS Location...',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 15),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        Navigator.of(context, rootNavigator: true).pop(); // dismiss loading dialog
+        _showLocationErrorDialog(
+          'GPS Acquisition Failed',
+          'Unable to acquire current location: ${e.toString()}',
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // dismiss loading dialog
+
+      lat = position.latitude;
+      lng = position.longitude;
+
+      // 3. Client-side geofence boundary verification if Wing has coordinates configured
+      if (req.wing != null &&
+          req.wing!.latitude != null &&
+          req.wing!.longitude != null) {
+        double distanceMeters = Geolocator.distanceBetween(
+          lat,
+          lng,
+          req.wing!.latitude!,
+          req.wing!.longitude!,
+        );
+
+        double maxAllowedMeters =
+            req.wing!.geofenceRadiusMeters.toDouble();
+
+        if (distanceMeters > maxAllowedMeters) {
+          _showLocationErrorDialog(
+            '📍 Out of Geofence Boundary',
+            'You are currently ${distanceMeters.toStringAsFixed(1)} meters away from ${req.wing?.name ?? "the Wing"}.\n\nYou must be within ${maxAllowedMeters.toStringAsFixed(0)} meters of the Wing boundary to start work.',
+          );
+          return;
+        }
+      }
+    }
+
+    if (!mounted) return;
+
     context.read<DigitalStudioBloc>().add(
           UpdateCrewRequestStatusEvent(
             requestId: req.id,
             status: status,
             phone: widget.currentUser?.phone,
+            latitude: lat,
+            longitude: lng,
           ),
         );
+  }
+
+  void _showLocationErrorDialog(
+    String title,
+    String message,
+  ) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        content: Text(message, style: const TextStyle(fontSize: 14)),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: PmsTheme.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -766,9 +766,14 @@ class DashboardTabView extends StatelessWidget {
         }
 
         final myUserId = userProfile?.id;
+        final myUserPhone = userProfile?.phone;
         final myShoots = state is DigitalStudioLoaded
             ? state.crewRequests.where((r) {
-                return r.allottedEmployees.any((e) => e.id == myUserId);
+                return r.allottedEmployees.any((e) =>
+                    (myUserId != null && e.id == myUserId) ||
+                    (myUserPhone != null &&
+                        myUserPhone.isNotEmpty &&
+                        e.phone.endsWith(myUserPhone.replaceAll(RegExp(r'\D'), ''))));
               }).toList()
             : <DigitalStudioCrewRequestModel>[];
 

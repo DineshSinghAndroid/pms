@@ -328,12 +328,18 @@ class DigitalStudioRepository {
   Future<DigitalStudioCrewRequestModel> updateCrewRequestStatus(
     int requestId, {
     required String status,
+    double? latitude,
+    double? longitude,
     String? phone,
   }) async {
     try {
+      final payload = <String, dynamic>{'status': status};
+      if (latitude != null) payload['latitude'] = latitude;
+      if (longitude != null) payload['longitude'] = longitude;
+
       final response = await _apiService.client.patch(
         '/api/digital-studio/crew-requests/$requestId/status',
-        data: {'status': status},
+        data: payload,
         queryParameters: phone != null ? {'phone': phone} : null,
       );
 

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '../widgets/loading_system.dart';
 
 class ApiService {
   late final Dio _dio;
@@ -16,8 +17,8 @@ class ApiService {
   }
 
   // Base URL: Local LAN for device/dev, or live production
-  static const String liveServerUrl = 'http://192.168.1.9:8000/ ';
-  static const String localServerUrl = 'http://192.168.1.9:8000/';
+  static const String liveServerUrl = 'https://pms.bytscop.com/';
+  static const String localServerUrl = 'https://pms.bytscop.com/';
 
   /// Prefer local admin when debugging; use live in release builds.
   static String get baseUrl {
@@ -42,6 +43,20 @@ class ApiService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
+          // Trigger screen-overlapped Prince Group loading animation
+          String msg = 'Connecting to server';
+          final method = options.method.toUpperCase();
+          if (method == 'GET') {
+            msg = 'Fetching data';
+          } else if (method == 'POST') {
+            msg = 'Saving data';
+          } else if (method == 'PUT' || method == 'PATCH') {
+            msg = 'Updating record';
+          } else if (method == 'DELETE') {
+            msg = 'Deleting record';
+          }
+          LoadingService().startLoading(message: msg);
+
           // 1. Resolve phone from ApiService.activeUserPhone or FirebaseAuth
           String? phone = activeUserPhone;
           if (phone == null || phone.isEmpty) {
@@ -66,10 +81,12 @@ class ApiService {
           return handler.next(options);
         },
         onResponse: (response, handler) {
+          LoadingService().stopLoading();
           debugPrint('🌐 [ApiService Response] ${response.statusCode} from [${response.requestOptions.method}] ${response.requestOptions.path}');
           return handler.next(response);
         },
         onError: (DioException error, handler) {
+          LoadingService().stopLoading();
           debugPrint('🚨 [ApiService Error] Status: ${error.response?.statusCode} on [${error.requestOptions.method}] ${error.requestOptions.path}');
           debugPrint('🚨 [ApiService Error Data]: ${error.response?.data}');
           return handler.next(error);
@@ -89,4 +106,20 @@ class ApiService {
   }
 
   Dio get client => _dio;
+
+  /// Sync current user GPS location to backend server
+  Future<bool> updateUserLocation(double latitude, double longitude, {String? address, String? source}) async {
+    try {
+      final res = await _dio.post('/api/users/update-location', data: {
+        'latitude': latitude,
+        'longitude': longitude,
+        if (address != null) 'address': address,
+        'source': source ?? 'mobile_app',
+      });
+      return res.data != null && res.data['success'] == true;
+    } catch (e) {
+      debugPrint('⚠️ [ApiService] Error syncing location: $e');
+      return false;
+    }
+  }
 }

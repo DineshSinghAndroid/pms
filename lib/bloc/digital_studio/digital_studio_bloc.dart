@@ -233,6 +233,8 @@ class DigitalStudioBloc extends Bloc<DigitalStudioEvent, DigitalStudioState> {
       await repository.updateCrewRequestStatus(
         event.requestId,
         status: event.status,
+        latitude: event.latitude,
+        longitude: event.longitude,
         phone: event.phone,
       );
       add(RefreshDigitalStudioEvent(phone: event.phone));

@@ -21,6 +21,12 @@ class DigitalStudioCrewRequestModel extends Equatable {
   final DateTime? allottedAt;
   final List<UserModel> allottedEmployees;
   final List<DigitalStudioAssetModel> allottedAssets;
+  final DateTime? workStartedAt;
+  final int? workStartedByUserId;
+  final double? workStartLatitude;
+  final double? workStartLongitude;
+  final double? workStartDistanceMeters;
+  final bool workStartVerified;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -42,9 +48,31 @@ class DigitalStudioCrewRequestModel extends Equatable {
     this.allottedAt,
     this.allottedEmployees = const [],
     this.allottedAssets = const [],
+    this.workStartedAt,
+    this.workStartedByUserId,
+    this.workStartLatitude,
+    this.workStartLongitude,
+    this.workStartDistanceMeters,
+    this.workStartVerified = false,
     this.createdAt,
     this.updatedAt,
   });
+
+  static DateTime _parseDateTime(dynamic value, {DateTime? fallback}) {
+    if (value == null) return fallback ?? DateTime.now();
+    final str = value.toString();
+    final parsed = DateTime.tryParse(str);
+    if (parsed == null) return fallback ?? DateTime.now();
+    return parsed.isUtc ? parsed.toLocal() : parsed;
+  }
+
+  static DateTime? _parseNullableDateTime(dynamic value) {
+    if (value == null) return null;
+    final str = value.toString();
+    final parsed = DateTime.tryParse(str);
+    if (parsed == null) return null;
+    return parsed.isUtc ? parsed.toLocal() : parsed;
+  }
 
   factory DigitalStudioCrewRequestModel.fromJson(Map<String, dynamic> json) {
     return DigitalStudioCrewRequestModel(
@@ -60,21 +88,18 @@ class DigitalStudioCrewRequestModel extends Equatable {
           : null,
       eventName: json['event_name'] as String? ?? '',
       requiredCrewCount: json['required_crew_count'] as int? ?? 1,
-      reportingDateTime: json['reporting_date_time'] != null
-          ? DateTime.parse(json['reporting_date_time'].toString())
-          : DateTime.now(),
-      eventEndTime: json['event_end_time'] != null
-          ? DateTime.parse(json['event_end_time'].toString())
-          : DateTime.now().add(const Duration(hours: 4)),
+      reportingDateTime: _parseDateTime(json['reporting_date_time']),
+      eventEndTime: _parseDateTime(
+        json['event_end_time'],
+        fallback: DateTime.now().add(const Duration(hours: 4)),
+      ),
       status: json['status'] as String? ?? 'pending',
       remarks: json['remarks'] as String?,
       allottedByUserId: json['allotted_by_user_id'] as int?,
       allottedBy: json['allotted_by'] != null
           ? UserModel.fromJson(json['allotted_by'] as Map<String, dynamic>)
           : null,
-      allottedAt: json['allotted_at'] != null
-          ? DateTime.tryParse(json['allotted_at'].toString())
-          : null,
+      allottedAt: _parseNullableDateTime(json['allotted_at']),
       allottedEmployees: (json['allotted_employees'] as List<dynamic>?)
               ?.map((u) => UserModel.fromJson(u as Map<String, dynamic>))
               .toList() ??
@@ -87,12 +112,20 @@ class DigitalStudioCrewRequestModel extends Equatable {
               )
               .toList() ??
           const [],
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'].toString())
+      workStartedAt: _parseNullableDateTime(json['work_started_at']),
+      workStartedByUserId: json['work_started_by_user_id'] as int?,
+      workStartLatitude: json['work_start_latitude'] != null
+          ? double.tryParse(json['work_start_latitude'].toString())
           : null,
-      updatedAt: json['updated_at'] != null
-          ? DateTime.tryParse(json['updated_at'].toString())
+      workStartLongitude: json['work_start_longitude'] != null
+          ? double.tryParse(json['work_start_longitude'].toString())
           : null,
+      workStartDistanceMeters: json['work_start_distance_meters'] != null
+          ? double.tryParse(json['work_start_distance_meters'].toString())
+          : null,
+      workStartVerified: json['work_start_verified'] as bool? ?? false,
+      createdAt: _parseNullableDateTime(json['created_at']),
+      updatedAt: _parseNullableDateTime(json['updated_at']),
     );
   }
 

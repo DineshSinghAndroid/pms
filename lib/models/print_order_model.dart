@@ -13,6 +13,9 @@ class PrintOrderModel {
   final String? expectedDeliveryTime;
   final String? requesterRemarks;
   final String? printOrderRemarks;
+  final String? finalDesignType;
+  final String? finalDesignUrl;
+  final String? finalDesignName;
   final String status;
   final DateTime? acceptedAt;
   final DateTime? dispatchedAt;
@@ -36,6 +39,9 @@ class PrintOrderModel {
     this.expectedDeliveryTime,
     this.requesterRemarks,
     this.printOrderRemarks,
+    this.finalDesignType,
+    this.finalDesignUrl,
+    this.finalDesignName,
     required this.status,
     this.acceptedAt,
     this.dispatchedAt,
@@ -69,6 +75,9 @@ class PrintOrderModel {
       expectedDeliveryTime: json['expected_delivery_time']?.toString(),
       requesterRemarks: json['requester_remarks']?.toString(),
       printOrderRemarks: json['print_order_remarks']?.toString(),
+      finalDesignType: json['final_design_type']?.toString(),
+      finalDesignUrl: json['final_design_url']?.toString(),
+      finalDesignName: json['final_design_name']?.toString(),
       status: json['status']?.toString() ?? 'in_production',
       acceptedAt: json['accepted_at'] != null
           ? DateTime.tryParse(json['accepted_at'].toString())

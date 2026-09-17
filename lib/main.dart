@@ -12,6 +12,7 @@ import 'bloc/product_type/product_type_event.dart';
 import 'bloc/purchase_request/purchase_request_bloc.dart';
 import 'bloc/user/user_bloc.dart';
 import 'bloc/vendor/vendor_bloc.dart';
+
 import 'bloc/vendor/vendor_event.dart';
 import 'bloc/wing/wing_bloc.dart';
 import 'bloc/wing/wing_event.dart';
@@ -36,6 +37,7 @@ import 'views/auth/login_screen.dart';
 import 'views/home/home_screen.dart';
 import 'views/permissions/permission_required_screen.dart';
 import 'widgets/app_gradient_background.dart';
+import 'widgets/loading_system.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -147,6 +149,12 @@ class PmsApp extends StatelessWidget {
           title: 'PMS Admin',
           debugShowCheckedModeBanner: false,
           theme: PmsTheme.light,
+          builder: (context, child) => PrinceGroupLoadingOverlay(
+            banner: const InAppNotificationBannerLayer(),
+            child: AppGradientBackground(
+              child: child ?? const SizedBox.shrink(),
+            ),
+          ),
           home: const AuthGate(),
         ),
       ),

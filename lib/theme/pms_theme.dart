@@ -150,7 +150,7 @@ abstract final class PmsTheme {
   static ThemeData get light => ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
-        scaffoldBackgroundColor: background,
+        scaffoldBackgroundColor: Colors.transparent,
         primaryColor: primary,
         colorScheme: const ColorScheme.light(
           primary: primary,

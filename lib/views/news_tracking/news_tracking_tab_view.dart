@@ -246,7 +246,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
       builder: (context, state) {
         if (state is NewsTrackingLoading) {
           return const Scaffold(
-            backgroundColor: PmsTheme.background,
+            backgroundColor: Colors.transparent,
             body: Center(
               child: CircularProgressIndicator(color: Color(0xFF059669)),
             ),
@@ -255,7 +255,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
 
         if (state is NewsTrackingLoaded) {
           return Scaffold(
-            backgroundColor: PmsTheme.background,
+            backgroundColor: Colors.transparent,
             body: RefreshIndicator(
               onRefresh: () async => _loadData(),
               color: const Color(0xFF059669),
@@ -523,7 +523,7 @@ class _NewsTrackingTabViewState extends State<NewsTrackingTabView> {
         }
 
         return const Scaffold(
-          backgroundColor: PmsTheme.background,
+          backgroundColor: Colors.transparent,
           body: Center(child: Text('Initialize News Tracking...')),
         );
       },

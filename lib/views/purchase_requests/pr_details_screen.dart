@@ -59,6 +59,8 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       widget.currentUser?.role.toLowerCase().trim() == 'digital_studio_incharge';
   bool get canAssignDesigner =>
       isSuperAdmin || isAdmin || isManager || isDigitalStudioIncharge;
+  bool canReassignDesigner(PurchaseRequestModel pr) =>
+      canAssignDesigner && !pr.isDesignerAssignmentLocked;
   bool get isAdminOrManager => isSuperAdmin || isAdmin || isManager;
   bool get canReviewArtwork => isAdminOrManager;
   bool get canWorkOnArtwork => isDesigner;
@@ -912,6 +914,18 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     BuildContext context,
     PurchaseRequestModel pr,
   ) async {
+    if (pr.isDesignerAssignmentLocked) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${pr.prNumber} is already ${pr.status.replaceAll('_', ' ')} and cannot be reassigned.',
+          ),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
     List<UserModel> designers = PurchaseRequestRepository.cachedDesigners ?? [];
 
     if (designers.isEmpty) {
@@ -1362,6 +1376,26 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
+                      'Requested By',
+                      style: TextStyle(fontSize: 10, color: PmsTheme.textSecondary),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      pr.createdByUser?.name ?? 'Admin',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: PmsTheme.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
                       'Expected Delivery',
                       style: TextStyle(fontSize: 10, color: PmsTheme.textSecondary),
                     ),
@@ -1443,7 +1477,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     ],
                   ),
                 ),
-                if (canAssignDesigner) ...[
+                if (canReassignDesigner(pr)) ...[
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
                     onPressed: () => _showAssignDesignerDialog(context, pr),
@@ -1912,7 +1946,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 ),
               ],
             ),
-            if (canAssignDesigner) ...[
+            if (canReassignDesigner(pr)) ...[
               const SizedBox(height: 14),
               ElevatedButton.icon(
                 onPressed: () => _showAssignDesignerDialog(context, pr),
@@ -1997,7 +2031,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                 ),
               ],
             ),
-            if (canAssignDesigner) ...[
+            if (canReassignDesigner(pr)) ...[
               const SizedBox(height: 10),
               ElevatedButton.icon(
                 onPressed: () => _showAssignDesignerDialog(context, pr),
@@ -2801,7 +2835,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     ),
                   ],
                 ),
-                if (canAssignDesigner) ...[
+                if (canReassignDesigner(pr)) ...[
                   const SizedBox(height: 14),
                   ElevatedButton.icon(
                     onPressed: () => _showAssignDesignerDialog(context, pr),
@@ -2889,7 +2923,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     ),
                   ],
                 ),
-                if (canAssignDesigner) ...[
+                if (canReassignDesigner(pr)) ...[
                   const SizedBox(height: 10),
                   ElevatedButton.icon(
                     onPressed: () => _showAssignDesignerDialog(context, pr),
