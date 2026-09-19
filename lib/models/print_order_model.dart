@@ -17,6 +17,15 @@ class PrintOrderModel {
   final String? finalDesignUrl;
   final String? finalDesignName;
   final String status;
+  final String quotationStatus;
+  final double? subtotalAmount;
+  final double gstRate;
+  final double? gstAmount;
+  final double? grandTotalAmount;
+  final String? quoteRemarks;
+  final DateTime? quoteSubmittedAt;
+  final DateTime? quoteApprovedAt;
+  final int? quoteApprovedByUserId;
   final DateTime? acceptedAt;
   final DateTime? dispatchedAt;
   final DateTime? completedAt;
@@ -43,6 +52,15 @@ class PrintOrderModel {
     this.finalDesignUrl,
     this.finalDesignName,
     required this.status,
+    this.quotationStatus = 'quote_approved',
+    this.subtotalAmount,
+    this.gstRate = 0.0,
+    this.gstAmount,
+    this.grandTotalAmount,
+    this.quoteRemarks,
+    this.quoteSubmittedAt,
+    this.quoteApprovedAt,
+    this.quoteApprovedByUserId,
     this.acceptedAt,
     this.dispatchedAt,
     this.completedAt,
@@ -78,7 +96,30 @@ class PrintOrderModel {
       finalDesignType: json['final_design_type']?.toString(),
       finalDesignUrl: json['final_design_url']?.toString(),
       finalDesignName: json['final_design_name']?.toString(),
-      status: json['status']?.toString() ?? 'in_production',
+      status: json['status']?.toString() ?? 'pending_vendor',
+      quotationStatus: json['quotation_status']?.toString() ?? 'quote_approved',
+      subtotalAmount: json['subtotal_amount'] != null
+          ? double.tryParse('${json['subtotal_amount']}')
+          : null,
+      gstRate: json['gst_rate'] != null
+          ? double.tryParse('${json['gst_rate']}') ?? 0.0
+          : 0.0,
+      gstAmount: json['gst_amount'] != null
+          ? double.tryParse('${json['gst_amount']}')
+          : null,
+      grandTotalAmount: json['grand_total_amount'] != null
+          ? double.tryParse('${json['grand_total_amount']}')
+          : null,
+      quoteRemarks: json['quote_remarks']?.toString(),
+      quoteSubmittedAt: json['quote_submitted_at'] != null
+          ? DateTime.tryParse(json['quote_submitted_at'].toString())
+          : null,
+      quoteApprovedAt: json['quote_approved_at'] != null
+          ? DateTime.tryParse(json['quote_approved_at'].toString())
+          : null,
+      quoteApprovedByUserId: json['quote_approved_by_user_id'] != null
+          ? int.tryParse('${json['quote_approved_by_user_id']}')
+          : null,
       acceptedAt: json['accepted_at'] != null
           ? DateTime.tryParse(json['accepted_at'].toString())
           : null,
@@ -138,6 +179,14 @@ class PrintOrderModel {
       'requester_remarks': requesterRemarks,
       'print_order_remarks': printOrderRemarks,
       'status': status,
+      'quotation_status': quotationStatus,
+      'subtotal_amount': subtotalAmount,
+      'gst_rate': gstRate,
+      'gst_amount': gstAmount,
+      'grand_total_amount': grandTotalAmount,
+      'quote_remarks': quoteRemarks,
+      'quote_submitted_at': quoteSubmittedAt?.toIso8601String(),
+      'quote_approved_at': quoteApprovedAt?.toIso8601String(),
       'accepted_at': acceptedAt?.toIso8601String(),
       'dispatched_at': dispatchedAt?.toIso8601String(),
       'completed_at': completedAt?.toIso8601String(),
@@ -146,6 +195,11 @@ class PrintOrderModel {
 
   bool get isCompleted => status.toLowerCase() == 'completed';
   bool get isCancelled => status.toLowerCase() == 'cancelled';
+  bool get isPendingQuote => quotationStatus.toLowerCase() == 'pending_quote';
+  bool get isQuoteSubmitted => quotationStatus.toLowerCase() == 'quote_submitted';
+  bool get isRevisionRequested => quotationStatus.toLowerCase() == 'revision_requested';
+  bool get isQuoteApproved => quotationStatus.toLowerCase() == 'quote_approved';
+
   bool get isFullyReceived {
     if (isCompleted) return true;
     if (items.isNotEmpty &&
@@ -162,6 +216,8 @@ class PrintOrderItemModel {
   final int? productTypeId;
   final String productName;
   final int quantity;
+  final double? unitPrice;
+  final double? totalPrice;
   final int receivedQuantity;
   final String? size;
   final String? attachmentPath;
@@ -173,6 +229,8 @@ class PrintOrderItemModel {
     this.productTypeId,
     required this.productName,
     required this.quantity,
+    this.unitPrice,
+    this.totalPrice,
     this.receivedQuantity = 0,
     this.size,
     this.attachmentPath,
@@ -192,6 +250,12 @@ class PrintOrderItemModel {
       quantity: json['quantity'] is int
           ? json['quantity']
           : int.tryParse('${json['quantity']}') ?? 1,
+      unitPrice: json['unit_price'] != null
+          ? double.tryParse('${json['unit_price']}')
+          : null,
+      totalPrice: json['total_price'] != null
+          ? double.tryParse('${json['total_price']}')
+          : null,
       receivedQuantity: json['received_quantity'] is int
           ? json['received_quantity']
           : int.tryParse('${json['received_quantity']}') ?? 0,
@@ -208,6 +272,8 @@ class PrintOrderItemModel {
       'product_type_id': productTypeId,
       'product_name': productName,
       'quantity': quantity,
+      'unit_price': unitPrice,
+      'total_price': totalPrice,
       'received_quantity': receivedQuantity,
       'size': size,
       'attachment_path': attachmentPath,

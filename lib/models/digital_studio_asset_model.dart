@@ -79,15 +79,7 @@ class DigitalStudioAssetLogModel extends Equatable {
 
 class DigitalStudioAssetModel extends Equatable {
   static const List<String> categories = [
-    'Camera',
-    'Lens',
-    'Audio/Mic',
-    'Lighting',
-    'Drone',
-    'Gimbal/Tripod',
-    'Memory Card',
-    'Laptop/System',
-    'Other',
+    'General',
   ];
 
   static const List<String> statuses = [

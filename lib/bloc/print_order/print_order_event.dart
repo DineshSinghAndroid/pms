@@ -138,3 +138,73 @@ class RecordDeliveryEvent extends PrintOrderEvent {
     items,
   ];
 }
+
+class SubmitQuotationEvent extends PrintOrderEvent {
+  final int printOrderId;
+  final List<Map<String, dynamic>> items;
+  final double? gstRate;
+  final String? quoteRemarks;
+  final String? phone;
+
+  const SubmitQuotationEvent({
+    required this.printOrderId,
+    required this.items,
+    this.gstRate,
+    this.quoteRemarks,
+    this.phone,
+  });
+
+  @override
+  List<Object?> get props => [
+    printOrderId,
+    items,
+    gstRate,
+    quoteRemarks,
+    phone,
+  ];
+}
+
+class ApproveQuotationEvent extends PrintOrderEvent {
+  final int printOrderId;
+  final String? phone;
+
+  const ApproveQuotationEvent({
+    required this.printOrderId,
+    this.phone,
+  });
+
+  @override
+  List<Object?> get props => [printOrderId, phone];
+}
+
+class RequestQuotationRevisionEvent extends PrintOrderEvent {
+  final int printOrderId;
+  final String remarks;
+  final String? phone;
+
+  const RequestQuotationRevisionEvent({
+    required this.printOrderId,
+    required this.remarks,
+    this.phone,
+  });
+
+  @override
+  List<Object?> get props => [printOrderId, remarks, phone];
+}
+
+class ReassignVendorEvent extends PrintOrderEvent {
+  final int printOrderId;
+  final int vendorId;
+  final String? remarks;
+  final String? phone;
+
+  const ReassignVendorEvent({
+    required this.printOrderId,
+    required this.vendorId,
+    this.remarks,
+    this.phone,
+  });
+
+  @override
+  List<Object?> get props => [printOrderId, vendorId, remarks, phone];
+}

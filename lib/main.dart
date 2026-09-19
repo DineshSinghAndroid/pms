@@ -3,22 +3,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'bloc/category/category_bloc.dart';
-import 'bloc/category/category_event.dart';
 import 'bloc/digital_studio/digital_studio_bloc.dart';
-import 'bloc/digital_studio/digital_studio_event.dart';
 import 'bloc/print_order/print_order_bloc.dart';
 import 'bloc/product_type/product_type_bloc.dart';
-import 'bloc/product_type/product_type_event.dart';
 import 'bloc/purchase_request/purchase_request_bloc.dart';
 import 'bloc/user/user_bloc.dart';
 import 'bloc/vendor/vendor_bloc.dart';
-
-import 'bloc/vendor/vendor_event.dart';
 import 'bloc/wing/wing_bloc.dart';
-import 'bloc/wing/wing_event.dart';
 import 'firebase_options.dart';
 import 'bloc/payment/payment_bloc.dart';
-import 'bloc/payment/payment_event.dart';
 import 'repositories/category_repository.dart';
 import 'repositories/digital_studio_repository.dart';
 import 'repositories/payment_repository.dart';
@@ -96,23 +89,20 @@ class PmsApp extends StatelessWidget {
         providers: [
           BlocProvider<CategoryBloc>(
             create: (context) =>
-                CategoryBloc(repository: context.read<CategoryRepository>())
-                  ..add(const FetchCategoriesEvent()),
+                CategoryBloc(repository: context.read<CategoryRepository>()),
           ),
           BlocProvider<ProductTypeBloc>(
             create: (context) => ProductTypeBloc(
               repository: context.read<ProductTypeRepository>(),
-            )..add(const FetchProductTypesEvent()),
+            ),
           ),
           BlocProvider<WingBloc>(
             create: (context) =>
-                WingBloc(repository: context.read<WingRepository>())
-                  ..add(const FetchWingsEvent()),
+                WingBloc(repository: context.read<WingRepository>()),
           ),
           BlocProvider<VendorBloc>(
             create: (context) =>
-                VendorBloc(repository: context.read<VendorRepository>())
-                  ..add(const FetchVendorsEvent()),
+                VendorBloc(repository: context.read<VendorRepository>()),
           ),
           BlocProvider<UserBloc>(
             create: (context) =>
@@ -131,12 +121,12 @@ class PmsApp extends StatelessWidget {
           BlocProvider<PaymentBloc>(
             create: (context) => PaymentBloc(
               repository: context.read<PaymentRepository>(),
-            )..add(const FetchPaymentsEvent()),
+            ),
           ),
           BlocProvider<DigitalStudioBloc>(
             create: (context) => DigitalStudioBloc(
               repository: context.read<DigitalStudioRepository>(),
-            )..add(const FetchDigitalStudioDataEvent()),
+            ),
           ),
           BlocProvider<NewsTrackingBloc>(
             create: (context) => NewsTrackingBloc(

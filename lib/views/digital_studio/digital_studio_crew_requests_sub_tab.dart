@@ -39,6 +39,9 @@ class _DigitalStudioCrewRequestsSubTabState
     extends State<DigitalStudioCrewRequestsSubTab> {
   String _selectedStatus = 'all';
 
+  bool get isDigitalStudioEmployee =>
+      widget.currentUser?.isDigitalStudioEmployee ?? false;
+
   bool get canAllot {
     final r = (widget.currentUser?.role ?? '').toLowerCase().trim();
     return widget.isSuperAdmin ||
@@ -87,7 +90,20 @@ class _DigitalStudioCrewRequestsSubTabState
         }
 
         if (state is DigitalStudioLoaded) {
-          var filteredRequests = state.crewRequests.where((req) {
+          final myId = widget.currentUser?.id;
+          final myPhone = widget.currentUser?.phone;
+          var sourceRequests = state.crewRequests;
+          if (isDigitalStudioEmployee) {
+            sourceRequests = sourceRequests.where((req) {
+              return req.allottedEmployees.any((e) =>
+                  (myId != null && e.id == myId) ||
+                  (myPhone != null &&
+                      myPhone.isNotEmpty &&
+                      e.phone.endsWith(myPhone.replaceAll(RegExp(r'\D'), ''))));
+            }).toList();
+          }
+
+          var filteredRequests = sourceRequests.where((req) {
             if (_selectedStatus == 'all') return true;
             return req.status.toLowerCase() == _selectedStatus.toLowerCase();
           }).toList();
@@ -108,10 +124,12 @@ class _DigitalStudioCrewRequestsSubTabState
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Crew Requests Queue',
-                        style: TextStyle(
+                        isDigitalStudioEmployee
+                            ? 'My Assigned Duty Requests'
+                            : 'Crew Requests Queue',
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: PmsTheme.textPrimary,
@@ -148,29 +166,29 @@ class _DigitalStudioCrewRequestsSubTabState
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: Row(
                   children: [
-                    _buildFilterTab('All', 'all', state.crewRequests.length),
+                    _buildFilterTab('All', 'all', sourceRequests.length),
                     _buildFilterTab(
                       'Pending',
                       'pending',
-                      state.crewRequests.where((r) => r.isPending).length,
+                      sourceRequests.where((r) => r.isPending).length,
                       badgeColor: PmsTheme.warning,
                     ),
                     _buildFilterTab(
                       'Allotted',
                       'allotted',
-                      state.crewRequests.where((r) => r.isAllotted).length,
+                      sourceRequests.where((r) => r.isAllotted).length,
                       badgeColor: const Color(0xFF8B5CF6),
                     ),
                     _buildFilterTab(
                       'In Progress',
                       'in_progress',
-                      state.crewRequests.where((r) => r.isInProgress).length,
+                      sourceRequests.where((r) => r.isInProgress).length,
                       badgeColor: const Color(0xFF3B82F6),
                     ),
                     _buildFilterTab(
                       'Completed',
                       'completed',
-                      state.crewRequests.where((r) => r.isCompleted).length,
+                      sourceRequests.where((r) => r.isCompleted).length,
                       badgeColor: PmsTheme.success,
                     ),
                   ],
@@ -209,7 +227,9 @@ class _DigitalStudioCrewRequestsSubTabState
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
-                                      'No crew requests found',
+                                      isDigitalStudioEmployee
+                                          ? 'No assigned shoot duties found'
+                                          : 'No crew requests found',
                                       style: TextStyle(
                                         color: Colors.grey.shade600,
                                         fontWeight: FontWeight.w600,
@@ -643,26 +663,122 @@ class _DigitalStudioCrewRequestsSubTabState
               ],
 
               if (!req.isCompleted && !req.isCancelled && !req.isInProgress) ...[
-                ElevatedButton.icon(
-                  onPressed: () => _updateRequestStatus(req, 'in_progress'),
-                  icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                  label: const Text('Start Work'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3B82F6),
-                    foregroundColor: Colors.white,
-                    elevation: 1.5,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                Builder(
+                  builder: (context) {
+                    final now = DateTime.now();
+                    final startWindow = req.reportingDateTime.subtract(const Duration(minutes: 15));
+                    final isTooEarly = now.isBefore(startWindow);
+
+                    if (isTooEarly) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFFDE68A)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.lock_clock_rounded, size: 14, color: Color(0xFFD97706)),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'You can start work 15 minutes before duty time (${DateFormat('hh:mm a').format(startWindow)})',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF92400E),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ElevatedButton.icon(
+                            onPressed: null,
+                            icon: const Icon(Icons.lock_outline_rounded, size: 18),
+                            label: const Text('Start Work'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey.shade300,
+                              foregroundColor: Colors.grey.shade600,
+                              disabledBackgroundColor: Colors.grey.shade200,
+                              disabledForegroundColor: Colors.grey.shade500,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    } else {
+                      return Column(
+                        
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFECFDF5),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFA7F3D0)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.location_on_rounded, size: 14, color: Color(0xFF059669)),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    '📍 Ready to Start inside ${req.wing?.name ?? "Campus"}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF065F46),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ElevatedButton.icon(
+                            onPressed: () => _updateRequestStatus(req, 'in_progress'),
+                            icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                            label: const Text('Start Work'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3B82F6),
+                              foregroundColor: Colors.white,
+                              elevation: 1.5,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                  },
                 ),
               ],
 
@@ -1409,6 +1525,19 @@ class _DigitalStudioCrewRequestsSubTabState
     double? lng;
 
     if (status == 'in_progress') {
+      // Time Window Check (within 15 mins of reporting time)
+      final now = DateTime.now();
+      final startWindow = req.reportingDateTime.subtract(const Duration(minutes: 15));
+      if (now.isBefore(startWindow)) {
+        final diffMins = startWindow.difference(now).inMinutes + 1;
+        if (!mounted) return;
+        _showLocationErrorDialog(
+          '⏰ Too Early to Start Work',
+          'Duty can only be started within 15 minutes of the scheduled reporting time (${DateFormat('hh:mm a').format(req.reportingDateTime)}).\n\nPlease try again in $diffMins minute(s) or arrive at the campus within the valid time window.',
+        );
+        return;
+      }
+
       try {
         // 1. Check if location service is enabled
         bool serviceEnabled = await Geolocator.isLocationServiceEnabled();

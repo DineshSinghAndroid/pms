@@ -153,16 +153,17 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   vertical: 16,
                 ),
                 children: [
-                  // --- SECTION 1: GENERAL ---
-                  _buildSectionHeader('GENERAL'),
-                  const SizedBox(height: 4),
-                  _buildMenuItem(
-                    menu: NavMenu.dashboard,
-                    icon: Icons.dashboard_outlined,
-                    label: 'Dashboard',
-                  ),
-
-                  const SizedBox(height: 18),
+                  // --- SECTION 1: GENERAL (Hidden for Digital Studio Employee) ---
+                  if (!isDigitalStudioEmployee) ...[
+                    _buildSectionHeader('GENERAL'),
+                    const SizedBox(height: 4),
+                    _buildMenuItem(
+                      menu: NavMenu.dashboard,
+                      icon: Icons.dashboard_outlined,
+                      label: 'Dashboard',
+                    ),
+                    const SizedBox(height: 18),
+                  ],
 
                   // --- SECTION 2: PRINT MANAGEMENT (Expandable) ---
                   if (!isDigitalStudioEmployee &&
@@ -346,7 +347,8 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                           (widget.isSuperAdmin ||
                               isDigitalStudioIncharge ||
                               isWingIncharge ||
-                              isManager))) ...[
+                              isManager ||
+                              isDigitalStudioEmployee))) ...[
                     _buildSectionHeader('DIGITAL STUDIO'),
                     const SizedBox(height: 4),
                     BlocBuilder<DigitalStudioBloc, DigitalStudioState>(
@@ -357,8 +359,8 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                         return _buildMenuItem(
                           menu: NavMenu.digitalStudio,
                           icon: Icons.videocam_outlined,
-                          label: 'Digital Studio',
-                          badgeCount: count > 0 ? count : null,
+                          label: isDigitalStudioEmployee ? 'My Duty Schedule' : 'Digital Studio',
+                          badgeCount: isDigitalStudioEmployee ? null : (count > 0 ? count : null),
                         );
                       },
                     ),

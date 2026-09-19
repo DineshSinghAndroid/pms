@@ -371,4 +371,140 @@ class PrintOrderRepository {
       throw Exception('Unexpected error: $e');
     }
   }
+
+  Future<PrintOrderModel> submitQuotation(
+    int poId, {
+    required List<Map<String, dynamic>> items,
+    double? gstRate,
+    String? quoteRemarks,
+    String? phone,
+  }) async {
+    try {
+      final response = await _apiService.client.post(
+        '/api/print-orders/$poId/submit-quotation',
+        data: {
+          'items': items,
+          'gst_rate': gstRate,
+          'quote_remarks': quoteRemarks,
+          'phone': phone,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final Map<String, dynamic> body = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : Map<String, dynamic>.from(response.data as Map);
+
+        return PrintOrderModel.fromJson(body['data'] as Map<String, dynamic>);
+      }
+      throw Exception('Failed to submit quotation: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error submitting quotation',
+      );
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<PrintOrderModel> approveQuotation(
+    int poId, {
+    String? phone,
+  }) async {
+    try {
+      final response = await _apiService.client.post(
+        '/api/print-orders/$poId/approve-quotation',
+        data: {
+          'phone': phone,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final Map<String, dynamic> body = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : Map<String, dynamic>.from(response.data as Map);
+
+        return PrintOrderModel.fromJson(body['data'] as Map<String, dynamic>);
+      }
+      throw Exception('Failed to approve quotation: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error approving quotation',
+      );
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<PrintOrderModel> requestQuotationRevision(
+    int poId, {
+    required String remarks,
+    String? phone,
+  }) async {
+    try {
+      final response = await _apiService.client.post(
+        '/api/print-orders/$poId/request-quotation-revision',
+        data: {
+          'remarks': remarks,
+          'phone': phone,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final Map<String, dynamic> body = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : Map<String, dynamic>.from(response.data as Map);
+
+        return PrintOrderModel.fromJson(body['data'] as Map<String, dynamic>);
+      }
+      throw Exception('Failed to request revision: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error requesting quotation revision',
+      );
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<PrintOrderModel> reassignVendor(
+    int poId, {
+    required int vendorId,
+    String? remarks,
+    String? phone,
+  }) async {
+    try {
+      final response = await _apiService.client.post(
+        '/api/print-orders/$poId/reassign-vendor',
+        data: {
+          'vendor_id': vendorId,
+          'remarks': remarks,
+          'phone': phone,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final Map<String, dynamic> body = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : Map<String, dynamic>.from(response.data as Map);
+
+        return PrintOrderModel.fromJson(body['data'] as Map<String, dynamic>);
+      }
+      throw Exception('Failed to reassign vendor: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data?['message'] ??
+            e.message ??
+            'Network error reassigning vendor',
+      );
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
 }

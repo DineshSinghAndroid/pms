@@ -92,6 +92,20 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
     }
   }
 
+  Color _getPOStatusColor(PrintOrderModel po) {
+    if (po.isPendingQuote) return const Color(0xFFD97706);
+    if (po.isQuoteSubmitted) return const Color(0xFF4F46E5);
+    if (po.isRevisionRequested) return const Color(0xFFDC2626);
+    return _getStatusColor(po.status);
+  }
+
+  String _getPOStatusLabel(PrintOrderModel po) {
+    if (po.isPendingQuote) return 'Awaiting Quote';
+    if (po.isQuoteSubmitted) return 'Quote Submitted';
+    if (po.isRevisionRequested) return 'Revision Requested';
+    return _getStatusLabel(po.status);
+  }
+
   List<PrintOrderModel> _filterOrders(List<PrintOrderModel> orders) {
     return orders.where((po) {
       // Role isolation: Designers only see Print Orders they worked on or created
@@ -417,8 +431,8 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
   }
 
   Widget _buildPOCard(PrintOrderModel po) {
-    final statusColor = _getStatusColor(po.status);
-    final statusLabel = _getStatusLabel(po.status);
+    final statusColor = _getPOStatusColor(po);
+    final statusLabel = _getPOStatusLabel(po);
 
     return InkWell(
       onTap: () {
@@ -502,24 +516,52 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                               ],
                             ],
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: statusColor.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: statusColor),
-                            ),
-                            child: Text(
-                              statusLabel,
-                              style: TextStyle(
-                                color: statusColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 10,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (canSeeVendorDetails && po.grandTotalAmount != null && po.grandTotalAmount! > 0) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF059669).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFF059669).withValues(alpha: 0.3)),
+                                  ),
+                                  child: Text(
+                                    '₹${po.grandTotalAmount!.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      color: Color(0xFF059669),
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 10,
+                                      fontFamily: 'monospace',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                              ],
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: statusColor),
+                                ),
+                                child: Text(
+                                  statusLabel,
+                                  style: TextStyle(
+                                    color: statusColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ],
                       ),

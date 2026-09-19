@@ -18,6 +18,132 @@ class PrintOrderBloc extends Bloc<PrintOrderEvent, PrintOrderState> {
     on<UpdatePrintOrderStatusEvent>(_onUpdatePrintOrderStatus);
     on<FetchDeliveryLogsEvent>(_onFetchDeliveryLogs);
     on<RecordDeliveryEvent>(_onRecordDelivery);
+    on<SubmitQuotationEvent>(_onSubmitQuotation);
+    on<ApproveQuotationEvent>(_onApproveQuotation);
+    on<RequestQuotationRevisionEvent>(_onRequestQuotationRevision);
+    on<ReassignVendorEvent>(_onReassignVendor);
+  }
+
+  Future<void> _onSubmitQuotation(
+    SubmitQuotationEvent event,
+    Emitter<PrintOrderState> emit,
+  ) async {
+    emit(PrintOrderLoading());
+    try {
+      final order = await _repository.submitQuotation(
+        event.printOrderId,
+        items: event.items,
+        gstRate: event.gstRate,
+        quoteRemarks: event.quoteRemarks,
+        phone: event.phone,
+      );
+      emit(
+        PrintOrderActionSuccess(
+          message: 'Price quotation submitted successfully to Admin & Manager!',
+          printOrder: order,
+        ),
+      );
+      _cachedOrders = await _repository.getPrintOrders(phone: event.phone);
+      emit(
+        PrintOrderLoaded(
+          printOrders: _cachedOrders,
+          deliveries: _cachedDeliveries,
+          successMessage: 'Price quotation submitted successfully!',
+        ),
+      );
+    } catch (e) {
+      emit(PrintOrderError(e.toString().replaceAll('Exception: ', '')));
+    }
+  }
+
+  Future<void> _onApproveQuotation(
+    ApproveQuotationEvent event,
+    Emitter<PrintOrderState> emit,
+  ) async {
+    emit(PrintOrderLoading());
+    try {
+      final order = await _repository.approveQuotation(
+        event.printOrderId,
+        phone: event.phone,
+      );
+      emit(
+        PrintOrderActionSuccess(
+          message: 'Quotation approved! Order is now in production.',
+          printOrder: order,
+        ),
+      );
+      _cachedOrders = await _repository.getPrintOrders(phone: event.phone);
+      emit(
+        PrintOrderLoaded(
+          printOrders: _cachedOrders,
+          deliveries: _cachedDeliveries,
+          successMessage: 'Quotation approved successfully!',
+        ),
+      );
+    } catch (e) {
+      emit(PrintOrderError(e.toString().replaceAll('Exception: ', '')));
+    }
+  }
+
+  Future<void> _onRequestQuotationRevision(
+    RequestQuotationRevisionEvent event,
+    Emitter<PrintOrderState> emit,
+  ) async {
+    emit(PrintOrderLoading());
+    try {
+      final order = await _repository.requestQuotationRevision(
+        event.printOrderId,
+        remarks: event.remarks,
+        phone: event.phone,
+      );
+      emit(
+        PrintOrderActionSuccess(
+          message: 'Quotation revision request sent to vendor.',
+          printOrder: order,
+        ),
+      );
+      _cachedOrders = await _repository.getPrintOrders(phone: event.phone);
+      emit(
+        PrintOrderLoaded(
+          printOrders: _cachedOrders,
+          deliveries: _cachedDeliveries,
+          successMessage: 'Quotation revision request sent!',
+        ),
+      );
+    } catch (e) {
+      emit(PrintOrderError(e.toString().replaceAll('Exception: ', '')));
+    }
+  }
+
+  Future<void> _onReassignVendor(
+    ReassignVendorEvent event,
+    Emitter<PrintOrderState> emit,
+  ) async {
+    emit(PrintOrderLoading());
+    try {
+      final order = await _repository.reassignVendor(
+        event.printOrderId,
+        vendorId: event.vendorId,
+        remarks: event.remarks,
+        phone: event.phone,
+      );
+      emit(
+        PrintOrderActionSuccess(
+          message: 'Order reassigned to new vendor for fresh quotation.',
+          printOrder: order,
+        ),
+      );
+      _cachedOrders = await _repository.getPrintOrders(phone: event.phone);
+      emit(
+        PrintOrderLoaded(
+          printOrders: _cachedOrders,
+          deliveries: _cachedDeliveries,
+          successMessage: 'Order reassigned successfully!',
+        ),
+      );
+    } catch (e) {
+      emit(PrintOrderError(e.toString().replaceAll('Exception: ', '')));
+    }
   }
 
   Future<void> _onFetchDeliveryLogs(

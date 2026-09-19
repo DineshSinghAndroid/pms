@@ -231,7 +231,7 @@ class DashboardTabView extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Logged in as $phone',
+                  'edLogged in as $phone',
                   style: const TextStyle(
                     fontSize: 11,
                     color: PmsTheme.textSecondary,

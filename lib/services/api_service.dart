@@ -18,7 +18,7 @@ class ApiService {
 
   // Base URL: Local LAN for device/dev, or live production
   static const String liveServerUrl = 'https://pms.bytscop.com/';
-  static const String localServerUrl = 'https://pms.bytscop.com/';
+  static const String localServerUrl = 'http://192.168.1.9:8000/';
 
   /// Prefer local admin when debugging; use live in release builds.
   static String get baseUrl {

@@ -46,6 +46,9 @@ class _DigitalStudioCalendarSubTabState
   bool get _isDigitalStudioEmployee =>
       widget.currentUser?.isDigitalStudioEmployee ?? false;
 
+  final Set<int> _autoStartedRequestIds = {};
+  bool _isAutoChecking = false;
+
   @override
   void initState() {
     super.initState();
@@ -127,6 +130,13 @@ class _DigitalStudioCalendarSubTabState
 
   Widget _buildCalendarContent(BuildContext context, DigitalStudioLoaded state) {
     final allSchedules = state.schedules;
+
+    // Automatically check for eligible allotted shoots inside campus to auto-start duty
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _checkAndTriggerAutoStartWork(allSchedules);
+      }
+    });
 
     // Events on selected date
     final selectedDayEvents = allSchedules.where((s) {
@@ -1249,23 +1259,114 @@ class _DigitalStudioCalendarSubTabState
 
           // Action Buttons for Allotted & In-Progress Events (Start Work / Mark Completed)
           if (!event.isCompleted && !event.isCancelled && !event.isInProgress) ...[
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _updateRequestStatus(event, 'in_progress'),
-                icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                label: const Text('Start Work (GPS Verify)'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B82F6),
-                  foregroundColor: Colors.white,
-                  elevation: 1.5,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
+            Builder(
+              builder: (context) {
+                final now = DateTime.now();
+                final startWindow = event.reportingDateTime.subtract(const Duration(minutes: 15));
+                final isTooEarly = now.isBefore(startWindow);
+
+                if (isTooEarly) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.lock_clock_rounded, size: 15, color: Color(0xFFD97706)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'You can start work 15 minutes before duty time (${DateFormat('hh:mm a').format(startWindow)})',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF92400E),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: null,
+                          icon: const Icon(Icons.lock_outline_rounded, size: 18),
+                          label: const Text('Start Work (Locked)'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey.shade300,
+                            foregroundColor: Colors.grey.shade600,
+                            disabledBackgroundColor: Colors.grey.shade200,
+                            disabledForegroundColor: Colors.grey.shade500,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                } else {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFA7F3D0)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.location_on_rounded, size: 15, color: Color(0xFF059669)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '📍 Ready to Start inside ${event.wing?.name ?? "Campus"}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF065F46),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _updateRequestStatus(event, 'in_progress'),
+                          icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                          label: const Text('Start Work (GPS Verify)'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3B82F6),
+                            foregroundColor: Colors.white,
+                            elevation: 1.5,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+              },
             ),
           ],
           if (event.isInProgress) ...[
@@ -1548,6 +1649,19 @@ class _DigitalStudioCalendarSubTabState
     double? lng;
 
     if (status == 'in_progress') {
+      // 1. Time Window Check (must be within 15 mins of reporting time)
+      final now = DateTime.now();
+      final startWindow = req.reportingDateTime.subtract(const Duration(minutes: 15));
+      if (now.isBefore(startWindow)) {
+        final diffMins = startWindow.difference(now).inMinutes + 1;
+        if (!mounted) return;
+        _showLocationErrorDialog(
+          '⏰ Too Early to Start Work',
+          'Duty can only be started within 15 minutes of the scheduled reporting time (${DateFormat('hh:mm a').format(req.reportingDateTime)}).\n\nPlease try again in $diffMins minute(s) or arrive at the campus within the valid time window.',
+        );
+        return;
+      }
+
       try {
         bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
         if (!serviceEnabled) {
@@ -1670,6 +1784,171 @@ class _DigitalStudioCalendarSubTabState
             longitude: lng,
           ),
         );
+  }
+
+  Future<void> _checkAndTriggerAutoStartWork(
+    List<DigitalStudioCrewRequestModel> allSchedules,
+  ) async {
+    if (_isAutoChecking) return;
+    _isAutoChecking = true;
+
+    try {
+      final currentUserId = widget.currentUser?.id;
+      if (currentUserId == null) return;
+
+      final now = DateTime.now();
+
+      // Find eligible allotted shoots assigned to this user
+      final eligibleShoots = allSchedules.where((s) {
+        if (!s.isAllotted) return false;
+        if (_autoStartedRequestIds.contains(s.id)) return false;
+
+        final isAssigned = s.allottedEmployees.any((e) => e.id == currentUserId);
+        if (!isAssigned && !_isDigitalStudioEmployee) return false;
+
+        // Check 15 min window before reporting time up to event end time
+        final startWindow = s.reportingDateTime.subtract(const Duration(minutes: 15));
+        final endWindow = s.eventEndTime;
+        final isTimeValid = now.isAfter(startWindow) && now.isBefore(endWindow);
+
+        return isTimeValid;
+      }).toList();
+
+      if (eligibleShoots.isEmpty) return;
+
+      // Check Location Service & Permissions silently
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+
+      for (final req in eligibleShoots) {
+        if (_autoStartedRequestIds.contains(req.id)) continue;
+
+        if (req.wing != null &&
+            req.wing!.latitude != null &&
+            req.wing!.longitude != null) {
+          final distanceMeters = Geolocator.distanceBetween(
+            position.latitude,
+            position.longitude,
+            req.wing!.latitude!,
+            req.wing!.longitude!,
+          );
+
+          final maxAllowedMeters = req.wing!.geofenceRadiusMeters > 0
+              ? req.wing!.geofenceRadiusMeters.toDouble()
+              : 200.0;
+
+          if (distanceMeters <= maxAllowedMeters) {
+            _autoStartedRequestIds.add(req.id);
+            if (!mounted) return;
+
+            context.read<DigitalStudioBloc>().add(
+                  UpdateCrewRequestStatusEvent(
+                    requestId: req.id,
+                    status: 'in_progress',
+                    phone: widget.currentUser?.phone,
+                    latitude: position.latitude,
+                    longitude: position.longitude,
+                  ),
+                );
+
+            _showAutoStartSuccessBanner(req, distanceMeters);
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Auto-start duty error: $e');
+    } finally {
+      _isAutoChecking = false;
+    }
+  }
+
+  void _showAutoStartSuccessBanner(
+    DigitalStudioCrewRequestModel req,
+    double distanceMeters,
+  ) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        contentPadding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.verified_rounded,
+                color: Color(0xFF059669),
+                size: 44,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '🎯 Duty Auto-Started!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You are within ${req.wing?.name ?? "Campus"} (${distanceMeters.toStringAsFixed(0)}m inside boundary) and your scheduled duty time has arrived.\n\nShoot "${req.eventName}" has automatically started.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF475569),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Awesome, Let\'s Shoot!',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showLocationErrorDialog(
