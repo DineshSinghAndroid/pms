@@ -5,6 +5,8 @@ import '../../services/api_service.dart';
 import '../../services/app_update_service.dart';
 import 'app_update_settings_dialog.dart';
 import '../../theme/pms_theme.dart';
+import '../../widgets/glass_card.dart';
+import '../../widgets/pms_ui.dart';
 
 class SettingsTabView extends StatefulWidget {
   final bool isSuperAdmin;
@@ -55,11 +57,10 @@ class _SettingsTabViewState extends State<SettingsTabView> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not open page: $e'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
+        showPmsSnackBar(
+          context,
+          'Could not open page: $e',
+          kind: PmsSnackKind.error,
         );
       }
     }
@@ -71,11 +72,10 @@ class _SettingsTabViewState extends State<SettingsTabView> {
       await _updateService.checkForUpdate(context, showToastIfUpToDate: true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to check for updates: $e'),
-            backgroundColor: const Color(0xFFDC2626),
-          ),
+        showPmsSnackBar(
+          context,
+          'Failed to check for updates: $e',
+          kind: PmsSnackKind.error,
         );
       }
     } finally {
@@ -109,248 +109,207 @@ class _SettingsTabViewState extends State<SettingsTabView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-          // 1. System Settings Header
-          const Row(
-            children: [
-              Icon(Icons.settings_rounded, color: PmsTheme.primary, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'System Settings & Connection',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: PmsTheme.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-        color: PmsTheme.glassSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PmsTheme.glassBorder),
-        boxShadow: PmsTheme.glassShadow,
+            const PmsPageHeader(
+              icon: Icons.settings_rounded,
+              title: 'System Settings',
+              subtitle: 'App info, updates, and legal compliance',
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildInfoRow('Application', 'PMS Admin Mobile'),
-                const Divider(color: PmsTheme.glassBorder, height: 20),
-                _buildInfoRow(
-                  'App Version',
-                  'v$_appVersion (Build #$_appBuildNumber)',
-                ),
-                const Divider(color: PmsTheme.glassBorder, height: 20),
-                _buildInfoRow('Organization', 'Prince Eduhub'),
-                const Divider(color: PmsTheme.glassBorder, height: 20),
-                _buildInfoRow('Backend Base URL', ApiService.baseUrl),
-                const Divider(color: PmsTheme.glassBorder, height: 20),
-                _buildInfoRow('State Management', 'BLoC (flutter_bloc 9.x)'),
-                const Divider(color: PmsTheme.glassBorder, height: 20),
-                _buildInfoRow('Network Client', 'Dio HTTP 5.x'),
-              ],
-            ),
-          ),
+            const SizedBox(height: 18),
 
-          const SizedBox(height: 24),
-
-          // 2. App Updates & Version Management Section
-          const Row(
-            children: [
-              Icon(Icons.system_update_rounded,
-                  color: PmsTheme.primary, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'App Updates & Version Control',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: PmsTheme.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            decoration: BoxDecoration(
-        color: PmsTheme.glassSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PmsTheme.glassBorder),
-        boxShadow: PmsTheme.glassShadow,
-            ),
-            child: Column(
-              children: [
-                // Check for Updates Tile
-                ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: _isCheckingUpdate
-                        ? const Center(
-                            child: SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                color: PmsTheme.primary,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                          )
-                        : const Icon(
-                            Icons.refresh_rounded,
-                            color: PmsTheme.primary,
-                            size: 20,
-                          ),
-                  ),
-                  title: const Text(
-                    'Check for Updates',
+            GlassCard(
+              borderRadius: 20,
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Connection & Build',
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
                       color: PmsTheme.textPrimary,
+                      letterSpacing: -0.2,
                     ),
                   ),
-                  subtitle: Text(
-                    _isCheckingUpdate
-                        ? 'Checking server for latest build...'
-                        : 'Currently installed: Build #$_appBuildNumber',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: PmsTheme.textSecondary,
-                    ),
+                  const SizedBox(height: 14),
+                  _buildInfoRow('Application', 'PMS Admin Mobile'),
+                  const Divider(color: PmsTheme.glassBorder, height: 20),
+                  _buildInfoRow(
+                    'App Version',
+                    'v$_appVersion (Build #$_appBuildNumber)',
                   ),
-                  trailing: const Icon(
-                    Icons.chevron_right_rounded,
-                    color: PmsTheme.textMuted,
-                  ),
-                  onTap: _isCheckingUpdate ? null : _checkForUpdates,
-                ),
+                  const Divider(color: PmsTheme.glassBorder, height: 20),
+                  _buildInfoRow('Organization', 'Prince Eduhub'),
+                  const Divider(color: PmsTheme.glassBorder, height: 20),
+                  _buildInfoRow('Backend Base URL', ApiService.baseUrl),
+                  const Divider(color: PmsTheme.glassBorder, height: 20),
+                  _buildInfoRow('State Management', 'BLoC (flutter_bloc 9.x)'),
+                  const Divider(color: PmsTheme.glassBorder, height: 20),
+                  _buildInfoRow('Network Client', 'Dio HTTP 5.x'),
+                ],
+              ),
+            ),
 
-                // Admin Update Management Tile (Visible for Admins)
-                if (canManageUpdates) ...[
-                  const Divider(color: PmsTheme.glassBorder, height: 1),
+            const SizedBox(height: 16),
+
+            GlassCard(
+              borderRadius: 20,
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
                   ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     leading: Container(
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F3FF),
-                        borderRadius: BorderRadius.circular(10),
+                        color: PmsTheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
-                        Icons.admin_panel_settings_rounded,
-                        color: PmsTheme.secondary,
-                        size: 20,
-                      ),
+                      child: _isCheckingUpdate
+                          ? const Center(
+                              child: SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  color: PmsTheme.primary,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
+                          : const Icon(
+                              Icons.refresh_rounded,
+                              color: PmsTheme.primary,
+                              size: 20,
+                            ),
                     ),
                     title: const Text(
-                      'Manage App Updates (Super Admin)',
+                      'Check for Updates',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: PmsTheme.textPrimary,
                       ),
                     ),
-                    subtitle: const Text(
-                      'Set target build number, toggle force update, store links',
-                      style: TextStyle(
+                    subtitle: Text(
+                      _isCheckingUpdate
+                          ? 'Checking server for latest build...'
+                          : 'Currently installed: Build #$_appBuildNumber',
+                      style: const TextStyle(
                         fontSize: 11,
                         color: PmsTheme.textSecondary,
                       ),
                     ),
-                    trailing: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: PmsTheme.textMuted,
+                    ),
+                    onTap: _isCheckingUpdate ? null : _checkForUpdates,
+                  ),
+
+                  if (canManageUpdates) ...[
+                    const Divider(color: PmsTheme.glassBorder, height: 1),
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3E8FF),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'SUPER ADMIN',
-                        style: TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w800,
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: PmsTheme.secondary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.admin_panel_settings_rounded,
                           color: PmsTheme.secondary,
+                          size: 20,
                         ),
                       ),
+                      title: const Text(
+                        'Manage App Updates (Super Admin)',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: PmsTheme.textPrimary,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Set target build number, toggle force update, store links',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: PmsTheme.textSecondary,
+                        ),
+                      ),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: PmsTheme.secondary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'SUPER ADMIN',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            color: PmsTheme.secondary,
+                          ),
+                        ),
+                      ),
+                      onTap: _openUpdateSettingsDialog,
                     ),
-                    onTap: _openUpdateSettingsDialog,
+                  ],
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            GlassCard(
+              borderRadius: 20,
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  _buildPolicyTile(
+                    context,
+                    title: 'Privacy Policy',
+                    subtitle: 'Data usage, permissions, and deletion policy',
+                    icon: Icons.privacy_tip_outlined,
+                    url: '${ApiService.liveServerUrl}/privacy-policy',
+                  ),
+                  const Divider(color: PmsTheme.glassBorder, height: 1),
+                  _buildPolicyTile(
+                    context,
+                    title: 'Terms & Conditions',
+                    subtitle:
+                        'Acceptable use, role governance, and jurisdiction',
+                    icon: Icons.description_outlined,
+                    url: '${ApiService.liveServerUrl}/terms-and-conditions',
+                  ),
+                  const Divider(color: PmsTheme.glassBorder, height: 1),
+                  _buildPolicyTile(
+                    context,
+                    title: 'Request Account & Data Deletion',
+                    subtitle:
+                        'Submit deletion request (Google Play Compliance)',
+                    icon: Icons.person_remove_outlined,
+                    url: '${ApiService.liveServerUrl}/delete-account',
+                    iconColor: PmsTheme.error,
+                    iconBg: const Color(0xFFFEF2F2),
                   ),
                 ],
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // 3. Legal Compliance Section
-          const Row(
-            children: [
-              Icon(Icons.gavel_outlined, color: PmsTheme.textSecondary, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Legal & Institutional Compliance',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: PmsTheme.textPrimary,
-                ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            decoration: BoxDecoration(
-        color: PmsTheme.glassSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PmsTheme.glassBorder),
-        boxShadow: PmsTheme.glassShadow,
             ),
-            child: Column(
-              children: [
-                _buildPolicyTile(
-                  context,
-                  title: 'Privacy Policy',
-                  subtitle: 'Data usage, permissions, and deletion policy',
-                  icon: Icons.privacy_tip_outlined,
-                  url: '${ApiService.liveServerUrl}/privacy-policy',
-                ),
-                const Divider(color: PmsTheme.glassBorder, height: 1),
-                _buildPolicyTile(
-                  context,
-                  title: 'Terms & Conditions',
-                  subtitle: 'Acceptable use, role governance, and jurisdiction',
-                  icon: Icons.description_outlined,
-                  url: '${ApiService.liveServerUrl}/terms-and-conditions',
-                ),
-                const Divider(color: PmsTheme.glassBorder, height: 1),
-                _buildPolicyTile(
-                  context,
-                  title: 'Request Account & Data Deletion',
-                  subtitle: 'Submit deletion request (Google Play Compliance)',
-                  icon: Icons.person_remove_outlined,
-                  url: '${ApiService.liveServerUrl}/delete-account',
-                  iconColor: const Color(0xFFDC2626),
-                  iconBg: const Color(0xFFFEF2F2),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 
@@ -370,7 +329,7 @@ class _SettingsTabViewState extends State<SettingsTabView> {
         height: 40,
         decoration: BoxDecoration(
           color: iconBg,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: iconColor, size: 20),
       ),

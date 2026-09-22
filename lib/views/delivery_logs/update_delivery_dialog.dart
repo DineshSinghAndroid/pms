@@ -53,13 +53,167 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
     super.dispose();
   }
 
+  bool _isImageFile(String? path) {
+    if (path == null || path.isEmpty) return false;
+    final clean = path.toLowerCase().split('?').first;
+    return clean.endsWith('.png') ||
+        clean.endsWith('.jpg') ||
+        clean.endsWith('.jpeg') ||
+        clean.endsWith('.webp') ||
+        clean.endsWith('.gif') ||
+        clean.endsWith('.bmp') ||
+        clean.endsWith('.svg');
+  }
+
+  void _showImagePreviewModal(
+    BuildContext context,
+    String imageUrl,
+    String title,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: PmsTheme.glassSurface,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: const BoxDecoration(
+                  color: PmsTheme.background,
+                  border: Border(
+                    bottom: BorderSide(color: PmsTheme.glassBorder),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          color: PmsTheme.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: PmsTheme.textPrimary,
+                        size: 20,
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.65,
+                ),
+                child: InteractiveViewer(
+                  panEnabled: true,
+                  minScale: 0.8,
+                  maxScale: 4.0,
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 220,
+                        color: PmsTheme.background,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: PmsTheme.primary,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 200,
+                        color: PmsTheme.background,
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.broken_image_rounded,
+                              size: 40,
+                              color: PmsTheme.textSecondary,
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Unable to load preview image.',
+                              style: TextStyle(
+                                color: PmsTheme.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            FilledButton.tonalIcon(
+                              onPressed: () => _launchUrl(imageUrl),
+                              icon: const Icon(Icons.open_in_browser, size: 16),
+                              label: const Text('Open External File'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: const BoxDecoration(
+                  color: PmsTheme.background,
+                  border: Border(
+                    top: BorderSide(color: PmsTheme.glassBorder),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => _launchUrl(imageUrl),
+                      icon: const Icon(Icons.download_rounded, size: 18),
+                      label: const Text('Download Original'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: PmsTheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _selectPO(PrintOrderModel po) {
     setState(() {
       _selectedPO = po;
       _itemControllers.clear();
       for (var it in po.items) {
+        final remaining = (it.quantity - it.receivedQuantity);
         _itemControllers[it.id] = TextEditingController(
-          text: '',
+          text: remaining > 0 ? '$remaining' : '',
         );
       }
     });
@@ -441,14 +595,37 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                       const SizedBox(height: 20),
 
                       // Step 2: Items & Received Quantities
-                      const Text(
-                        '2. PRODUCTS & QUANTITIES RECEIVED *',
-                        style: TextStyle(
-                          color: PmsTheme.primary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            '2. PRODUCTS & QUANTITIES RECEIVED *',
+                            style: TextStyle(
+                              color: PmsTheme.primary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: PmsTheme.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '${_selectedPO!.items.length} Product${_selectedPO!.items.length > 1 ? 's' : ''}',
+                              style: const TextStyle(
+                                color: PmsTheme.primary,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 10),
 
@@ -456,135 +633,386 @@ class _UpdateDeliveryDialogState extends State<UpdateDeliveryDialog> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: _selectedPO!.items.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, idx) {
                           final it = _selectedPO!.items[idx];
                           final ctrl = _itemControllers[it.id];
+                          final remaining = (it.quantity - it.receivedQuantity);
+                          final isComplete = remaining <= 0;
+
+                          final hasAttachment = it.attachmentPath != null &&
+                              it.attachmentPath!.isNotEmpty;
+                          final fullUrl = hasAttachment
+                              ? (it.attachmentPath!.startsWith('http')
+                                  ? it.attachmentPath!
+                                  : '${ApiService.baseUrl}/storage/${it.attachmentPath}')
+                              : null;
+                          final isImage = hasAttachment && _isImageFile(it.attachmentPath);
+
+                          final unitPriceStr = it.unitPrice != null
+                              ? '₹${it.unitPrice!.toStringAsFixed(2)} / pc'
+                              : null;
+                          final lineTotal = it.totalPrice ??
+                              (it.unitPrice != null ? (it.unitPrice! * it.quantity) : null);
+                          final lineTotalStr = lineTotal != null
+                              ? '₹${lineTotal.toStringAsFixed(2)}'
+                              : null;
 
                           return Container(
-                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: PmsTheme.background,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: PmsTheme.glassBorder),
+                              color: isComplete
+                                  ? const Color(0xFFF0FDF4)
+                                  : PmsTheme.background,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isComplete
+                                    ? const Color(0xFF86EFAC)
+                                    : PmsTheme.glassBorder,
+                                width: isComplete ? 1.5 : 1,
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                // Item Header with Image Proof & Name
+                                Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Product / Proof Thumbnail
+                                      if (fullUrl != null) ...[
+                                        InkWell(
+                                          onTap: () {
+                                            if (isImage) {
+                                              _showImagePreviewModal(
+                                                context,
+                                                fullUrl,
+                                                '#${idx + 1}. ${it.productName} Proof',
+                                              );
+                                            } else {
+                                              _launchUrl(fullUrl);
+                                            }
+                                          },
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: Stack(
+                                            children: [
+                                              ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                child: Container(
+                                                  width: 58,
+                                                  height: 58,
+                                                  decoration: BoxDecoration(
+                                                    color: PmsTheme.glassSurface,
+                                                    border: Border.all(
+                                                      color: PmsTheme.primary
+                                                          .withValues(alpha: 0.3),
+                                                    ),
+                                                  ),
+                                                  child: isImage
+                                                      ? Image.network(
+                                                          fullUrl,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder: (_, _, _) =>
+                                                              const Icon(
+                                                            Icons.image_not_supported_outlined,
+                                                            size: 24,
+                                                            color: PmsTheme.textSecondary,
+                                                          ),
+                                                        )
+                                                      : const Icon(
+                                                          Icons.attach_file_rounded,
+                                                          size: 26,
+                                                          color: PmsTheme.primary,
+                                                        ),
+                                                ),
+                                              ),
+                                              Positioned(
+                                                bottom: 2,
+                                                right: 2,
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(2),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black87,
+                                                    borderRadius:
+                                                        BorderRadius.circular(4),
+                                                  ),
+                                                  child: Icon(
+                                                    isImage
+                                                        ? Icons.zoom_in_rounded
+                                                        : Icons.open_in_new_rounded,
+                                                    size: 11,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                      ],
+
+                                      // Product Name, Size & Rate
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    '#${idx + 1}. ${it.productName}',
+                                                    style: const TextStyle(
+                                                      color: PmsTheme.textPrimary,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 13,
+                                                    ),
+                                                    maxLines: 2,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                                if (isComplete)
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          const Color(0xFFDCFCE7),
+                                                      borderRadius:
+                                                          BorderRadius.circular(6),
+                                                    ),
+                                                    child: const Text(
+                                                      '✓ 100% Recv',
+                                                      style: TextStyle(
+                                                        color:
+                                                            Color(0xFF166534),
+                                                        fontSize: 9.5,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 3),
+                                            Text(
+                                              'Size: ${it.size ?? "Standard"}',
+                                              style: const TextStyle(
+                                                color: PmsTheme.textSecondary,
+                                                fontSize: 11,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+
+                                            // Rate & Line Total Chips
+                                            Wrap(
+                                              spacing: 6,
+                                              runSpacing: 4,
+                                              children: [
+                                                if (unitPriceStr != null)
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(0xFFEFF6FF),
+                                                      borderRadius:
+                                                          BorderRadius.circular(4),
+                                                      border: Border.all(
+                                                        color: const Color(0xFFBFDBFE),
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      'Rate: $unitPriceStr',
+                                                      style: const TextStyle(
+                                                        color: Color(0xFF1D4ED8),
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                if (lineTotalStr != null)
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(0xFFECFDF5),
+                                                      borderRadius:
+                                                          BorderRadius.circular(4),
+                                                      border: Border.all(
+                                                        color: const Color(0xFFA7F3D0),
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      'Item Total: $lineTotalStr',
+                                                      style: const TextStyle(
+                                                        color: Color(0xFF065F46),
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                const Divider(
+                                  color: PmsTheme.glassSurface,
+                                  height: 1,
+                                ),
+
+                                // Quantity Details & Receipt Input
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
-                                            '#${idx + 1}. ${it.productName}',
-                                            style: const TextStyle(
-                                              color: PmsTheme.textPrimary,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            'Size: ${it.size ?? "Standard"} · Ordered: ${it.quantity} · Already Recv: ${it.receivedQuantity}',
+                                            'Ordered: ${it.quantity}  ·  Recv so \nfar: ${it.receivedQuantity}  ·  Remaining: ${remaining > 0 ? remaining : 0}',
                                             style: const TextStyle(
                                               color: PmsTheme.textSecondary,
                                               fontSize: 11,
+                                              fontWeight: FontWeight.w600,
                                             ),
+                                          ),
+                                          if (remaining > 0)
+                                            InkWell(
+                                              onTap: () {
+                                                setState(() {
+                                                  ctrl?.text = '$remaining';
+                                                });
+                                              },
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF059669)
+                                                      .withValues(alpha: 0.12),
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                  border: Border.all(
+                                                    color:
+                                                        const Color(0xFF059669),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  'Recv Balance ($remaining)',
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF059669),
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            'Receiving in this Challan:',
+                                            style: TextStyle(
+                                              color: PmsTheme.textPrimary,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              SizedBox(
+                                                width: 80,
+                                                height: 36,
+                                                child: TextField(
+                                                  controller: ctrl,
+                                                  keyboardType:
+                                                      TextInputType.number,
+                                                  textAlign: TextAlign.center,
+                                                  style: const TextStyle(
+                                                    color: PmsTheme.textPrimary,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 13,
+                                                  ),
+                                                  decoration: InputDecoration(
+                                                    hintText: '0',
+                                                    filled: true,
+                                                    fillColor:
+                                                        const Color(0xFFFFFFFF),
+                                                    contentPadding:
+                                                        const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 8,
+                                                    ),
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                        8,
+                                                      ),
+                                                      borderSide:
+                                                          const BorderSide(
+                                                        color: PmsTheme
+                                                            .glassBorder,
+                                                      ),
+                                                    ),
+                                                    enabledBorder:
+                                                        OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                        8,
+                                                      ),
+                                                      borderSide:
+                                                          const BorderSide(
+                                                        color: PmsTheme
+                                                            .glassBorder,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                '/ ${it.quantity} pcs',
+                                                style: const TextStyle(
+                                                  color:
+                                                      PmsTheme.textSecondary,
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    if (it.attachmentPath != null &&
-                                        it.attachmentPath!.isNotEmpty)
-                                      IconButton(
-                                        onPressed: () {
-                                          final fullUrl =
-                                              it.attachmentPath!.startsWith(
-                                                'http',
-                                              )
-                                              ? it.attachmentPath!
-                                              : '${ApiService.baseUrl}/storage/${it.attachmentPath}';
-                                          _launchUrl(fullUrl);
-                                        },
-                                        tooltip: 'Download Proof',
-                                        icon: const Icon(
-                                          Icons.download_rounded,
-                                          color: PmsTheme.primary,
-                                          size: 18,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                const Divider(
-                                  color: PmsTheme.glassSurface,
-                                  height: 16,
-                                ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'Qty Received Now:',
-                                      style: TextStyle(
-                                        color: PmsTheme.textSecondary,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Row(
-                                      children: [
-                                        SizedBox(
-                                          width: 90,
-                                          height: 36,
-                                          child: TextField(
-                                            controller: ctrl,
-                                            keyboardType: TextInputType.number,
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              color: PmsTheme.textPrimary,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
-                                            ),
-                                            decoration: InputDecoration(
-                                              filled: true,
-                                              fillColor: Color(0xFFFFFFFF),
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 8,
-                                                  ),
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                borderSide: const BorderSide(
-                                                  color: PmsTheme.glassBorder,
-                                                ),
-                                              ),
-                                              enabledBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                borderSide: const BorderSide(
-                                                  color: PmsTheme.glassBorder,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          '/ ${it.quantity}',
-                                          style: const TextStyle(
-                                            color: PmsTheme.textSecondary,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

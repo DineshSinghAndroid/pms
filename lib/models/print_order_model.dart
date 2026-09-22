@@ -1,3 +1,4 @@
+import 'package:pms/models/print_order_delivery_model.dart';
 import 'package:pms/models/purchase_request_model.dart';
 import 'package:pms/models/vendor_model.dart';
 import 'package:pms/models/wing_model.dart';
@@ -36,6 +37,7 @@ class PrintOrderModel {
   final PurchaseRequestModel? purchaseRequest;
   final List<PrintOrderItemModel> items;
   final List<PrintOrderActivityModel> activities;
+  final List<PrintOrderDeliveryModel> deliveries;
 
   PrintOrderModel({
     required this.id,
@@ -71,6 +73,8 @@ class PrintOrderModel {
     this.purchaseRequest,
     this.items = const [],
     this.activities = const [],
+    this.deliveries = const [],
+
   });
 
   factory PrintOrderModel.fromJson(Map<String, dynamic> json) {
@@ -163,6 +167,15 @@ class PrintOrderModel {
                 )
                 .toList()
           : [],
+      deliveries: json['deliveries'] != null && json['deliveries'] is List
+          ? (json['deliveries'] as List)
+                .map(
+                  (d) => PrintOrderDeliveryModel.fromJson(
+                    d as Map<String, dynamic>,
+                  ),
+                )
+                .toList()
+          : const [],
     );
   }
 
@@ -218,6 +231,8 @@ class PrintOrderItemModel {
   final int quantity;
   final double? unitPrice;
   final double? totalPrice;
+  final double gstRate;
+  final double? gstAmount;
   final int receivedQuantity;
   final String? size;
   final String? attachmentPath;
@@ -231,6 +246,8 @@ class PrintOrderItemModel {
     required this.quantity,
     this.unitPrice,
     this.totalPrice,
+    this.gstRate = 0.0,
+    this.gstAmount,
     this.receivedQuantity = 0,
     this.size,
     this.attachmentPath,
@@ -256,6 +273,12 @@ class PrintOrderItemModel {
       totalPrice: json['total_price'] != null
           ? double.tryParse('${json['total_price']}')
           : null,
+      gstRate: json['gst_rate'] != null
+          ? double.tryParse('${json['gst_rate']}') ?? 0.0
+          : 0.0,
+      gstAmount: json['gst_amount'] != null
+          ? double.tryParse('${json['gst_amount']}')
+          : null,
       receivedQuantity: json['received_quantity'] is int
           ? json['received_quantity']
           : int.tryParse('${json['received_quantity']}') ?? 0,
@@ -274,6 +297,8 @@ class PrintOrderItemModel {
       'quantity': quantity,
       'unit_price': unitPrice,
       'total_price': totalPrice,
+      'gst_rate': gstRate,
+      'gst_amount': gstAmount,
       'received_quantity': receivedQuantity,
       'size': size,
       'attachment_path': attachmentPath,

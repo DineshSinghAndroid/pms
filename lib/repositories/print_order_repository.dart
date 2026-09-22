@@ -112,6 +112,8 @@ class PrintOrderRepository {
     String? expectedDeliveryTime,
     String? requesterRemarks,
     String? printOrderRemarks,
+    String? finalDesignLink,
+    String? finalDesignName,
     String? phone,
     required List<CreatePrintOrderItemParam> items,
   }) async {
@@ -141,6 +143,20 @@ class PrintOrderRepository {
       }
       if (printOrderRemarks != null) {
         formData.fields.add(MapEntry('print_order_remarks', printOrderRemarks));
+      }
+      if (finalDesignLink != null && finalDesignLink.trim().isNotEmpty) {
+        formData.fields.add(
+          MapEntry('final_design_link', finalDesignLink.trim()),
+        );
+        formData.fields.add(
+          MapEntry('final_design_url', finalDesignLink.trim()),
+        );
+        formData.fields.add(const MapEntry('final_design_type', 'link'));
+        if (finalDesignName != null && finalDesignName.trim().isNotEmpty) {
+          formData.fields.add(
+            MapEntry('final_design_name', finalDesignName.trim()),
+          );
+        }
       }
       if (phone != null) {
         formData.fields.add(MapEntry('phone', phone));

@@ -4,7 +4,10 @@ import 'package:pms/bloc/payment/payment_bloc.dart';
 import 'package:pms/bloc/payment/payment_event.dart';
 import 'package:pms/bloc/payment/payment_state.dart';
 import 'package:pms/models/payment_model.dart';
+import 'package:pms/models/print_order_model.dart';
+import 'package:pms/services/api_service.dart';
 import 'package:pms/theme/pms_theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PaymentDetailsSheet extends StatefulWidget {
   final ProductPaymentModel payment;
@@ -20,6 +23,166 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
   void initState() {
     super.initState();
     context.read<PaymentBloc>().add(FetchPaymentDetailsEvent(widget.payment.id));
+  }
+
+  bool _isImageFile(String? path) {
+    if (path == null || path.isEmpty) return false;
+    final clean = path.toLowerCase().split('?').first;
+    return clean.endsWith('.png') ||
+        clean.endsWith('.jpg') ||
+        clean.endsWith('.jpeg') ||
+        clean.endsWith('.webp') ||
+        clean.endsWith('.gif') ||
+        clean.endsWith('.bmp') ||
+        clean.endsWith('.svg');
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  void _showImagePreviewModal(
+    BuildContext context,
+    String imageUrl,
+    String title,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: PmsTheme.glassSurface,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: const BoxDecoration(
+                  color: PmsTheme.background,
+                  border: Border(
+                    bottom: BorderSide(color: PmsTheme.glassBorder),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          color: PmsTheme.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: PmsTheme.textPrimary,
+                        size: 20,
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.65,
+                ),
+                child: InteractiveViewer(
+                  panEnabled: true,
+                  minScale: 0.8,
+                  maxScale: 4.0,
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 220,
+                        color: PmsTheme.background,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: PmsTheme.primary,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 200,
+                        color: PmsTheme.background,
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.broken_image_rounded,
+                              size: 40,
+                              color: PmsTheme.textSecondary,
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Unable to load preview image.',
+                              style: TextStyle(
+                                color: PmsTheme.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            FilledButton.tonalIcon(
+                              onPressed: () => _launchUrl(imageUrl),
+                              icon: const Icon(Icons.open_in_browser, size: 16),
+                              label: const Text('Open External File'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: const BoxDecoration(
+                  color: PmsTheme.background,
+                  border: Border(
+                    top: BorderSide(color: PmsTheme.glassBorder),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => _launchUrl(imageUrl),
+                      icon: const Icon(Icons.download_rounded, size: 18),
+                      label: const Text('Download Original'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: PmsTheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -50,10 +213,11 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                decoration: const BoxDecoration(
-                  color: PmsTheme.textPrimary, // Slate 900
+                decoration: BoxDecoration(
+                  gradient: PmsTheme.primaryGradient,
                   borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(24)),
+                      const BorderRadius.vertical(top: Radius.circular(28)),
+                  boxShadow: PmsTheme.glowShadow,
                 ),
                 child: Row(
                   children: [
@@ -61,13 +225,16 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: PmsTheme.success, // Emerald 500
-                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.35),
+                        ),
                       ),
                       child: Text(
                         payment.paymentNumber,
                         style: const TextStyle(
-                          color: PmsTheme.textPrimary,
+                          color: Colors.white,
                           fontWeight: FontWeight.w900,
                           fontSize: 12,
                           fontFamily: 'monospace',
@@ -80,25 +247,27 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Payment Record & Lifecycle',
+                            'Payment Record',
                             style: TextStyle(
                               fontSize: 15,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w800,
                               color: Colors.white,
+                              letterSpacing: -0.2,
                             ),
                           ),
                           Text(
-                            'Day 1 historical timeline',
+                            'Lifecycle & invoice details',
                             style: TextStyle(
                               fontSize: 11,
-                              color: PmsTheme.textMuted,
+                              color: Color(0xCCFFFFFF),
                             ),
                           ),
                         ],
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
+                      tooltip: 'Close',
+                      icon: const Icon(Icons.close_rounded, color: Colors.white),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -210,7 +379,7 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                           ),
                           const SizedBox(height: 10),
                           const Text(
-                            'ORDERED PRODUCTS:',
+                            'ORDERED PRODUCTS & PRICING BREAKDOWN:',
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -218,43 +387,252 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                               color: PmsTheme.textMuted,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           if (payment.items.isNotEmpty)
-                            ...payment.items.map((it) {
+                            ...payment.items.asMap().entries.map((entry) {
+                              final idx = entry.key;
+                              final it = entry.value;
+
                               final name = it is Map
-                                  ? it['product_name'] ?? 'Product'
-                                  : (it.productName ?? 'Product');
+                                  ? (it['product_name']?.toString() ?? 'Product')
+                                  : (it is PrintOrderItemModel ? it.productName : 'Product');
+                              final code = it is Map
+                                  ? (it['product_code']?.toString() ?? '')
+                                  : '';
                               final qty = it is Map
-                                  ? it['quantity'] ?? 1
-                                  : (it.quantity ?? 1);
+                                  ? (it['quantity'] is int ? it['quantity'] : int.tryParse('${it['quantity']}') ?? 1)
+                                  : (it is PrintOrderItemModel ? it.quantity : 1);
                               final sz = it is Map
-                                  ? it['size'] ?? 'Standard'
-                                  : (it.size ?? 'Standard');
+                                  ? (it['size']?.toString() ?? 'Standard')
+                                  : (it is PrintOrderItemModel ? (it.size ?? 'Standard') : 'Standard');
                               final rec = it is Map
-                                  ? (it['received_quantity'] ?? qty)
-                                  : qty;
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
+                                  ? (it['received_quantity'] is int ? it['received_quantity'] : int.tryParse('${it['received_quantity']}') ?? qty)
+                                  : (it is PrintOrderItemModel ? it.receivedQuantity : qty);
+                              final attPath = it is Map
+                                  ? it['attachment_path']?.toString()
+                                  : (it is PrintOrderItemModel ? it.attachmentPath : null);
+
+                              final unitPrice = it is Map
+                                  ? (it['unit_price'] != null ? double.tryParse('${it['unit_price']}') : null)
+                                  : (it is PrintOrderItemModel ? it.unitPrice : null);
+                              final totalPrice = it is Map
+                                  ? (it['total_price'] != null ? double.tryParse('${it['total_price']}') : null)
+                                  : (it is PrintOrderItemModel ? it.totalPrice : null);
+
+                              final unitPriceStr = unitPrice != null
+                                  ? '₹${unitPrice.toStringAsFixed(2)} / pc'
+                                  : null;
+                              final lineTotal = totalPrice ??
+                                  (unitPrice != null ? (unitPrice * qty) : null);
+                              final lineTotalStr = lineTotal != null
+                                  ? '₹${lineTotal.toStringAsFixed(2)}'
+                                  : null;
+
+                              final hasAtt = attPath != null && attPath.isNotEmpty;
+                              final fullUrl = hasAtt
+                                  ? (attPath.startsWith('http')
+                                      ? attPath
+                                      : '${ApiService.baseUrl}/storage/$attPath')
+                                  : null;
+                              final isImage = hasAtt && _isImageFile(attPath);
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: PmsTheme.glassSurface,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: Colors.grey.shade200,
+                                  ),
+                                ),
                                 child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(Icons.check_circle, color: Color(0xFF059669), size: 14),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        '$name · $qty pcs ($sz)',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFF334155),
+                                    // Proof Thumbnail
+                                    if (fullUrl != null) ...[
+                                      InkWell(
+                                        onTap: () {
+                                          if (isImage) {
+                                            _showImagePreviewModal(
+                                              context,
+                                              fullUrl,
+                                              '#${idx + 1}. $name Proof',
+                                            );
+                                          } else {
+                                            _launchUrl(fullUrl);
+                                          }
+                                        },
+                                        borderRadius: BorderRadius.circular(6),
+                                        child: Stack(
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              child: Container(
+                                                width: 48,
+                                                height: 48,
+                                                color: Colors.white,
+                                                child: isImage
+                                                    ? Image.network(
+                                                        fullUrl,
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder:
+                                                            (_, _, _) =>
+                                                                const Icon(
+                                                          Icons
+                                                              .image_not_supported_outlined,
+                                                          size: 20,
+                                                          color: PmsTheme
+                                                              .textSecondary,
+                                                        ),
+                                                      )
+                                                    : const Icon(
+                                                        Icons
+                                                            .attach_file_rounded,
+                                                        size: 22,
+                                                        color:
+                                                            PmsTheme.primary,
+                                                      ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              bottom: 1,
+                                              right: 1,
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.all(2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black87,
+                                                  borderRadius:
+                                                      BorderRadius.circular(3),
+                                                ),
+                                                child: Icon(
+                                                  isImage
+                                                      ? Icons.zoom_in_rounded
+                                                      : Icons
+                                                          .open_in_new_rounded,
+                                                  size: 9,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ),
-                                    Text(
-                                      'Recv: $rec/$qty',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF059669),
+                                      const SizedBox(width: 10),
+                                    ],
+
+                                    // Details
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  '#${idx + 1}. $name${code.isNotEmpty ? ' ($code)' : ''}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12.5,
+                                                    color: PmsTheme.textPrimary,
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFDCFCE7),
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                                child: Text(
+                                                  'Recv: $rec/$qty',
+                                                  style: const TextStyle(
+                                                    fontSize: 9.5,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xFF166534),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'Size: $sz · Ordered: $qty pcs',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: PmsTheme.textSecondary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Wrap(
+                                            spacing: 6,
+                                            runSpacing: 4,
+                                            children: [
+                                              if (unitPriceStr != null)
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        const Color(0xFFEFF6FF),
+                                                    borderRadius:
+                                                        BorderRadius.circular(4),
+                                                    border: Border.all(
+                                                      color: const Color(
+                                                          0xFFBFDBFE),
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    'Rate: $unitPriceStr',
+                                                    style: const TextStyle(
+                                                      color: Color(0xFF1D4ED8),
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                ),
+                                              if (lineTotalStr != null)
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        const Color(0xFFECFDF5),
+                                                    borderRadius:
+                                                        BorderRadius.circular(4),
+                                                    border: Border.all(
+                                                      color: const Color(
+                                                          0xFFA7F3D0),
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    'Item Total: $lineTotalStr',
+                                                    style: const TextStyle(
+                                                      color: Color(0xFF065F46),
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
@@ -262,21 +640,30 @@ class _PaymentDetailsSheetState extends State<PaymentDetailsSheet> {
                               );
                             })
                           else if (item != null)
-                            Row(
-                              children: [
-                                const Icon(Icons.check_circle, color: Color(0xFF059669), size: 14),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    '${item.productName} · ${item.quantity} pcs (${item.size ?? 'Standard'})',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF334155),
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: PmsTheme.glassSurface,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.check_circle,
+                                      color: Color(0xFF059669), size: 14),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      '${item.productName} · ${item.quantity} pcs (${item.size ?? 'Standard'})',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF334155),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             )
                           else
                             Text(

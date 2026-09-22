@@ -42,6 +42,8 @@ class EligibleOrderItemProduct {
   final String productName;
   final String productCode;
   final int quantity;
+  final double? unitPrice;
+  final double? totalPrice;
   final int receivedQuantity;
   final int pendingQuantity;
   final bool isFullyReceived;
@@ -54,6 +56,8 @@ class EligibleOrderItemProduct {
     required this.productName,
     required this.productCode,
     required this.quantity,
+    this.unitPrice,
+    this.totalPrice,
     required this.receivedQuantity,
     required this.pendingQuantity,
     required this.isFullyReceived,
@@ -70,6 +74,12 @@ class EligibleOrderItemProduct {
       quantity: json['quantity'] is int
           ? json['quantity']
           : int.tryParse('${json['quantity']}') ?? 1,
+      unitPrice: json['unit_price'] != null
+          ? double.tryParse('${json['unit_price']}')
+          : null,
+      totalPrice: json['total_price'] != null
+          ? double.tryParse('${json['total_price']}')
+          : null,
       receivedQuantity: json['received_quantity'] is int
           ? json['received_quantity']
           : int.tryParse('${json['received_quantity']}') ?? 0,
@@ -109,6 +119,10 @@ class EligiblePaymentItemModel {
   final int totalOrderedQuantity;
   final int totalReceivedQuantity;
   final int totalPendingQuantity;
+  final double? subtotalAmount;
+  final double gstRate;
+  final double? gstAmount;
+  final double? grandTotalAmount;
   final String? size;
   final String? attachmentPath;
   final String? attachmentName;
@@ -143,6 +157,10 @@ class EligiblePaymentItemModel {
     this.totalOrderedQuantity = 1,
     this.totalReceivedQuantity = 0,
     this.totalPendingQuantity = 0,
+    this.subtotalAmount,
+    this.gstRate = 0.0,
+    this.gstAmount,
+    this.grandTotalAmount,
     this.size,
     this.attachmentPath,
     this.attachmentName,
@@ -221,6 +239,18 @@ class EligiblePaymentItemModel {
       totalOrderedQuantity: totalOrd,
       totalReceivedQuantity: totalRec,
       totalPendingQuantity: max(0, totalOrd - totalRec),
+      subtotalAmount: json['subtotal_amount'] != null
+          ? double.tryParse('${json['subtotal_amount']}')
+          : null,
+      gstRate: json['gst_rate'] != null
+          ? double.tryParse('${json['gst_rate']}') ?? 0.0
+          : 0.0,
+      gstAmount: json['gst_amount'] != null
+          ? double.tryParse('${json['gst_amount']}')
+          : null,
+      grandTotalAmount: json['grand_total_amount'] != null
+          ? double.tryParse('${json['grand_total_amount']}')
+          : null,
       size: json['size']?.toString() ?? firstItem?.size,
       attachmentPath: json['attachment_path']?.toString() ?? firstItem?.attachmentPath,
       attachmentName: json['attachment_name']?.toString() ?? firstItem?.attachmentName,

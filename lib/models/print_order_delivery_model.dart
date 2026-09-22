@@ -96,6 +96,8 @@ class PrintOrderDeliveryItemModel {
   final int orderedQuantity;
   final int receivedQuantity;
   final int totalReceivedToDate;
+  final double? unitPrice;
+  final double? totalPrice;
   final String? size;
   final String? attachmentPath;
 
@@ -107,11 +109,32 @@ class PrintOrderDeliveryItemModel {
     required this.orderedQuantity,
     required this.receivedQuantity,
     required this.totalReceivedToDate,
+    this.unitPrice,
+    this.totalPrice,
     this.size,
     this.attachmentPath,
   });
 
   factory PrintOrderDeliveryItemModel.fromJson(Map<String, dynamic> json) {
+    final poItem = json['print_order_item'] is Map<String, dynamic>
+        ? json['print_order_item'] as Map<String, dynamic>
+        : null;
+
+    final uPrice = json['unit_price'] != null
+        ? double.tryParse('${json['unit_price']}')
+        : (poItem?['unit_price'] != null
+            ? double.tryParse('${poItem!['unit_price']}')
+            : null);
+
+    final tPrice = json['total_price'] != null
+        ? double.tryParse('${json['total_price']}')
+        : (poItem?['total_price'] != null
+            ? double.tryParse('${poItem!['total_price']}')
+            : null);
+
+    final att = json['attachment_path']?.toString() ?? poItem?['attachment_path']?.toString();
+    final sz = json['size']?.toString() ?? poItem?['size']?.toString();
+
     return PrintOrderDeliveryItemModel(
       id: json['id'] is int ? json['id'] : int.tryParse('${json['id']}') ?? 0,
       printOrderDeliveryId: json['print_order_delivery_id'] is int
@@ -130,8 +153,10 @@ class PrintOrderDeliveryItemModel {
       totalReceivedToDate: json['total_received_to_date'] is int
           ? json['total_received_to_date']
           : int.tryParse('${json['total_received_to_date']}') ?? 0,
-      size: json['size']?.toString(),
-      attachmentPath: json['attachment_path']?.toString(),
+      unitPrice: uPrice,
+      totalPrice: tPrice,
+      size: sz,
+      attachmentPath: att,
     );
   }
 
@@ -144,6 +169,8 @@ class PrintOrderDeliveryItemModel {
       'ordered_quantity': orderedQuantity,
       'received_quantity': receivedQuantity,
       'total_received_to_date': totalReceivedToDate,
+      'unit_price': unitPrice,
+      'total_price': totalPrice,
       'size': size,
       'attachment_path': attachmentPath,
     };

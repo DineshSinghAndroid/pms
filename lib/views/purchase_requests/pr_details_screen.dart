@@ -23,6 +23,8 @@ import '../../repositories/vendor_repository.dart';
 import '../../services/api_service.dart';
 import '../../theme/pms_theme.dart';
 import '../../widgets/app_gradient_background.dart';
+import '../../widgets/glass_card.dart';
+import '../../widgets/pms_ui.dart';
 import '../print_orders/print_order_details_screen.dart';
 
 class PRDetailsScreen extends StatefulWidget {
@@ -71,6 +73,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     if (canAssignDesigner) {
       PurchaseRequestRepository().getDesigners();
     }
+    VendorRepository().getVendors();
   }
 
   String _getAttachmentUrl(String? path) {
@@ -107,6 +110,40 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
   }
 
   bool _isImage(String? path) => _getMediaType(path) == 'image';
+
+  String _extractSizeFromText(String? text) {
+    if (text == null || text.trim().isEmpty) return '';
+    final dimRegex = RegExp(
+      r'''\b\d+(\.\d+)?\s*(?:x|\*|X|by|'|")\s*\d+(\.\d+)?\s*(?:ft|feet|in|inch|inches|cm|mm|m|mtr|meter|meters|'|")?\b''',
+      caseSensitive: false,
+    );
+    final paperRegex = RegExp(r'\b(A[0-6]|B[0-6])(?:\s*size)?\b', caseSensitive: false);
+    final match = dimRegex.firstMatch(text) ?? paperRegex.firstMatch(text);
+    return match?.group(0)?.trim() ?? '';
+  }
+
+  int _extractQuantityFromText(String? text, {int fallback = 1}) {
+    if (text == null || text.trim().isEmpty) return fallback;
+    final qtyRegex1 = RegExp(
+      r'\b(?:qty|quantity|count|nos|pcs|pieces)[\s:]*(\d+)\b',
+      caseSensitive: false,
+    );
+    final qtyRegex2 = RegExp(
+      r'\b(\d+)\s*(?:pcs|pieces|nos|units|qty|quantity)\b',
+      caseSensitive: false,
+    );
+    final m1 = qtyRegex1.firstMatch(text);
+    if (m1 != null && m1.group(1) != null) {
+      final val = int.tryParse(m1.group(1)!);
+      if (val != null && val > 0) return val;
+    }
+    final m2 = qtyRegex2.firstMatch(text);
+    if (m2 != null && m2.group(1) != null) {
+      final val = int.tryParse(m2.group(1)!);
+      if (val != null && val > 0) return val;
+    }
+    return fallback;
+  }
 
   String _formatFileSize(int bytes) {
     if (bytes < 1024) return '$bytes B';
@@ -1191,6 +1228,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
         backgroundColor: PmsTheme.glassSurface,
         elevation: 0,
         leading: IconButton(
+          tooltip: 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: PmsTheme.textPrimary,
@@ -1306,14 +1344,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
 
   /// 1. Top Header Card
   Widget _buildHeaderCard(PurchaseRequestModel pr) {
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: PmsTheme.glassSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PmsTheme.glassBorder),
-        boxShadow: PmsTheme.glassShadow,
-      ),
+      borderRadius: 20,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1829,35 +1862,79 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                if (pr.artworkFilePath != null &&
-                    pr.artworkFilePath!.isNotEmpty)
-                  InkWell(
-                    onTap: () {
-                      if (isImg) {
-                        _showImageDialog(context, fileUrl, 'Approved Artwork');
-                      } else {
-                        _openExternalUrl(fileUrl);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Color(0xFF059669),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'View Artwork',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: PmsTheme.textPrimary,
-                          fontWeight: FontWeight.bold,
+                Wrap(
+                  spacing: 6,
+                  children: [
+                    if (pr.finalDesignUrl != null &&
+                        (pr.finalDesignUrl!.startsWith('http://') ||
+                            pr.finalDesignUrl!.startsWith('https://')))
+                      InkWell(
+                        onTap: () => _openExternalUrl(pr.finalDesignUrl!),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF4F46E5),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.open_in_new_rounded,
+                                size: 10,
+                                color: Colors.white,
+                              ),
+                              SizedBox(width: 3),
+                              Text(
+                                'Design Link',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                    if (pr.artworkFilePath != null &&
+                        pr.artworkFilePath!.isNotEmpty)
+                      InkWell(
+                        onTap: () {
+                          if (isImg) {
+                            _showImageDialog(
+                              context,
+                              fileUrl,
+                              'Approved Artwork',
+                            );
+                          } else {
+                            _openExternalUrl(fileUrl);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF059669),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'View Artwork',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ],
             ),
           ],
@@ -2153,14 +2230,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       );
     }
 
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: PmsTheme.glassSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PmsTheme.glassBorder),
-        boxShadow: PmsTheme.glassShadow,
-      ),
+      borderRadius: 20,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2405,14 +2477,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     BuildContext context,
     PurchaseRequestModel pr,
   ) {
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: PmsTheme.glassSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PmsTheme.glassBorder),
-        boxShadow: PmsTheme.glassShadow,
-      ),
+      borderRadius: 20,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2555,6 +2622,65 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           height: 1.3,
                         ),
                       ),
+                      ...() {
+                        final urlRegex = RegExp(r'https?://[^\s<>"]+');
+                        final matches = urlRegex.allMatches(act.remarks!);
+                        if (matches.isEmpty) return <Widget>[];
+                        return [
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: matches.map((m) {
+                              final matchedUrl = m.group(0)!;
+                              return InkWell(
+                                onTap: () => _openExternalUrl(matchedUrl),
+                                borderRadius: BorderRadius.circular(6),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF4F46E5)
+                                        .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: const Color(0xFF4F46E5)
+                                          .withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.open_in_new_rounded,
+                                        size: 12,
+                                        color: Color(0xFF4F46E5),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 220,
+                                        ),
+                                        child: Text(
+                                          matchedUrl,
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF4F46E5),
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ];
+                      }(),
                     ],
                     if (hasActAttach) ...[
                       const SizedBox(height: 6),
@@ -3771,25 +3897,125 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
   }
 
   void _showSendToPrintModal(PurchaseRequestModel pr) async {
-    List<VendorModel> vendors = [];
-    try {
-      vendors = await VendorRepository().getVendors();
-    } catch (_) {}
+    List<VendorModel> vendors = VendorRepository.cachedVendors ?? [];
+    if (vendors.isEmpty) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(
+          child: CircularProgressIndicator(color: PmsTheme.primary),
+        ),
+      );
+      try {
+        vendors = await VendorRepository().getVendors();
+      } catch (e) {
+        debugPrint('Error loading vendors for print order: $e');
+      } finally {
+        if (mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+      }
+    }
 
     if (!mounted) return;
 
-    final printOrderRemarksCtrl = TextEditingController();
-
-    final itemStates = pr.items.map((it) {
-      return _SendToPrintItemState(
-        item: it,
-        quantityCtrl: TextEditingController(text: '${it.quantity}'),
-        sizeCtrl: TextEditingController(text: it.size ?? ''),
-        defaultAttachmentPath: pr.artworkFilePath ?? it.attachmentPath,
-        defaultAttachmentName:
-            pr.artworkFileName ?? it.attachmentName ?? 'Approved Proof',
+    if (vendors.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No printing vendors found. Please contact Administrator to register vendors.',
+          ),
+          backgroundColor: Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
-    }).toList();
+      return;
+    }
+
+    final printOrderRemarksCtrl = TextEditingController();
+    final designLinkCtrl = TextEditingController(
+      text: (pr.finalDesignUrl != null &&
+              (pr.finalDesignUrl!.startsWith('http://') ||
+                  pr.finalDesignUrl!.startsWith('https://')))
+          ? pr.finalDesignUrl
+          : '',
+    );
+
+    final List<_SendToPrintItemState> itemStates = [];
+    if (pr.items.isNotEmpty) {
+      for (final it in pr.items) {
+        int initialQty = (it.quantity > 0) ? it.quantity : 1;
+        if (initialQty == 1) {
+          final qFromProd = _extractQuantityFromText(it.productName, fallback: 0);
+          if (qFromProd > 0) {
+            initialQty = qFromProd;
+          } else {
+            final qFromRemarks = _extractQuantityFromText(pr.remarks, fallback: 0);
+            if (qFromRemarks > 0) initialQty = qFromRemarks;
+          }
+        }
+
+        String initialSize = (it.size != null && it.size!.trim().isNotEmpty)
+            ? it.size!.trim()
+            : '';
+        if (initialSize.isEmpty) {
+          initialSize = _extractSizeFromText(it.productName);
+        }
+        if (initialSize.isEmpty && it.productType?.subName != null) {
+          initialSize = _extractSizeFromText(it.productType!.subName);
+        }
+        if (initialSize.isEmpty && it.productType?.name != null) {
+          initialSize = _extractSizeFromText(it.productType!.name);
+        }
+        if (initialSize.isEmpty && pr.remarks != null) {
+          initialSize = _extractSizeFromText(pr.remarks);
+        }
+        if (initialSize.isEmpty && pr.artworkFileName != null) {
+          initialSize = _extractSizeFromText(pr.artworkFileName);
+        }
+        if (initialSize.isEmpty && pr.designerSubmissionRemarks != null) {
+          initialSize = _extractSizeFromText(pr.designerSubmissionRemarks);
+        }
+
+        itemStates.add(
+          _SendToPrintItemState(
+            item: it,
+            quantityCtrl: TextEditingController(text: '$initialQty'),
+            sizeCtrl: TextEditingController(text: initialSize),
+            defaultAttachmentPath: it.attachmentPath ?? pr.artworkFilePath,
+            defaultAttachmentName:
+                it.attachmentName ?? pr.artworkFileName ?? 'Approved Proof',
+          ),
+        );
+      }
+    } else {
+      final fallbackQty = _extractQuantityFromText(pr.remarks, fallback: 1);
+      String fallbackSize = _extractSizeFromText(pr.remarks);
+      if (fallbackSize.isEmpty && pr.artworkFileName != null) {
+        fallbackSize = _extractSizeFromText(pr.artworkFileName);
+      }
+      if (fallbackSize.isEmpty && pr.designerSubmissionRemarks != null) {
+        fallbackSize = _extractSizeFromText(pr.designerSubmissionRemarks);
+      }
+
+      itemStates.add(
+        _SendToPrintItemState(
+          item: PurchaseRequestItemModel(
+            id: 0,
+            purchaseRequestId: pr.id,
+            productName: 'Approved Print Item',
+            quantity: fallbackQty,
+            size: fallbackSize.isNotEmpty ? fallbackSize : '',
+            attachmentPath: pr.artworkFilePath,
+            attachmentName: pr.artworkFileName ?? 'Approved Proof',
+          ),
+          quantityCtrl: TextEditingController(text: '$fallbackQty'),
+          sizeCtrl: TextEditingController(text: fallbackSize),
+          defaultAttachmentPath: pr.artworkFilePath,
+          defaultAttachmentName: pr.artworkFileName ?? 'Approved Proof',
+        ),
+      );
+    }
 
     VendorModel? selectedVendor = vendors.isNotEmpty ? vendors.first : null;
 
@@ -3814,65 +4040,13 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
             ),
             child: Column(
               children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: PmsTheme.textSecondary,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: PmsTheme.primary.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.print_rounded,
-                              color: PmsTheme.primary,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Send to Print',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: PmsTheme.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                '${pr.prNumber} · ${pr.wing?.name ?? 'General Wing'}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: PmsTheme.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(modalCtx),
-                        icon: const Icon(Icons.close, color: PmsTheme.textSecondary),
-                      ),
-                    ],
+                  padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
+                  child: PmsSheetHeader(
+                    title: 'Send to Print',
+                    subtitle:
+                        '${pr.prNumber} · ${pr.wing?.name ?? 'General Wing'}',
+                    onClose: () => Navigator.pop(modalCtx),
                   ),
                 ),
                 const Divider(color: PmsTheme.glassBorder, height: 1),
@@ -4050,6 +4224,77 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                           ),
                         ),
                         const SizedBox(height: 18),
+                        const Row(
+                          children: [
+                            Icon(
+                              Icons.link_rounded,
+                              size: 14,
+                              color: PmsTheme.primary,
+                            ),
+                            SizedBox(width: 5),
+                            Text(
+                              'CLOUD / WEB DESIGN LINK (OPTIONAL)',
+                              style: TextStyle(
+                                color: PmsTheme.primary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: designLinkCtrl,
+                          keyboardType: TextInputType.url,
+                          style: const TextStyle(
+                            color: PmsTheme.textPrimary,
+                            fontSize: 13,
+                          ),
+                          decoration: InputDecoration(
+                            hintText:
+                                'Paste Google Drive, Canva, Figma, Dropbox, WeTransfer link...',
+                            hintStyle: const TextStyle(
+                              color: PmsTheme.textSecondary,
+                              fontSize: 12,
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.cloud_outlined,
+                              size: 18,
+                              color: PmsTheme.primary,
+                            ),
+                            suffixIcon: designLinkCtrl.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, size: 16),
+                                    onPressed: () {
+                                      designLinkCtrl.clear();
+                                      setModalState(() {});
+                                    },
+                                  )
+                                : null,
+                            filled: true,
+                            fillColor: PmsTheme.background,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: PmsTheme.glassBorder,
+                              ),
+                            ),
+                          ),
+                          onChanged: (_) => setModalState(() {}),
+                        ),
+                        const SizedBox(height: 4),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(
+                            '💡 This link will be accessible to the vendor and saved in permanent activity logs alongside all file proofs.',
+                            style: TextStyle(
+                              color: PmsTheme.textSecondary,
+                              fontSize: 10.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
                         const Text(
                           'PRINT ORDER REMARKS FOR VENDOR / PRINTER',
                           style: TextStyle(
@@ -4068,7 +4313,8 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                             fontSize: 13,
                           ),
                           decoration: InputDecoration(
-                            hintText: 'Specific instructions (e.g. 300 GSM Star Flex, 4 corner eyelets, urgent delivery)...',
+                            hintText:
+                                'Specific instructions (e.g. 300 GSM Star Flex, 4 corner eyelets, urgent delivery)...',
                             hintStyle: const TextStyle(
                               color: PmsTheme.textSecondary,
                               fontSize: 12,
@@ -4148,6 +4394,14 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                                           .isNotEmpty
                                       ? printOrderRemarksCtrl.text.trim()
                                       : null,
+                                  finalDesignLink:
+                                      designLinkCtrl.text.trim().isNotEmpty
+                                          ? designLinkCtrl.text.trim()
+                                          : null,
+                                  finalDesignName:
+                                      designLinkCtrl.text.trim().isNotEmpty
+                                          ? 'Cloud / Web Print Design Link'
+                                          : null,
                                   phone: phone,
                                   items: dispatchItems,
                                 );
@@ -4210,8 +4464,31 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
     required _SendToPrintItemState state,
     required StateSetter setModalState,
   }) {
+    final hasProof = state.pickedBytes != null ||
+        (state.defaultAttachmentPath != null &&
+            state.defaultAttachmentPath!.isNotEmpty);
+    final proofUrl = (state.defaultAttachmentPath != null &&
+            state.defaultAttachmentPath!.isNotEmpty)
+        ? _getAttachmentUrl(state.defaultAttachmentPath)
+        : '';
+    final isImg = state.pickedType == 'image' ||
+        (state.pickedBytes != null) ||
+        _isImage(state.defaultAttachmentPath);
+
+    final standardSizes = [
+      '10x4 ft',
+      '8x3 ft',
+      '6x3 ft',
+      '4x2 ft',
+      '3x2 ft',
+      'A4',
+      'A3',
+      '12x8 ft',
+      'Standard',
+    ];
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: PmsTheme.background,
@@ -4221,13 +4498,16 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header: Index, Name, Code, and Original Requested Specs
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 22,
-                height: 22,
+                width: 24,
+                height: 24,
+                margin: const EdgeInsets.only(top: 2),
                 decoration: BoxDecoration(
-                  color: PmsTheme.primary.withValues(alpha: 0.2),
+                  color: PmsTheme.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Center(
@@ -4243,86 +4523,283 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  state.item.productName,
-                  style: const TextStyle(
-                    color: PmsTheme.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            state.item.productName,
+                            style: const TextStyle(
+                              color: PmsTheme.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        if (state.item.productType?.productCode != null &&
+                            state.item.productType!.productCode!.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: PmsTheme.textPrimary,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              state.item.productType!.productCode!,
+                              style: const TextStyle(
+                                color: Color(0xFF5EEAD4),
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Text(
+                        'Requested by Wing: Qty ${state.item.quantity} · Size: ${state.item.size?.trim().isNotEmpty == true ? state.item.size : (state.sizeCtrl.text.isNotEmpty ? state.sizeCtrl.text : "Standard")}',
+                        style: const TextStyle(
+                          color: Color(0xFF475569),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
+
+          // Fields: Quantity (with Stepper) & Size (with Autofill)
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 1. Quantity Field with Quick Stepper Buttons
               Expanded(
-                child: TextField(
-                  controller: state.quantityCtrl,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(
-                    color: PmsTheme.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Quantity',
-                    labelStyle: const TextStyle(
-                      color: PmsTheme.textSecondary,
-                      fontSize: 11,
+                flex: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Quantity (Pcs) *',
+                      style: TextStyle(
+                        color: PmsTheme.textPrimary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    filled: true,
-                    fillColor: Color(0xFFFFFFFF),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
+                    const SizedBox(height: 5),
+                    Container(
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFFFF),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: PmsTheme.glassBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove, size: 16),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 32),
+                            splashRadius: 18,
+                            color: PmsTheme.primary,
+                            onPressed: () {
+                              final current =
+                                  int.tryParse(state.quantityCtrl.text.trim()) ?? 1;
+                              if (current > 1) {
+                                state.quantityCtrl.text = '${current - 1}';
+                                setModalState(() {});
+                              }
+                            },
+                          ),
+                          Expanded(
+                            child: TextField(
+                              controller: state.quantityCtrl,
+                              keyboardType: TextInputType.number,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: PmsTheme.textPrimary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              onChanged: (_) => setModalState(() {}),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add, size: 16),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 32),
+                            splashRadius: 18,
+                            color: PmsTheme.primary,
+                            onPressed: () {
+                              final current =
+                                  int.tryParse(state.quantityCtrl.text.trim()) ?? 1;
+                              state.quantityCtrl.text = '${current + 1}';
+                              setModalState(() {});
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: PmsTheme.glassBorder),
-                    ),
-                  ),
+                  ],
                 ),
               ),
               const SizedBox(width: 10),
+
+              // 2. Size / Dimension Field
               Expanded(
-                child: TextField(
-                  controller: state.sizeCtrl,
-                  style: const TextStyle(
-                    color: PmsTheme.textPrimary,
-                    fontSize: 13,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Size / Dimension',
-                    labelStyle: const TextStyle(
-                      color: PmsTheme.textSecondary,
-                      fontSize: 11,
+                flex: 6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Size / Dimensions *',
+                      style: TextStyle(
+                        color: PmsTheme.textPrimary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    filled: true,
-                    fillColor: Color(0xFFFFFFFF),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
+                    const SizedBox(height: 5),
+                    SizedBox(
+                      height: 42,
+                      child: TextField(
+                        controller: state.sizeCtrl,
+                        style: const TextStyle(
+                          color: PmsTheme.textPrimary,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'e.g. 10x4 ft, 6x3 ft, A4',
+                          hintStyle: const TextStyle(
+                            color: PmsTheme.textSecondary,
+                            fontSize: 11,
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFFFFFFF),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 10,
+                          ),
+                          suffixIcon: state.sizeCtrl.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 16),
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () {
+                                    state.sizeCtrl.clear();
+                                    setModalState(() {});
+                                  },
+                                )
+                              : null,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                                const BorderSide(color: PmsTheme.glassBorder),
+                          ),
+                        ),
+                        onChanged: (_) => setModalState(() {}),
+                      ),
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: PmsTheme.glassBorder),
-                    ),
-                  ),
+                  ],
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 8),
+
+          // Quick Size Presets (Chips)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                const Text(
+                  'Quick Size:',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: PmsTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                ...standardSizes.map((sz) {
+                  final isSelected =
+                      state.sizeCtrl.text.trim().toLowerCase() ==
+                          sz.toLowerCase();
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: InkWell(
+                      onTap: () {
+                        state.sizeCtrl.text = sz;
+                        setModalState(() {});
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? PmsTheme.primary.withValues(alpha: 0.15)
+                              : PmsTheme.glassSurface,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: isSelected
+                                ? PmsTheme.primary
+                                : PmsTheme.glassBorder,
+                          ),
+                        ),
+                        child: Text(
+                          sz,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? PmsTheme.primary
+                                : PmsTheme.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
           const SizedBox(height: 10),
-          // Attachment selection per item
+
+          // Attachment / Artwork Proof Section
           if (state.pickedBytes != null && state.pickedName != null) ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Color(0xFF059669).withValues(alpha: 0.15),
+                color: const Color(0xFF059669).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Color(0xFF059669)),
+                border: Border.all(color: const Color(0xFF059669)),
               ),
               child: Row(
                 children: [
@@ -4334,7 +4811,7 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Attached: ${state.pickedName}',
+                      'Custom File: ${state.pickedName}',
                       style: const TextStyle(
                         color: Color(0xFF059669),
                         fontSize: 11,
@@ -4361,26 +4838,55 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
               ),
             ),
             const SizedBox(height: 8),
-          ] else if (state.defaultAttachmentPath != null) ...[
+          ] else if (hasProof) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-        color: PmsTheme.glassSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PmsTheme.glassBorder),
-        boxShadow: PmsTheme.glassShadow,
+                color: PmsTheme.glassSurface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: PmsTheme.glassBorder),
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.image_outlined,
-                    color: PmsTheme.primary,
-                    size: 14,
-                  ),
-                  const SizedBox(width: 6),
+                  if (proofUrl.isNotEmpty && isImg)
+                    GestureDetector(
+                      onTap: () => _showImageDialog(
+                        context,
+                        proofUrl,
+                        '${state.item.productName} Proof',
+                      ),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: PmsTheme.glassBorder),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Image.network(
+                          proofUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => const Icon(
+                            Icons.image_outlined,
+                            size: 16,
+                            color: PmsTheme.primary,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    const Padding(
+                      padding: EdgeInsets.only(right: 8.0),
+                      child: Icon(
+                        Icons.image_outlined,
+                        color: PmsTheme.primary,
+                        size: 16,
+                      ),
+                    ),
                   Expanded(
                     child: Text(
-                      'Using Proof: ${state.defaultAttachmentName ?? 'Artwork'}',
+                      'Default Proof: ${state.defaultAttachmentName ?? "Approved Artwork"}',
                       style: const TextStyle(
                         color: PmsTheme.textSecondary,
                         fontSize: 11,
@@ -4388,11 +4894,35 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  if (proofUrl.isNotEmpty && isImg)
+                    TextButton(
+                      onPressed: () => _showImageDialog(
+                        context,
+                        proofUrl,
+                        '${state.item.productName} Proof',
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'View Proof',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
             const SizedBox(height: 8),
           ],
+
           Row(
             children: [
               Expanded(

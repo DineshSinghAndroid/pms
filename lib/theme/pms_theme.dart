@@ -306,13 +306,61 @@ abstract final class PmsTheme {
           elevation: 2,
         ),
         drawerTheme: const DrawerThemeData(
-          backgroundColor: background,
+          backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
         ),
         tabBarTheme: const TabBarThemeData(
           labelColor: primary,
           unselectedLabelColor: textMuted,
           indicatorColor: primary,
+        ),
+        iconButtonTheme: IconButtonThemeData(
+          style: IconButton.styleFrom(
+            foregroundColor: textSecondary,
+            hoverColor: primaryLight,
+          ),
+        ),
+        listTileTheme: const ListTileThemeData(
+          iconColor: textSecondary,
+          textColor: textPrimary,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        ),
+        switchTheme: SwitchThemeData(
+          thumbColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return textWhite;
+            return textMuted;
+          }),
+          trackColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return primary;
+            return glassBorder;
+          }),
+        ),
+        checkboxTheme: CheckboxThemeData(
+          fillColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return primary;
+            return Colors.transparent;
+          }),
+          checkColor: const WidgetStatePropertyAll(textWhite),
+          side: const BorderSide(color: glassBorder, width: 1.5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        ),
+        popupMenuTheme: PopupMenuThemeData(
+          color: glassSurface,
+          elevation: 8,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: glassBorder),
+          ),
+        ),
+        dropdownMenuTheme: DropdownMenuThemeData(
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: glassSurfaceLight,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: glassBorder),
+            ),
+          ),
         ),
       );
 }

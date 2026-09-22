@@ -5,7 +5,9 @@ import 'package:pms/bloc/payment/payment_event.dart';
 import 'package:pms/bloc/payment/payment_state.dart';
 import 'package:pms/models/eligible_payment_item_model.dart';
 import 'package:pms/models/user_model.dart';
+import 'package:pms/services/api_service.dart';
 import 'package:pms/theme/pms_theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RecordPaymentSheet extends StatefulWidget {
   final UserModel? currentUser;
@@ -41,6 +43,166 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     return '${d.day.toString().padLeft(2, '0')} ${months[d.month - 1]} ${d.year}';
+  }
+
+  bool _isImageFile(String? path) {
+    if (path == null || path.isEmpty) return false;
+    final clean = path.toLowerCase().split('?').first;
+    return clean.endsWith('.png') ||
+        clean.endsWith('.jpg') ||
+        clean.endsWith('.jpeg') ||
+        clean.endsWith('.webp') ||
+        clean.endsWith('.gif') ||
+        clean.endsWith('.bmp') ||
+        clean.endsWith('.svg');
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  void _showImagePreviewModal(
+    BuildContext context,
+    String imageUrl,
+    String title,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: PmsTheme.glassSurface,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: const BoxDecoration(
+                  color: PmsTheme.background,
+                  border: Border(
+                    bottom: BorderSide(color: PmsTheme.glassBorder),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          color: PmsTheme.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: PmsTheme.textPrimary,
+                        size: 20,
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.65,
+                ),
+                child: InteractiveViewer(
+                  panEnabled: true,
+                  minScale: 0.8,
+                  maxScale: 4.0,
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 220,
+                        color: PmsTheme.background,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: PmsTheme.primary,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 200,
+                        color: PmsTheme.background,
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.broken_image_rounded,
+                              size: 40,
+                              color: PmsTheme.textSecondary,
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Unable to load preview image.',
+                              style: TextStyle(
+                                color: PmsTheme.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            FilledButton.tonalIcon(
+                              onPressed: () => _launchUrl(imageUrl),
+                              icon: const Icon(Icons.open_in_browser, size: 16),
+                              label: const Text('Open External File'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: const BoxDecoration(
+                  color: PmsTheme.background,
+                  border: Border(
+                    top: BorderSide(color: PmsTheme.glassBorder),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => _launchUrl(imageUrl),
+                      icon: const Icon(Icons.download_rounded, size: 18),
+                      label: const Text('Download Original'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: PmsTheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -166,24 +328,25 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5), // Emerald 50
+                  gradient: PmsTheme.primaryGradient,
                   borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(24)),
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade200),
-                  ),
+                      const BorderRadius.vertical(top: Radius.circular(28)),
+                  boxShadow: PmsTheme.glowShadow,
                 ),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF059669),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.35),
+                        ),
                       ),
                       child: const Icon(
                         Icons.payments_outlined,
-                        
+                        color: Colors.white,
                         size: 20,
                       ),
                     ),
@@ -197,14 +360,14 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: PmsTheme.textPrimary,
+                              color: Colors.white,
                             ),
                           ),
                           Text(
                             'Select fully received print order against vendor invoice',
                             style: TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF047857),
+                              color: Colors.white70,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -212,7 +375,8 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      tooltip: 'Close',
+                      icon: const Icon(Icons.close_rounded, color: Colors.white),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -294,10 +458,17 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
 
                             if (isFully) {
                               // Selectable Green
+                              final amountText = item.grandTotalAmount != null
+                                  ? ' · ₹${item.grandTotalAmount!.toStringAsFixed(2)}'
+                                  : '';
+
                               return InkWell(
                                 onTap: () {
                                   setState(() {
                                     _selectedItem = item;
+                                    if (item.grandTotalAmount != null && _amountController.text.trim().isEmpty) {
+                                      _amountController.text = item.grandTotalAmount!.toStringAsFixed(2);
+                                    }
                                   });
                                 },
                                 borderRadius: BorderRadius.circular(12),
@@ -337,7 +508,7 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                                               ),
                                             ),
                                             Text(
-                                              '${item.vendorName} · ${item.wingName}',
+                                              '${item.vendorName} · ${item.wingName}$amountText',
                                               style: const TextStyle(
                                                 fontSize: 11,
                                                 color: PmsTheme.textSecondary,
@@ -477,7 +648,7 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    '#${_selectedItem!.poNumber} · ${_selectedItem!.vendorName} (Fully Received)',
+                                    '#${_selectedItem!.poNumber} · ${_selectedItem!.vendorName} (100% Received)',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
@@ -516,13 +687,51 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                                 color: Color(0xFF059669),
                               ),
                             ),
-                            Text(
-                              'Remark: ${_selectedItem!.printOrderRemarks ?? _selectedItem!.requesterRemarks ?? 'Standard print specifications'}',
-                              style: const TextStyle(fontSize: 12),
-                            ),
+                            if (_selectedItem!.grandTotalAmount != null) ...[
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFFA7F3D0)),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Subtotal: ₹${_selectedItem!.subtotalAmount?.toStringAsFixed(2) ?? "0.00"}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: PmsTheme.textSecondary,
+                                      ),
+                                    ),
+                                    if (_selectedItem!.gstAmount != null && _selectedItem!.gstAmount! > 0)
+                                      Text(
+                                        'GST (${_selectedItem!.gstRate}%): ₹${_selectedItem!.gstAmount!.toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: PmsTheme.textSecondary,
+                                        ),
+                                      ),
+                                    Text(
+                                      'Total Payable: ₹${_selectedItem!.grandTotalAmount!.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFF059669),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 10),
                             const Text(
-                              'Order Items Breakdown:',
+                              'Order Items & Pricing Breakdown:',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
@@ -531,9 +740,32 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                             ),
                             const SizedBox(height: 6),
                             if (_selectedItem!.items.isNotEmpty)
-                              ..._selectedItem!.items.map(
-                                (prod) => Container(
-                                  margin: const EdgeInsets.only(bottom: 6),
+                              ..._selectedItem!.items.asMap().entries.map((entry) {
+                                final idx = entry.key;
+                                final prod = entry.value;
+
+                                final hasAtt = prod.attachmentPath != null &&
+                                    prod.attachmentPath!.isNotEmpty;
+                                final fullUrl = hasAtt
+                                    ? (prod.attachmentPath!.startsWith('http')
+                                        ? prod.attachmentPath!
+                                        : '${ApiService.baseUrl}/storage/${prod.attachmentPath}')
+                                    : null;
+                                final isImage = hasAtt && _isImageFile(prod.attachmentPath);
+
+                                final unitPriceStr = prod.unitPrice != null
+                                    ? '₹${prod.unitPrice!.toStringAsFixed(2)} / pc'
+                                    : null;
+                                final lineTotal = prod.totalPrice ??
+                                    (prod.unitPrice != null
+                                        ? (prod.unitPrice! * prod.quantity)
+                                        : null);
+                                final lineTotalStr = lineTotal != null
+                                    ? '₹${lineTotal.toStringAsFixed(2)}'
+                                    : null;
+
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
                                     color: PmsTheme.glassSurface,
@@ -542,60 +774,206 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                                       color: const Color(0xFFA7F3D0),
                                     ),
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        '#${_selectedItem!.poNumber} - ${prod.productName}${prod.productCode.isNotEmpty ? ' (${prod.productCode})' : ''} Received',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                          color: Color(0xFF065F46),
+                                      // Artwork thumbnail
+                                      if (fullUrl != null) ...[
+                                        InkWell(
+                                          onTap: () {
+                                            if (isImage) {
+                                              _showImagePreviewModal(
+                                                context,
+                                                fullUrl,
+                                                '#${idx + 1}. ${prod.productName} Proof',
+                                              );
+                                            } else {
+                                              _launchUrl(fullUrl);
+                                            }
+                                          },
+                                          borderRadius: BorderRadius.circular(6),
+                                          child: Stack(
+                                            children: [
+                                              ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                child: Container(
+                                                  width: 50,
+                                                  height: 50,
+                                                  color: Colors.white,
+                                                  child: isImage
+                                                      ? Image.network(
+                                                          fullUrl,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder:
+                                                              (_, _, _) =>
+                                                                  const Icon(
+                                                            Icons
+                                                                .image_not_supported_outlined,
+                                                            size: 20,
+                                                            color: PmsTheme
+                                                                .textSecondary,
+                                                          ),
+                                                        )
+                                                      : const Icon(
+                                                          Icons
+                                                              .attach_file_rounded,
+                                                          size: 22,
+                                                          color:
+                                                              PmsTheme.primary,
+                                                        ),
+                                                ),
+                                              ),
+                                              Positioned(
+                                                bottom: 1,
+                                                right: 1,
+                                                child: Container(
+                                                  padding:
+                                                      const EdgeInsets.all(2),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black87,
+                                                    borderRadius:
+                                                        BorderRadius.circular(3),
+                                                  ),
+                                                  child: Icon(
+                                                    isImage
+                                                        ? Icons.zoom_in_rounded
+                                                        : Icons
+                                                            .open_in_new_rounded,
+                                                    size: 9,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            'Qty: ${prod.quantity}',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 11,
+                                        const SizedBox(width: 10),
+                                      ],
+
+                                      // Details
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    '#${idx + 1}. ${prod.productName}${prod.productCode.isNotEmpty ? ' (${prod.productCode})' : ''}',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 12.5,
+                                                      color: Color(0xFF065F46),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(
+                                                        0xFFDCFCE7),
+                                                    borderRadius:
+                                                        BorderRadius.circular(4),
+                                                  ),
+                                                  child: const Text(
+                                                    '✓ 100% Recv',
+                                                    style: TextStyle(
+                                                      fontSize: 9,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Color(0xFF166534),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            'Size: ${prod.size ?? 'Standard'}',
-                                            style: const TextStyle(fontSize: 11),
-                                          ),
-                                        ],
-                                      ),
-                                      Text(
-                                        'Wing: ${_selectedItem!.wingName}',
-                                        style: const TextStyle(fontSize: 11),
-                                      ),
-                                      Text(
-                                        'Received/Pending: ${prod.receivedQuantity} / ${prod.pendingQuantity}',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF059669),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'Size: ${prod.size ?? 'Standard'} · Qty: ${prod.quantity} pcs (Recv: ${prod.receivedQuantity})',
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                color: PmsTheme.textSecondary,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Wrap(
+                                              spacing: 6,
+                                              runSpacing: 4,
+                                              children: [
+                                                if (unitPriceStr != null)
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                          0xFFEFF6FF),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              4),
+                                                      border: Border.all(
+                                                        color: const Color(
+                                                            0xFFBFDBFE),
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      'Rate: $unitPriceStr',
+                                                      style: const TextStyle(
+                                                        color:
+                                                            Color(0xFF1D4ED8),
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                if (lineTotalStr != null)
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                          0xFFECFDF5),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              4),
+                                                      border: Border.all(
+                                                        color: const Color(
+                                                            0xFFA7F3D0),
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      'Total: $lineTotalStr',
+                                                      style: const TextStyle(
+                                                        color:
+                                                            Color(0xFF065F46),
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      if (prod.attachmentName != null &&
-                                          prod.attachmentName!.isNotEmpty)
-                                        Text(
-                                          'File: ${prod.attachmentName}',
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.blue,
-                                          ),
-                                        ),
                                     ],
                                   ),
-                                ),
-                              )
+                                );
+                              })
                             else
                               Container(
                                 margin: const EdgeInsets.only(bottom: 6),
@@ -621,27 +999,8 @@ class _RecordPaymentSheetState extends State<RecordPaymentSheet> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      'Qty: ${_selectedItem!.quantity}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Size: ${_selectedItem!.size ?? 'Standard'}',
+                                      'Qty: ${_selectedItem!.quantity} · Size: ${_selectedItem!.size ?? 'Standard'}',
                                       style: const TextStyle(fontSize: 11),
-                                    ),
-                                    Text(
-                                      'Wing: ${_selectedItem!.wingName}',
-                                      style: const TextStyle(fontSize: 11),
-                                    ),
-                                    Text(
-                                      'Received/Pending: ${_selectedItem!.receivedQuantity} / ${_selectedItem!.pendingQuantity}',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF059669),
-                                      ),
                                     ),
                                   ],
                                 ),

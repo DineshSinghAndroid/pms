@@ -8,6 +8,7 @@ import 'package:pms/models/user_model.dart';
 import 'package:pms/services/api_service.dart';
 import 'package:pms/views/post_orders/post_order_details_screen.dart';
 import 'package:pms/theme/pms_theme.dart';
+import 'package:pms/widgets/pms_ui.dart';
 
 class PostOrdersTabView extends StatefulWidget {
   final UserModel? currentUser;
@@ -170,12 +171,17 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
 
         return Column(
           children: [
-            // Top Search Bar
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              color: PmsTheme.glassSurface,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const PmsPageHeader(
+                    icon: Icons.campaign_rounded,
+                    title: 'Post Orders',
+                    subtitle: 'Digital and social publishing requests',
+                  ),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: _searchCtrl,
                     style: const TextStyle(
@@ -190,22 +196,11 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                     decoration: InputDecoration(
                       hintText:
                           'Search PR #, wing, product, or post remarks...',
-                      hintStyle: const TextStyle(
-                        color: PmsTheme.textSecondary,
-                        fontSize: 12,
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: PmsTheme.textSecondary,
-                        size: 18,
-                      ),
+                      prefixIcon: const Icon(Icons.search_rounded, size: 20),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(
-                                Icons.clear,
-                                color: PmsTheme.textSecondary,
-                                size: 16,
-                              ),
+                              tooltip: 'Clear search',
+                              icon: const Icon(Icons.clear_rounded, size: 18),
                               onPressed: () {
                                 _searchCtrl.clear();
                                 setState(() {
@@ -214,32 +209,10 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                               },
                             )
                           : null,
-                      filled: true,
-                      fillColor: PmsTheme.background,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: PmsTheme.glassBorder),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: PmsTheme.glassBorder),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: PmsTheme.primary,
-                          width: 1.5,
-                        ),
-                      ),
                     ),
                   ),
-
                   if (wingMap.isNotEmpty) ...[
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -256,7 +229,6 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
               ),
             ),
 
-            // Post Orders List / Empty State
             Expanded(
               child: RefreshIndicator(
                 color: PmsTheme.primary,
@@ -265,51 +237,18 @@ class _PostOrdersTabViewState extends State<PostOrdersTabView> {
                   await Future.delayed(const Duration(milliseconds: 600));
                 },
                 child: filteredOrders.isEmpty
-                    ? Center(
-                        child: SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: Padding(
-                            padding: const EdgeInsets.all(32),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 64,
-                                  height: 64,
-                                  decoration: BoxDecoration(
-                                    color: Color(0xFFF5F3FF)
-                                        .withValues(alpha: 0.2),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.campaign_outlined,
-                                    color: PmsTheme.primary,
-                                    size: 32,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                const Text(
-                                  'No Post Orders Found',
-                                  style: TextStyle(
-                                    color: PmsTheme.textPrimary,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                const Text(
-                                  'Approve a Purchase Request and tap "Post It" to forward artwork for digital & social publishing.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: PmsTheme.textSecondary,
-                                    fontSize: 12,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ],
-                            ),
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(20),
+                        children: const [
+                          SizedBox(height: 40),
+                          PmsEmptyState(
+                            icon: Icons.campaign_outlined,
+                            title: 'No Post Orders Found',
+                            subtitle:
+                                'Approve a Purchase Request and tap "Post It" to forward artwork for digital & social publishing.',
                           ),
-                        ),
+                        ],
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.symmetric(

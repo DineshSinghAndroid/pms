@@ -9,7 +9,6 @@ class ApiService {
   /// Global active user phone tracking for API requests
   static String? activeUserPhone;
 
-  /// Set the active user phone globally across all repositories
   static void setUserPhone(String phone) {
     final clean = phone.replaceAll(RegExp(r'\D'), '');
     activeUserPhone = clean.length > 10 ? clean.substring(clean.length - 10) : clean;
@@ -18,10 +17,12 @@ class ApiService {
 
   // Base URL: Local LAN for device/dev, or live production
   static const String liveServerUrl = 'https://pms.bytscop.com/';
-  static const String localServerUrl = 'http://192.168.1.9:8000/';
+
+  static const String localServerUrl = 'http://192.168.137.207:8000/';
 
   /// Prefer local admin when debugging; use live in release builds.
   static String get baseUrl {
+
     if (kDebugMode) {
       return localServerUrl;
     }

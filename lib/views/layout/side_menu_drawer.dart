@@ -103,7 +103,9 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
     return Container(
       width: 280,
       height: double.infinity,
-        color: PmsTheme.background,
+      decoration: const BoxDecoration(
+        gradient: PmsTheme.bgSoftGradient,
+      ),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -112,7 +114,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: PmsTheme.glassSurface)),
+                border: Border(bottom: BorderSide(color: PmsTheme.glassBorder)),
               ),
               child: Row(
                 children: [
@@ -240,8 +242,8 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                             );
                           },
                         ),
-                      // 2.6 Delivery Logs - AVAILABLE TO ADMIN, MANAGER & STORE INCHARGE
-                      if (widget.isSuperAdmin || isManager || isStoreIncharge)
+                      // 2.6 Delivery Logs - AVAILABLE TO ADMIN, MANAGER, STORE INCHARGE & WING INCHARGE
+                      if (widget.isSuperAdmin || isManager || isStoreIncharge || isWingIncharge)
                         BlocBuilder<PrintOrderBloc, PrintOrderState>(
                           builder: (context, state) {
                             final count = state.deliveriesList.length;
@@ -480,7 +482,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: const BoxDecoration(
-                 border: Border(top: BorderSide(color: PmsTheme.glassSurface)),
+                 border: Border(top: BorderSide(color: PmsTheme.glassBorder)),
               ),
               child: Row(
                 children: [

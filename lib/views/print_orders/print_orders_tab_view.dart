@@ -7,6 +7,8 @@ import 'package:pms/models/print_order_model.dart';
 import 'package:pms/models/user_model.dart';
 import 'package:pms/views/print_orders/print_order_details_screen.dart';
 import 'package:pms/theme/pms_theme.dart';
+import 'package:pms/widgets/glass_card.dart';
+import 'package:pms/widgets/pms_ui.dart';
 
 class PrintOrdersTabView extends StatefulWidget {
   final UserModel? userProfile;
@@ -172,13 +174,17 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Top Search & Status Filter Bar
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          color: Color(0xFF0B1120),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Search Bar
+              const PmsPageHeader(
+                icon: Icons.print_rounded,
+                title: 'Print Orders',
+                subtitle: 'Vendor production and fulfillment',
+              ),
+              const SizedBox(height: 16),
               TextField(
                 controller: _searchController,
                 onChanged: (val) {
@@ -189,22 +195,11 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                 style: const TextStyle(color: PmsTheme.textPrimary, fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'Search by PO #, vendor, wing, or product...',
-                  hintStyle: const TextStyle(
-                    color: PmsTheme.textSecondary,
-                    fontSize: 12,
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search_rounded,
-                    color: PmsTheme.textSecondary,
-                    size: 18,
-                  ),
+                  prefixIcon: const Icon(Icons.search_rounded, size: 20),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(
-                            Icons.clear,
-                            color: PmsTheme.textSecondary,
-                            size: 16,
-                          ),
+                          tooltip: 'Clear search',
+                          icon: const Icon(Icons.clear_rounded, size: 18),
                           onPressed: () {
                             _searchController.clear();
                             setState(() {
@@ -213,29 +208,9 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                           },
                         )
                       : null,
-                  filled: true,
-                  fillColor: Color(0xFFFFFFFF),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: PmsTheme.glassBorder),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: PmsTheme.glassBorder),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: PmsTheme.primary),
-                  ),
                 ),
               ),
-              const SizedBox(height: 10),
-
-              // Filter Chips
+              const SizedBox(height: 12),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -266,7 +241,6 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
           ),
         ),
 
-        // List View
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async => _loadPrintOrders(),
@@ -281,33 +255,35 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.error_outline_rounded,
-                            color: Color(0xFFDC2626),
-                            size: 40,
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            state.message,
-                            style: const TextStyle(
-                              color: PmsTheme.textSecondary,
-                              fontSize: 13,
+                      child: GlassCard(
+                        backgroundColor: const Color(0xFFFEF2F2),
+                        border: Border.all(
+                          color: PmsTheme.error.withValues(alpha: 0.35),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.error_outline_rounded,
+                              color: PmsTheme.error,
+                              size: 40,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 14),
-                          ElevatedButton(
-                            onPressed: _loadPrintOrders,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: PmsTheme.primary,
-                              foregroundColor: Color(0xFFFFFFFF),
+                            const SizedBox(height: 10),
+                            Text(
+                              state.message,
+                              style: const TextStyle(
+                                color: PmsTheme.textSecondary,
+                                fontSize: 13,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            child: const Text('Retry'),
-                          ),
-                        ],
+                            const SizedBox(height: 14),
+                            FilledButton(
+                              onPressed: _loadPrintOrders,
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -315,58 +291,48 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                   final filtered = _filterOrders(state.printOrders);
 
                   if (filtered.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: PmsTheme.glassSurface,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              Icons.print_disabled_rounded,
-                              color: PmsTheme.textSecondary,
-                              size: 30,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          const Text(
-                            'No Print Orders Found',
-                            style: TextStyle(
-                              color: PmsTheme.textPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            (widget.isDesigner || widget.userProfile?.role == 'Designer')
-                                ? 'Only print orders created from your designs will appear here.'
-                                : 'Approved PRs dispatched to vendors will appear here.',
-                            style: const TextStyle(
-                              color: PmsTheme.textSecondary,
-                              fontSize: 12,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(20),
+                      children: [
+                        const SizedBox(height: 40),
+                        PmsEmptyState(
+                          icon: Icons.print_disabled_rounded,
+                          title: 'No Print Orders Found',
+                          subtitle: (widget.isDesigner ||
+                                  widget.userProfile?.role == 'Designer')
+                              ? 'Only print orders created from your designs will appear here.'
+                              : 'Approved PRs dispatched to vendors will appear here.',
+                        ),
+                      ],
                     );
                   }
 
                   return Column(
                     children: [
-                      if (widget.isDesigner || widget.userProfile?.role == 'Designer')
+                      if (widget.isDesigner ||
+                          widget.userProfile?.role == 'Designer')
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          color: PmsTheme.backgroundGradientStart,
+                          margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: PmsTheme.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: PmsTheme.primary.withValues(alpha: 0.22),
+                            ),
+                          ),
                           child: Row(
                             children: [
-                              const Icon(Icons.palette_outlined, size: 14, color: PmsTheme.primary),
+                              const Icon(
+                                Icons.palette_outlined,
+                                size: 14,
+                                color: PmsTheme.primary,
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
@@ -619,7 +585,7 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                       ),
                       const SizedBox(height: 10),
 
-                      // Bottom Wing & Delivery Target
+                      // Bottom Wing, Proofs, & Delivery Target
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -638,6 +604,39 @@ class _PrintOrdersTabViewState extends State<PrintOrdersTabView> {
                                   fontSize: 11,
                                 ),
                               ),
+                              if (po.items.any((it) => it.attachmentPath != null && it.attachmentPath!.isNotEmpty) ||
+                                  po.purchaseRequest?.artworkFilePath != null) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 1.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: PmsTheme.primary.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.image_outlined,
+                                        size: 10,
+                                        color: PmsTheme.primary,
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        '${po.items.where((it) => it.attachmentPath != null && it.attachmentPath!.isNotEmpty).isNotEmpty ? po.items.where((it) => it.attachmentPath != null && it.attachmentPath!.isNotEmpty).length : 1} Proofs',
+                                        style: const TextStyle(
+                                          color: PmsTheme.primary,
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                           Row(

@@ -9,6 +9,9 @@ import '../../bloc/product_type/product_type_event.dart';
 import '../../bloc/product_type/product_type_state.dart';
 import '../../models/product_type_model.dart';
 import '../../theme/pms_theme.dart';
+import '../../widgets/glass_card.dart';
+import '../../widgets/pms_status_chip.dart';
+import '../../widgets/pms_ui.dart';
 
 class ProductTypesTabView extends StatefulWidget {
   final bool isSuperAdmin;
@@ -39,7 +42,6 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
       text: productType?.productCode ?? '',
     );
 
-    // Get categories
     final catState = context.read<CategoryBloc>().state;
     final categories = catState is CategoryLoaded ? catState.categories : [];
     int? chosenCatId =
@@ -47,13 +49,10 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
         (categories.isNotEmpty ? categories.first.id : null);
 
     if (categories.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please create at least one Category before adding Product Types.',
-          ),
-          backgroundColor: Color(0xFFDC2626),
-        ),
+      showPmsSnackBar(
+        context,
+        'Please create at least one Category before adding Product Types.',
+        kind: PmsSnackKind.error,
       );
       return;
     }
@@ -80,32 +79,17 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          productType != null
-                              ? 'Edit Product Type'
-                              : 'Add Product Type',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: PmsTheme.textPrimary,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.close,
-                            color: PmsTheme.textSecondary,
-                            size: 20,
-                          ),
-                          onPressed: () => Navigator.pop(modalCtx),
-                        ),
-                      ],
+                    PmsSheetHeader(
+                      title: productType != null
+                          ? 'Edit Product Type'
+                          : 'Add Product Type',
+                      subtitle: productType != null
+                          ? 'Update name, code and category'
+                          : 'Link a product to a print category',
+                      onClose: () => Navigator.pop(modalCtx),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
 
-                    // 1. Select Category *
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -132,7 +116,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                             child: DropdownButton<int>(
                               value: chosenCatId,
                               isExpanded: true,
-                              dropdownColor: Color(0xFFFFFFFF),
+                              dropdownColor: Colors.white,
                               style: const TextStyle(
                                 fontSize: 13,
                                 color: PmsTheme.textPrimary,
@@ -158,7 +142,6 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                     ),
                     const SizedBox(height: 12),
 
-                    // 2. Product Name *
                     _buildTextField(
                       controller: nameCtrl,
                       label: 'Product Name *',
@@ -166,7 +149,6 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                     ),
                     const SizedBox(height: 12),
 
-                    // 3. Product Code (Auto-Generated / Editable)
                     _buildTextField(
                       controller: codeCtrl,
                       label: 'Product Code (Auto-Generated e.g. 000112)',
@@ -175,20 +157,16 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Submit Button
                     ElevatedButton(
                       onPressed: () {
                         final name = nameCtrl.text.trim();
                         final code = codeCtrl.text.trim();
 
                         if (name.isEmpty || chosenCatId == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Please enter Product Name and select Category',
-                              ),
-                              backgroundColor: Color(0xFFDC2626),
-                            ),
+                          showPmsSnackBar(
+                            context,
+                            'Please enter Product Name and select Category',
+                            kind: PmsSnackKind.error,
                           );
                           return;
                         }
@@ -213,24 +191,17 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                         }
 
                         Navigator.pop(modalCtx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              productType != null
-                                  ? '✓ Product Type updated!'
-                                  : '✓ Product Type created!',
-                            ),
-                            backgroundColor: Color(0xFF059669),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
+                        showPmsSnackBar(
+                          context,
+                          productType != null
+                              ? '✓ Product Type updated!'
+                              : '✓ Product Type created!',
+                          kind: PmsSnackKind.success,
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF059669),
-                        foregroundColor: Color(0xFFFFFFFF),
+                        backgroundColor: PmsTheme.primary,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -287,16 +258,15 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                   DeleteProductTypeEvent(productType.id),
                 );
                 Navigator.pop(dialogCtx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('✓ Product Type deleted'),
-                    backgroundColor: Color(0xFFDC2626),
-                  ),
+                showPmsSnackBar(
+                  context,
+                  '✓ Product Type deleted',
+                  kind: PmsSnackKind.error,
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFDC2626),
-                foregroundColor: Color(0xFFFFFFFF),
+                backgroundColor: PmsTheme.error,
+                foregroundColor: Colors.white,
               ),
               child: const Text('Delete'),
             ),
@@ -335,7 +305,10 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
           ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: PmsTheme.textSecondary, fontSize: 12),
+            hintStyle: const TextStyle(
+              color: PmsTheme.textSecondary,
+              fontSize: 12,
+            ),
             filled: true,
             fillColor: PmsTheme.background,
             contentPadding: const EdgeInsets.symmetric(
@@ -349,7 +322,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
-                color: Color(0xFF059669),
+                color: PmsTheme.primary,
                 width: 1.5,
               ),
             ),
@@ -362,7 +335,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      color: const Color(0xFF059669),
+      color: PmsTheme.primary,
       onRefresh: () async {
         context.read<ProductTypeBloc>().add(
               RefreshProductTypesEvent(categoryId: _selectedCategoryId),
@@ -378,308 +351,215 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Row(
-                children: [
-                  Icon(
-                    Icons.layers_rounded,
-                    color: Color(0xFF059669),
-                    size: 20,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Product Types Master',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: PmsTheme.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              if (widget.isSuperAdmin)
-                ElevatedButton.icon(
-                  onPressed: () => _showProductTypeForm(context),
-                  icon: const Icon(Icons.add, size: 14),
-                  label: const Text('Add Product Type'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF059669),
-                    foregroundColor: Color(0xFFFFFFFF),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // Search
-          TextField(
-            controller: _searchController,
-            onChanged: (val) {
-              setState(() => _searchQuery = val.trim().toLowerCase());
-            },
-            style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary),
-            decoration: InputDecoration(
-              hintText: 'Search product name or code (e.g. 000001)...',
-              hintStyle: const TextStyle(
-                color: PmsTheme.textSecondary,
-                fontSize: 13,
-              ),
-              prefixIcon: const Icon(
-                Icons.search,
-                color: PmsTheme.textSecondary,
-                size: 18,
-              ),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.clear,
-                        color: PmsTheme.textSecondary,
-                        size: 16,
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() => _searchQuery = '');
-                      },
+            PmsPageHeader(
+              icon: Icons.layers_rounded,
+              title: 'Product Types Master',
+              subtitle: 'Catalog of printable products by category',
+              action: widget.isSuperAdmin
+                  ? FilledButton.icon(
+                      onPressed: () => _showProductTypeForm(context),
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('Add Product Type'),
                     )
                   : null,
-              filled: true,
-              fillColor: Color(0xFFFFFFFF),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: PmsTheme.glassBorder),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: Color(0xFF059669),
-                  width: 1.5,
-                ),
+            ),
+
+            const SizedBox(height: 18),
+
+            TextField(
+              controller: _searchController,
+              onChanged: (val) {
+                setState(() => _searchQuery = val.trim().toLowerCase());
+              },
+              style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary),
+              decoration: InputDecoration(
+                hintText: 'Search product name or code (e.g. 000001)...',
+                prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        tooltip: 'Clear search',
+                        icon: const Icon(Icons.clear_rounded, size: 18),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
               ),
             ),
-          ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-          // Category Filter Chips
-          BlocBuilder<CategoryBloc, CategoryState>(
-            builder: (context, catState) {
-              if (catState is CategoryLoaded) {
-                final categories = catState.categories;
-                return SizedBox(
-                  height: 36,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: categories.length + 1,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(width: 8),
-                    itemBuilder: (context, index) {
-                      final isAll = index == 0;
-                      final isSelected = isAll
-                          ? _selectedCategoryId == null
-                          : _selectedCategoryId == categories[index - 1].id;
-                      final label = isAll
-                          ? 'All Categories'
-                          : categories[index - 1].name;
+            BlocBuilder<CategoryBloc, CategoryState>(
+              builder: (context, catState) {
+                if (catState is CategoryLoaded) {
+                  final categories = catState.categories;
+                  return SizedBox(
+                    height: 40,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: categories.length + 1,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        final isAll = index == 0;
+                        final isSelected = isAll
+                            ? _selectedCategoryId == null
+                            : _selectedCategoryId == categories[index - 1].id;
+                        final label = isAll
+                            ? 'All Categories'
+                            : categories[index - 1].name;
 
-                      return ChoiceChip(
-                        label: Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.w500,
-                            color: isSelected
-                                ? PmsTheme.textPrimary
-                                : PmsTheme.textSecondary,
-                          ),
-                        ),
-                        selected: isSelected,
-                        selectedColor: Color(0xFF059669),
-                        backgroundColor: PmsTheme.glassSurface,
-                        side: BorderSide(
-                          color: isSelected
-                              ? Color(0xFF059669)
-                              : PmsTheme.glassBorder,
-                        ),
-                        onSelected: (selected) {
-                          setState(() {
-                            _selectedCategoryId = isAll
-                                ? null
-                                : categories[index - 1].id;
-                          });
-                        },
-                      );
-                    },
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-
-          const SizedBox(height: 16),
-
-          // Product Types List
-          BlocBuilder<ProductTypeBloc, ProductTypeState>(
-            builder: (context, state) {
-              if (state is ProductTypeLoading) {
-                return Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-        color: PmsTheme.glassSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PmsTheme.glassBorder),
-        boxShadow: PmsTheme.glassShadow,
-                  ),
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF059669),
-                      strokeWidth: 2.5,
+                        return PmsFilterChip(
+                          label: label,
+                          selected: isSelected,
+                          onSelected: (_) {
+                            setState(() {
+                              _selectedCategoryId = isAll
+                                  ? null
+                                  : categories[index - 1].id;
+                            });
+                          },
+                        );
+                      },
                     ),
-                  ),
-                );
-              }
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
 
-              if (state is ProductTypeError) {
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFFEF2F2).withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Color(0xFFDC2626)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Failed to load product types: ${state.errorMessage}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFFB91C1C),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          context.read<ProductTypeBloc>().add(
-                            const FetchProductTypesEvent(),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFB91C1C),
-                          foregroundColor: Color(0xFFFFFFFF),
-                          textStyle: const TextStyle(fontSize: 11),
-                        ),
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                );
-              }
+            const SizedBox(height: 18),
 
-              if (state is ProductTypeLoaded) {
-                final types = state.productTypes.where((pt) {
-                  final matchesQuery =
-                      _searchQuery.isEmpty ||
-                      pt.name.toLowerCase().contains(_searchQuery) ||
-                      (pt.productCode?.toLowerCase().contains(_searchQuery) ??
-                          false) ||
-                      (pt.category?.name.toLowerCase().contains(_searchQuery) ??
-                          false);
-
-                  final matchesCat =
-                      _selectedCategoryId == null ||
-                      pt.categoryId == _selectedCategoryId;
-
-                  return matchesQuery && matchesCat;
-                }).toList();
-
-                if (types.isEmpty) {
-                  return Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-        color: PmsTheme.glassSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PmsTheme.glassBorder),
-        boxShadow: PmsTheme.glassShadow,
-                    ),
+            BlocBuilder<ProductTypeBloc, ProductTypeState>(
+              builder: (context, state) {
+                if (state is ProductTypeLoading) {
+                  return GlassCard(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
                     child: const Center(
-                      child: Text(
-                        'No product types found.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: PmsTheme.textSecondary,
-                        ),
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
                     ),
                   );
                 }
 
-                return ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: types.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final pt = types[index];
-                    return _buildProductTypeCard(context, pt);
-                  },
-                );
-              }
+                if (state is ProductTypeError) {
+                  return GlassCard(
+                    backgroundColor: const Color(0xFFFEF2F2),
+                    border: Border.all(
+                      color: PmsTheme.error.withValues(alpha: 0.35),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Couldn’t load product types',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFFB91C1C),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          state.errorMessage,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFFB91C1C),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton(
+                          onPressed: () {
+                            context.read<ProductTypeBloc>().add(
+                                  const FetchProductTypesEvent(),
+                                );
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: PmsTheme.error,
+                          ),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
-              return const SizedBox.shrink();
-            },
-          ),
-        ],
+                if (state is ProductTypeLoaded) {
+                  final types = state.productTypes.where((pt) {
+                    final matchesQuery =
+                        _searchQuery.isEmpty ||
+                        pt.name.toLowerCase().contains(_searchQuery) ||
+                        (pt.productCode?.toLowerCase().contains(_searchQuery) ??
+                            false) ||
+                        (pt.category?.name
+                                .toLowerCase()
+                                .contains(_searchQuery) ??
+                            false);
+
+                    final matchesCat =
+                        _selectedCategoryId == null ||
+                        pt.categoryId == _selectedCategoryId;
+
+                    return matchesQuery && matchesCat;
+                  }).toList();
+
+                  if (types.isEmpty) {
+                    return PmsEmptyState(
+                      icon: Icons.layers_clear_rounded,
+                      title: 'No product types found',
+                      subtitle:
+                          'Try another search or category filter, or add a product type.',
+                      actionLabel:
+                          widget.isSuperAdmin ? 'Add Product Type' : null,
+                      onAction: widget.isSuperAdmin
+                          ? () => _showProductTypeForm(context)
+                          : null,
+                    );
+                  }
+
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: types.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final pt = types[index];
+                      return _buildProductTypeCard(context, pt);
+                    },
+                  );
+                }
+
+                return const SizedBox.shrink();
+              },
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 
   Widget _buildProductTypeCard(BuildContext context, ProductTypeModel pt) {
     final isHospital = pt.category?.name == 'Hospital';
+    final categoryColor = isHospital ? PmsTheme.error : PmsTheme.primary;
 
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: PmsTheme.glassSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PmsTheme.glassBorder),
-        boxShadow: PmsTheme.glassShadow,
-      ),
+      borderRadius: 20,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              // Product Code Monospace Badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: PmsTheme.background,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: PmsTheme.glassBorder),
+                  color: PmsTheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: PmsTheme.primary.withValues(alpha: 0.25),
+                  ),
                 ),
                 child: Text(
                   pt.productCode ?? '000000',
@@ -688,7 +568,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                     fontFamily: 'monospace',
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.0,
-                    color: Color(0xFF059669),
+                    color: PmsTheme.primary,
                   ),
                 ),
               ),
@@ -700,88 +580,48 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                     Text(
                       pt.name,
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
                         color: PmsTheme.textPrimary,
+                        letterSpacing: -0.2,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
-                      'ID: #${pt.id}',
+                      'ID #${pt.id}',
                       style: const TextStyle(
-                        fontSize: 10,
-                        color: PmsTheme.textSecondary,
+                        fontSize: 11,
+                        color: PmsTheme.textMuted,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3.5,
-                ),
-                decoration: BoxDecoration(
-                  color: isHospital
-                      ? Color(0xFFFEF2F2).withValues(alpha: 0.4)
-                      : PmsTheme.backgroundGradientStart.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isHospital ? Color(0xFFB91C1C) : PmsTheme.primary,
-                  ),
-                ),
-                child: Text(
-                  pt.category?.name ?? 'Category',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: isHospital ? Color(0xFFB91C1C) : PmsTheme.primary,
-                  ),
-                ),
+              PmsStatusChip(
+                label: pt.category?.name ?? 'Category',
+                color: categoryColor,
               ),
             ],
           ),
 
           if (widget.isSuperAdmin) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                OutlinedButton.icon(
+                PmsIconAction(
+                  icon: Icons.edit_rounded,
+                  tooltip: 'Edit product type',
                   onPressed: () =>
                       _showProductTypeForm(context, productType: pt),
-                  icon: const Icon(Icons.edit, size: 12),
-                  label: const Text('Edit'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Color(0xFF059669),
-                    side: const BorderSide(color: Color(0xFF059669)),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    textStyle: const TextStyle(fontSize: 11),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
                 ),
                 const SizedBox(width: 8),
-                OutlinedButton.icon(
+                PmsIconAction(
+                  icon: Icons.delete_outline_rounded,
+                  tooltip: 'Delete product type',
+                  color: PmsTheme.error,
                   onPressed: () => _confirmDelete(context, pt),
-                  icon: const Icon(Icons.delete_outline, size: 12),
-                  label: const Text('Delete'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Color(0xFFB91C1C),
-                    side: const BorderSide(color: Color(0xFFDC2626)),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    textStyle: const TextStyle(fontSize: 11),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
                 ),
               ],
             ),

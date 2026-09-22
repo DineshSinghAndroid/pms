@@ -23,10 +23,13 @@ import '../../models/user_model.dart';
 import '../../models/wing_model.dart';
 import '../../repositories/product_type_repository.dart';
 import '../../repositories/purchase_request_repository.dart';
+import '../../repositories/vendor_repository.dart';
 import '../../repositories/wing_repository.dart';
 import '../../widgets/searchable_typeahead.dart';
 import 'pr_details_screen.dart';
 import '../../theme/pms_theme.dart';
+import '../../widgets/glass_card.dart';
+import '../../widgets/pms_ui.dart';
 
 class PurchaseRequestsTabView extends StatefulWidget {
   final bool isSuperAdmin;
@@ -59,22 +62,6 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
   bool get isAdminOrManager => isSuperAdmin || isManager;
   bool get isDesigner => widget.currentUser?.role == 'Designer';
 
-  bool _isImage(String? path) {
-    if (path == null || path.isEmpty) return false;
-    final lower = path.toLowerCase();
-    return lower.endsWith('.png') ||
-        lower.endsWith('.jpg') ||
-        lower.endsWith('.jpeg') ||
-        lower.endsWith('.webp') ||
-        lower.endsWith('.gif');
-  }
-
-  String _formatFileSize(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-  }
-
   @override
   void initState() {
     super.initState();
@@ -84,6 +71,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
 
   void _preloadPrDependencies() {
     PurchaseRequestRepository().getDesigners();
+    VendorRepository().getVendors();
     context.read<ProductTypeBloc>().add(const FetchProductTypesEvent());
     context.read<WingBloc>().add(const FetchWingsEvent());
     ProductTypeRepository().getProductTypes();
@@ -153,7 +141,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
         context: context,
         barrierDismissible: false,
         builder: (ctx) => const Center(
-          child: CircularProgressIndicator(color: Color(0xFFDC2626)),
+          child: CircularProgressIndicator(color: PmsTheme.primary),
         ),
       );
       try {
@@ -207,14 +195,6 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
       return;
     }
 
-    // Dynamic item list state
-    List<Map<String, dynamic>> itemsList = [];
-    int? selectedWingId = availableWings.isNotEmpty ? availableWings.first.id : null;
-    DateTime selectedDate = DateTime.now().add(const Duration(days: 2));
-    final timeCtrl = TextEditingController(text: '04:00 PM');
-    final remarksCtrl = TextEditingController();
-    ProductTypeModel? chosenPickerProduct;
-
     final payload = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -222,844 +202,22 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (modalCtx) {
-        return StatefulBuilder(
-          builder: (ctx, setModalState) {
-            return Padding(
-                padding: EdgeInsets.only(
-                  left: 20,
-                  right: 20,
-                  top: 20,
-                  bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 20,
-                ),
-                child: SingleChildScrollView(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.manual,
-                  child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Header
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(
-                              Icons.assignment_outlined,
-                              color: Color(0xFFDC2626),
-                              size: 22,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Create Purchase Request (PR)',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: PmsTheme.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.close,
-                            color: PmsTheme.textSecondary,
-                            size: 20,
-                          ),
-                          onPressed: () => Navigator.pop(modalCtx),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // SECTION 1: PRODUCT PICKER & SEARCH
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: PmsTheme.background,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: PmsTheme.glassBorder),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '1. Select Product to Add (Search from 614 Master Items) *',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFB91C1C),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          SearchableTypeahead<ProductTypeModel>(
-                            key: ValueKey('pr-product-${itemsList.length}'),
-                            items: allProductTypes,
-                            selected: chosenPickerProduct,
-                            hintText: 'Type name or product code...',
-                            displayString: (pt) =>
-                                '[${pt.productCode ?? '000000'}] ${pt.name} (${pt.category?.name ?? ''})',
-                            matches: (pt, q) {
-                              return pt.name.toLowerCase().contains(q) ||
-                                  (pt.productCode?.toLowerCase().contains(q) ??
-                                      false) ||
-                                  (pt.subName?.toLowerCase().contains(q) ??
-                                      false) ||
-                                  (pt.category?.name.toLowerCase().contains(q) ??
-                                      false);
-                            },
-                            onSelected: (val) {
-                              setModalState(() {
-                                chosenPickerProduct = val;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          ElevatedButton.icon(
-                            onPressed: chosenPickerProduct == null
-                                ? null
-                                : () {
-                                    FocusScope.of(ctx).unfocus();
-                                    setModalState(() {
-                                      itemsList.insert(0, {
-                                        'product_type_id':
-                                            chosenPickerProduct!.id,
-                                        'product_name':
-                                            chosenPickerProduct!.name,
-                                        'product_code':
-                                            chosenPickerProduct!.productCode ??
-                                            '000000',
-                                        'quantity_ctrl': TextEditingController(
-                                          text: '1',
-                                        ),
-                                        'size_ctrl': TextEditingController(),
-                                        'attachment_ctrl':
-                                            TextEditingController(),
-                                        'pickedBytes': null,
-                                        'pickedName': null,
-                                        'pickedSize': null,
-                                      });
-                                      chosenPickerProduct = null;
-                                    });
-                                  },
-                            icon: const Icon(Icons.add_box_rounded, size: 16),
-                            label: const Text('Add Product Box'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFFDC2626),
-                              foregroundColor: Color(0xFFFFFFFF),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              textStyle: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // SECTION 2: LIST OF ITEMS WITH SPECS
-                    Text(
-                      '2. Selected Products & Specifications (${itemsList.length})',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: PmsTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    if (itemsList.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: PmsTheme.background,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: PmsTheme.glassBorder,
-                            style: BorderStyle.solid,
-                          ),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'No products added yet. Select a product above and tap "Add Product Box".',
-                            style: TextStyle(
-                              color: PmsTheme.textSecondary,
-                              fontSize: 12,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-
-                    // Render dynamic item boxes
-                    ...itemsList.asMap().entries.map((entry) {
-                      final idx = entry.key;
-                      final item = entry.value;
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: PmsTheme.background,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: PmsTheme.glassBorder),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: PmsTheme.glassSurface,
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: PmsTheme.textSecondary,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        item['product_code'],
-                                        style: const TextStyle(
-                                          fontSize: 10,
-                                          fontFamily: 'monospace',
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF059669),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '${item['product_name']}',
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: PmsTheme.textPrimary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    color: Color(0xFFB91C1C),
-                                    size: 18,
-                                  ),
-                                  onPressed: () {
-                                    setModalState(() {
-                                      itemsList.removeAt(idx);
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                // Quantity
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Quantity *',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: PmsTheme.textSecondary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      TextField(
-                                        controller:
-                                            item['quantity_ctrl']
-                                                as TextEditingController,
-                                        keyboardType: TextInputType.number,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: PmsTheme.textPrimary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        decoration: InputDecoration(
-                                          filled: true,
-                                          fillColor: Color(0xFFFFFFFF),
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                                horizontal: 10,
-                                                vertical: 8,
-                                              ),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                // Size
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Size / Dimensions',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: PmsTheme.textSecondary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      TextField(
-                                        controller:
-                                            item['size_ctrl']
-                                                as TextEditingController,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          color: PmsTheme.textPrimary,
-                                        ),
-                                        decoration: InputDecoration(
-                                          hintText: 'e.g. 10x4 ft, A4',
-                                          hintStyle: const TextStyle(
-                                            color: PmsTheme.textSecondary,
-                                            fontSize: 11,
-                                          ),
-                                          filled: true,
-                                          fillColor: Color(0xFFFFFFFF),
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                                horizontal: 10,
-                                                vertical: 8,
-                                              ),
-                                          border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            // Sample Attachment Section
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Sample Attachment (Camera / Any File / Reference)',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: PmsTheme.textSecondary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-
-                                // Dual Action Buttons: Camera & Upload Any File
-                                Row(
-                                  children: [
-                                    // Option 1: Camera Photo
-                                    Expanded(
-                                      child: OutlinedButton.icon(
-                                        onPressed: () async {
-                                          final messenger =
-                                              ScaffoldMessenger.of(context);
-                                          try {
-                                            final picker = ImagePicker();
-                                            final photo = await picker.pickImage(
-                                              source: ImageSource.camera,
-                                              imageQuality: 90,
-                                            );
-                                            if (photo != null) {
-                                              final bytes = await photo.readAsBytes();
-                                              setModalState(() {
-                                                item['pickedBytes'] = bytes;
-                                                item['pickedName'] = photo.name;
-                                                item['pickedSize'] = bytes.length;
-                                                (item['attachment_ctrl'] as TextEditingController).text = photo.name;
-                                              });
-                                            }
-                                          } catch (e) {
-                                            messenger.showSnackBar(
-                                              SnackBar(
-                                                content: Text('Error opening camera: $e'),
-                                                backgroundColor: const Color(0xFFDC2626),
-                                              ),
-                                            );
-                                          }
-                                        },
-                                        icon: const Icon(Icons.camera_alt_rounded, size: 14),
-                                        label: const Text(
-                                          'Camera',
-                                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                                        ),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: PmsTheme.primary,
-                                          side: const BorderSide(color: PmsTheme.primary),
-                                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    // Option 2: Upload Any File
-                                    Expanded(
-                                      child: OutlinedButton.icon(
-                                        onPressed: () async {
-                                          final messenger =
-                                              ScaffoldMessenger.of(context);
-                                          try {
-                                            final file = await FilePicker.pickFile(type: FileType.any);
-                                            if (file != null) {
-                                              final bytes = await file.readAsBytes();
-                                              final size = await file.length();
-                                              setModalState(() {
-                                                item['pickedBytes'] = bytes;
-                                                item['pickedName'] = file.name;
-                                                item['pickedSize'] = size;
-                                                (item['attachment_ctrl'] as TextEditingController).text = file.name;
-                                              });
-                                            }
-                                          } catch (e) {
-                                            messenger.showSnackBar(
-                                              SnackBar(
-                                                content: Text('Error selecting file: $e'),
-                                                backgroundColor: const Color(0xFFDC2626),
-                                              ),
-                                            );
-                                          }
-                                        },
-                                        icon: const Icon(Icons.upload_file_rounded, size: 14),
-                                        label: const Text(
-                                          'Upload File',
-                                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                                        ),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: const Color(0xFF059669),
-                                          side: const BorderSide(color: Color(0xFF059669)),
-                                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                // Preview Tile if a file/photo is selected
-                                if (item['pickedBytes'] != null && item['pickedName'] != null) ...[
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: PmsTheme.bgSoft,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: const Color(0xFFCBD5E1)),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        // Thumbnail / File Icon
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(6),
-                                          child: _isImage(item['pickedName'] as String?)
-                                              ? Image.memory(
-                                                  item['pickedBytes'] as Uint8List,
-                                                  width: 38,
-                                                  height: 38,
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : Container(
-                                                  width: 38,
-                                                  height: 38,
-                                                  color: PmsTheme.glassBorder,
-                                                  child: Icon(
-                                                    (item['pickedName'] as String).toLowerCase().endsWith('.pdf')
-                                                        ? Icons.picture_as_pdf_rounded
-                                                        : Icons.insert_drive_file_rounded,
-                                                    color: (item['pickedName'] as String).toLowerCase().endsWith('.pdf')
-                                                        ? const Color(0xFFDC2626)
-                                                        : PmsTheme.primary,
-                                                    size: 22,
-                                                  ),
-                                                ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        // Filename & Size
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                item['pickedName'] as String,
-                                                style: const TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: PmsTheme.textPrimary,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              if (item['pickedSize'] != null)
-                                                Text(
-                                                  _formatFileSize(item['pickedSize'] as int),
-                                                  style: const TextStyle(
-                                                    fontSize: 10,
-                                                    color: PmsTheme.textSecondary,
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                        // Remove Attachment Button
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.close_rounded,
-                                            color: Color(0xFFDC2626),
-                                            size: 18,
-                                          ),
-                                          tooltip: 'Remove Attachment',
-                                          padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(),
-                                          onPressed: () {
-                                            setModalState(() {
-                                              item['pickedBytes'] = null;
-                                              item['pickedName'] = null;
-                                              item['pickedSize'] = null;
-                                              (item['attachment_ctrl'] as TextEditingController).clear();
-                                            });
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-
-                                const SizedBox(height: 6),
-                                // Text Field for custom reference / note
-                                TextField(
-                                  controller:
-                                      item['attachment_ctrl']
-                                          as TextEditingController,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: PmsTheme.textPrimary,
-                                  ),
-                                  decoration: InputDecoration(
-                                    prefixIcon: const Icon(
-                                      Icons.note_alt_outlined,
-                                      color: PmsTheme.textSecondary,
-                                      size: 15,
-                                    ),
-                                    hintText:
-                                        'Or enter sample link / note (optional)',
-                                    hintStyle: const TextStyle(
-                                      color: PmsTheme.textMuted,
-                                      fontSize: 11,
-                                    ),
-                                    filled: true,
-                                    fillColor: const Color(0xFFFFFFFF),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 6,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-
-                    const SizedBox(height: 16),
-
-                    // SECTION 3: ORDER LEVEL DETAILS (WING, DELIVERY & REMARKS)
-                    const Text(
-                      '3. Target Wing & Delivery Schedule',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: PmsTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Wing Selector Dropdown
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: PmsTheme.background,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: PmsTheme.glassBorder),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          value: selectedWingId,
-                          isExpanded: true,
-                          dropdownColor: Color(0xFFFFFFFF),
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: PmsTheme.textPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          items: availableWings.map((w) {
-                            return DropdownMenuItem<int>(
-                              value: w.id,
-                              child: Text(w.name),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setModalState(() {
-                              selectedWingId = val;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Delivery Date & Time
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: selectedDate,
-                                firstDate: DateTime.now(),
-                                lastDate: DateTime.now().add(
-                                  const Duration(days: 365),
-                                ),
-                              );
-                              if (picked != null) {
-                                setModalState(() {
-                                  selectedDate = picked;
-                                });
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: PmsTheme.background,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: PmsTheme.glassBorder),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.calendar_today_rounded,
-                                    size: 16,
-                                    color: Color(0xFFB91C1C),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: PmsTheme.textPrimary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextField(
-                            controller: timeCtrl,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: PmsTheme.textPrimary,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Delivery Time',
-                              hintStyle: const TextStyle(
-                                color: PmsTheme.textSecondary,
-                                fontSize: 11,
-                              ),
-                              filled: true,
-                              fillColor: PmsTheme.background,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Remarks
-                    TextField(
-                      controller: remarksCtrl,
-                      maxLines: 2,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: PmsTheme.textPrimary,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Remarks & finishing instructions...',
-                        hintStyle: const TextStyle(
-                          color: PmsTheme.textSecondary,
-                          fontSize: 12,
-                        ),
-                        filled: true,
-                        fillColor: PmsTheme.background,
-                        contentPadding: const EdgeInsets.all(12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Submit Button
-                    ElevatedButton(
-                      onPressed: itemsList.isEmpty || selectedWingId == null
-                          ? null
-                          : () {
-                              final formattedItems = itemsList.map((it) {
-                                final qtyStr =
-                                    (it['quantity_ctrl']
-                                            as TextEditingController)
-                                        .text
-                                        .trim();
-                                final sizeStr =
-                                    (it['size_ctrl'] as TextEditingController)
-                                        .text
-                                        .trim();
-                                final attStr =
-                                    (it['attachment_ctrl']
-                                            as TextEditingController)
-                                        .text
-                                        .trim();
-                                final Uint8List? bytes = it['pickedBytes'] as Uint8List?;
-                                final String? pickedName = it['pickedName'] as String?;
-
-                                return {
-                                  'product_type_id': it['product_type_id'],
-                                  'product_name': it['product_name'],
-                                  'quantity': int.tryParse(qtyStr) ?? 1,
-                                  'size': sizeStr.isNotEmpty ? sizeStr : null,
-                                  'attachment_path': attStr.isNotEmpty
-                                      ? attStr
-                                      : null,
-                                  'attachment_name': pickedName ??
-                                      (attStr.isNotEmpty ? attStr : null),
-                                  'attachment_base64': bytes != null
-                                      ? base64Encode(bytes)
-                                      : null,
-                                };
-                              }).toList();
-
-                              final dateFormatted =
-                                  '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
-
-                              final payload = {
-                                'wing_id': selectedWingId,
-                                'expected_delivery_date': dateFormatted,
-                                'expected_delivery_time': timeCtrl.text.trim(),
-                                'remarks': remarksCtrl.text.trim(),
-                                'items': formattedItems,
-                                'created_by_user_id': widget.currentUser?.id,
-                                'phone': widget.currentUser?.phone,
-                              };
-
-                              Navigator.pop(modalCtx, payload);
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFDC2626),
-                        foregroundColor: Color(0xFFFFFFFF),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Save Purchase Request (PR)',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+      builder: (modalCtx) => _CreatePurchaseRequestSheet(
+        allProductTypes: allProductTypes,
+        availableWings: availableWings,
+        currentUser: widget.currentUser,
+      ),
     );
-
-    // Let the sheet finish unmounting before disposing controllers or
-    // starting the save request (loading overlay must not overlap the modal).
-    await Future<void>.delayed(Duration.zero);
-
-    for (final it in itemsList) {
-      (it['quantity_ctrl'] as TextEditingController?)?.dispose();
-      (it['size_ctrl'] as TextEditingController?)?.dispose();
-      (it['attachment_ctrl'] as TextEditingController?)?.dispose();
-    }
-    timeCtrl.dispose();
-    remarksCtrl.dispose();
 
     if (payload == null || !context.mounted) return;
 
     context.read<PurchaseRequestBloc>().add(
       CreatePurchaseRequestEvent(payload),
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✓ Purchase Request created successfully!'),
-        backgroundColor: Color(0xFFDC2626),
-      ),
+    showPmsSnackBar(
+      context,
+      '✓ Purchase Request created successfully!',
+      kind: PmsSnackKind.success,
     );
   }
 
@@ -1272,59 +430,29 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Header
-            Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    widget.currentUser?.role == 'Designer'
-                        ? Icons.brush_rounded
-                        : Icons.assignment_outlined,
-                    color: widget.currentUser?.role == 'Designer'
-                        ? Color(0xFFD97706)
-                        : Color(0xFFB91C1C),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    widget.currentUser?.role == 'Designer'
-                        ? 'My Assigned PRs'
-                        : 'Purchase Requests (PR)',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: PmsTheme.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              if (widget.isSuperAdmin ||
-                  widget.currentUser?.role.toLowerCase() == 'manager' ||
-                  widget.currentUser?.isWingIncharge == true)
-                ElevatedButton.icon(
-                  onPressed: () => _showCreatePRForm(context),
-                  icon: const Icon(Icons.add, size: 14),
-                  label: const Text('Create PR'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFDC2626),
-                    foregroundColor: Color(0xFFFFFFFF),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+            PmsPageHeader(
+              icon: widget.currentUser?.role == 'Designer'
+                  ? Icons.brush_rounded
+                  : Icons.assignment_outlined,
+              accent: widget.currentUser?.role == 'Designer'
+                  ? const Color(0xFFD97706)
+                  : PmsTheme.primary,
+              title: widget.currentUser?.role == 'Designer'
+                  ? 'My Assigned PRs'
+                  : 'Purchase Requests (PR)',
+              subtitle: widget.currentUser?.role == 'Designer'
+                  ? 'Printing requests assigned to you'
+                  : 'Create, assign, and track design requests',
+              action: (widget.isSuperAdmin ||
+                      widget.currentUser?.role.toLowerCase() == 'manager' ||
+                      widget.currentUser?.isWingIncharge == true)
+                  ? FilledButton.icon(
+                      onPressed: () => _showCreatePRForm(context),
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('Create PR'),
+                    )
+                  : null,
+            ),
 
           if (widget.currentUser?.role == 'Designer') ...[
             const SizedBox(height: 10),
@@ -1405,7 +533,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                         title: 'Active Design Requests',
                         count: activeCount,
                         scopeKey: 'active',
-                        activeColor: Color(0xFFDC2626),
+                        activeColor: PmsTheme.primary,
                       ),
                       const SizedBox(width: 4),
                       _buildScopeTab(
@@ -1445,45 +573,17 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
             style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary),
             decoration: InputDecoration(
               hintText: 'Search PR #, product, wing, or designer...',
-              hintStyle: const TextStyle(
-                color: PmsTheme.textSecondary,
-                fontSize: 13,
-              ),
-              prefixIcon: const Icon(
-                Icons.search,
-                color: PmsTheme.textSecondary,
-                size: 18,
-              ),
+              prefixIcon: const Icon(Icons.search_rounded, size: 20),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(
-                        Icons.clear,
-                        color: PmsTheme.textSecondary,
-                        size: 16,
-                      ),
+                      tooltip: 'Clear search',
+                      icon: const Icon(Icons.clear_rounded, size: 18),
                       onPressed: () {
                         _searchController.clear();
                         setState(() => _searchQuery = '');
                       },
                     )
                   : null,
-              filled: true,
-              fillColor: Color(0xFFFFFFFF),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: PmsTheme.glassBorder),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: Color(0xFFDC2626),
-                  width: 1.5,
-                ),
-              ),
             ),
           ),
 
@@ -1553,17 +653,11 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
           BlocBuilder<PurchaseRequestBloc, PurchaseRequestState>(
             builder: (context, state) {
               if (state is PurchaseRequestLoading) {
-                return Container(
-                  height: 140,
-                  decoration: BoxDecoration(
-        color: PmsTheme.glassSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PmsTheme.glassBorder),
-        boxShadow: PmsTheme.glassShadow,
-                  ),
+                return GlassCard(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
                   child: const Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFFDC2626),
+                      color: PmsTheme.primary,
                       strokeWidth: 2.5,
                     ),
                   ),
@@ -1615,23 +709,18 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                 }).toList();
 
                 if (list.isEmpty) {
-                  return Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-        color: PmsTheme.glassSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: PmsTheme.glassBorder),
-        boxShadow: PmsTheme.glassShadow,
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'No purchase requests match the selected filters.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: PmsTheme.textSecondary,
-                        ),
-                      ),
-                    ),
+                  final canCreate = widget.isSuperAdmin ||
+                      widget.currentUser?.role.toLowerCase() == 'manager' ||
+                      widget.currentUser?.isWingIncharge == true;
+                  return PmsEmptyState(
+                    icon: Icons.assignment_outlined,
+                    title: 'No purchase requests found',
+                    subtitle:
+                        'Try another search or filter, or create a new PR.',
+                    actionLabel: canCreate ? 'Create PR' : null,
+                    onAction: canCreate
+                        ? () => _showCreatePRForm(context)
+                        : null,
                   );
                 }
 
@@ -2330,3 +1419,973 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
     );
   }
 }
+
+class _CreatePurchaseRequestSheet extends StatefulWidget {
+  final List<ProductTypeModel> allProductTypes;
+  final List<WingModel> availableWings;
+  final UserModel? currentUser;
+
+  const _CreatePurchaseRequestSheet({
+    required this.allProductTypes,
+    required this.availableWings,
+    required this.currentUser,
+  });
+
+  @override
+  State<_CreatePurchaseRequestSheet> createState() =>
+      _CreatePurchaseRequestSheetState();
+}
+
+class _CreatePurchaseRequestSheetState
+    extends State<_CreatePurchaseRequestSheet> {
+  final List<Map<String, dynamic>> _itemsList = [];
+  int? _selectedWingId;
+  DateTime _selectedDate = DateTime.now().add(const Duration(days: 2));
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 16, minute: 0);
+  late final TextEditingController _remarksCtrl;
+  ProductTypeModel? _chosenPickerProduct;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedWingId = widget.availableWings.isNotEmpty
+        ? widget.availableWings.first.id
+        : null;
+    _remarksCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    for (final it in _itemsList) {
+      (it['quantity_ctrl'] as TextEditingController?)?.dispose();
+      (it['size_ctrl'] as TextEditingController?)?.dispose();
+      (it['attachment_ctrl'] as TextEditingController?)?.dispose();
+    }
+    _remarksCtrl.dispose();
+    super.dispose();
+  }
+
+  String _formatTime(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '${hour.toString().padLeft(2, '0')}:$minute $period';
+  }
+
+  bool _isImage(String? path) {
+    if (path == null || path.isEmpty) return false;
+    final lower = path.toLowerCase();
+    return lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.gif');
+  }
+
+  String _formatFileSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            PmsSheetHeader(
+              title: 'Create Purchase Request (PR)',
+              subtitle: 'Add products, wing, and delivery details',
+              onClose: () => Navigator.pop(context),
+            ),
+            const SizedBox(height: 8),
+
+            // SECTION 1: PRODUCT PICKER & SEARCH
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: PmsTheme.background,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: PmsTheme.glassBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '1. Select Product to Add (Search from 614 Master Items) *',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: PmsTheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SearchableTypeahead<ProductTypeModel>(
+                    key: ValueKey('pr-product-${_itemsList.length}'),
+                    items: widget.allProductTypes,
+                    selected: _chosenPickerProduct,
+                    hintText: 'Type name or product code...',
+                    displayString: (pt) =>
+                        '[${pt.productCode ?? '000000'}] ${pt.name} (${pt.category?.name ?? ''})',
+                    matches: (pt, q) {
+                      return pt.name.toLowerCase().contains(q) ||
+                          (pt.productCode?.toLowerCase().contains(q) ??
+                              false) ||
+                          (pt.subName?.toLowerCase().contains(q) ??
+                              false) ||
+                          (pt.category?.name.toLowerCase().contains(q) ??
+                              false);
+                    },
+                    onSelected: (val) {
+                      setState(() {
+                        _chosenPickerProduct = val;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: _chosenPickerProduct == null
+                        ? null
+                        : () {
+                            FocusScope.of(context).unfocus();
+                            setState(() {
+                              _itemsList.insert(0, {
+                                'product_type_id': _chosenPickerProduct!.id,
+                                'product_name': _chosenPickerProduct!.name,
+                                'product_code':
+                                    _chosenPickerProduct!.productCode ??
+                                        '000000',
+                                'quantity_ctrl':
+                                    TextEditingController(text: '1'),
+                                'size_ctrl': TextEditingController(),
+                                'attachment_ctrl': TextEditingController(),
+                                'pickedBytes': null,
+                                'pickedName': null,
+                                'pickedSize': null,
+                              });
+                              _chosenPickerProduct = null;
+                            });
+                          },
+                    icon: const Icon(Icons.add_box_rounded, size: 16),
+                    label: const Text('Add Product Box'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: PmsTheme.primary,
+                      foregroundColor: const Color(0xFFFFFFFF),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // SECTION 2: LIST OF ITEMS WITH SPECS
+            Text(
+              '2. Selected Products & Specifications (${_itemsList.length})',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: PmsTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            if (_itemsList.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: PmsTheme.background,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: PmsTheme.glassBorder,
+                    style: BorderStyle.solid,
+                  ),
+                ),
+                child: const Center(
+                  child: Text(
+                    'No products added yet. Select a product above and tap "Add Product Box".',
+                    style: TextStyle(
+                      color: PmsTheme.textSecondary,
+                      fontSize: 12,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+
+            // Render dynamic item boxes
+            ..._itemsList.asMap().entries.map((entry) {
+              final idx = entry.key;
+              final item = entry.value;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: PmsTheme.background,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: PmsTheme.glassBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: PmsTheme.glassSurface,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: PmsTheme.textSecondary,
+                                ),
+                              ),
+                              child: Text(
+                                item['product_code'],
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontFamily: 'monospace',
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF059669),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${item['product_name']}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: PmsTheme.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Color(0xFFB91C1C),
+                            size: 18,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              final removed = _itemsList.removeAt(idx);
+                              (removed['quantity_ctrl']
+                                      as TextEditingController?)
+                                  ?.dispose();
+                              (removed['size_ctrl']
+                                      as TextEditingController?)
+                                  ?.dispose();
+                              (removed['attachment_ctrl']
+                                      as TextEditingController?)
+                                  ?.dispose();
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        // Quantity
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Quantity *',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: PmsTheme.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              TextField(
+                                controller: item['quantity_ctrl']
+                                    as TextEditingController,
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: PmsTheme.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: const Color(0xFFFFFFFF),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Size
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Size / Dimensions',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: PmsTheme.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              TextField(
+                                controller: item['size_ctrl']
+                                    as TextEditingController,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: PmsTheme.textPrimary,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'e.g. 10x4 ft, A4',
+                                  hintStyle: const TextStyle(
+                                    color: PmsTheme.textSecondary,
+                                    fontSize: 11,
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFFFFFFFF),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Sample Attachment Section
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Sample Attachment (Camera / Any File / Reference)',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: PmsTheme.textSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+
+                        // Dual Action Buttons: Camera & Upload Any File
+                        Row(
+                          children: [
+                            // Option 1: Camera Photo
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final messenger =
+                                      ScaffoldMessenger.of(context);
+                                  try {
+                                    final picker = ImagePicker();
+                                    final photo = await picker.pickImage(
+                                      source: ImageSource.camera,
+                                      imageQuality: 90,
+                                    );
+                                    if (photo != null) {
+                                      final bytes =
+                                          await photo.readAsBytes();
+                                      if (mounted) {
+                                        setState(() {
+                                          item['pickedBytes'] = bytes;
+                                          item['pickedName'] = photo.name;
+                                          item['pickedSize'] = bytes.length;
+                                          (item['attachment_ctrl']
+                                                  as TextEditingController)
+                                              .text = photo.name;
+                                        });
+                                      }
+                                    }
+                                  } catch (e) {
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        content:
+                                            Text('Error opening camera: $e'),
+                                        backgroundColor:
+                                            const Color(0xFFDC2626),
+                                      ),
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.camera_alt_rounded,
+                                    size: 14),
+                                label: const Text(
+                                  'Camera',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: PmsTheme.primary,
+                                  side: const BorderSide(
+                                      color: PmsTheme.primary),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 8, horizontal: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Option 2: Upload Any File
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final messenger =
+                                      ScaffoldMessenger.of(context);
+                                  try {
+                                    final file =
+                                        await FilePicker.pickFile(
+                                            type: FileType.any);
+                                    if (file != null) {
+                                      final bytes =
+                                          await file.readAsBytes();
+                                      final size = await file.length();
+                                      if (mounted) {
+                                        setState(() {
+                                          item['pickedBytes'] = bytes;
+                                          item['pickedName'] = file.name;
+                                          item['pickedSize'] = size;
+                                          (item['attachment_ctrl']
+                                                  as TextEditingController)
+                                              .text = file.name;
+                                        });
+                                      }
+                                    }
+                                  } catch (e) {
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        content:
+                                            Text('Error selecting file: $e'),
+                                        backgroundColor:
+                                            const Color(0xFFDC2626),
+                                      ),
+                                    );
+                                  }
+                                },
+                                icon: const Icon(
+                                    Icons.upload_file_rounded,
+                                    size: 14),
+                                label: const Text(
+                                  'Upload File',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor:
+                                      const Color(0xFF059669),
+                                  side: const BorderSide(
+                                      color: Color(0xFF059669)),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 8, horizontal: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // Preview Tile if a file/photo is selected
+                        if (item['pickedBytes'] != null &&
+                            item['pickedName'] != null) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: PmsTheme.bgSoft,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                  color: const Color(0xFFCBD5E1)),
+                            ),
+                            child: Row(
+                              children: [
+                                // Thumbnail / File Icon
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: _isImage(
+                                          item['pickedName'] as String?)
+                                      ? Image.memory(
+                                          item['pickedBytes'] as Uint8List,
+                                          width: 38,
+                                          height: 38,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Container(
+                                          width: 38,
+                                          height: 38,
+                                          color: PmsTheme.glassBorder,
+                                          child: Icon(
+                                            (item['pickedName'] as String)
+                                                    .toLowerCase()
+                                                    .endsWith('.pdf')
+                                                ? Icons
+                                                    .picture_as_pdf_rounded
+                                                : Icons
+                                                    .insert_drive_file_rounded,
+                                            color: (item['pickedName']
+                                                        as String)
+                                                    .toLowerCase()
+                                                    .endsWith('.pdf')
+                                                ? const Color(0xFFDC2626)
+                                                : PmsTheme.primary,
+                                            size: 22,
+                                          ),
+                                        ),
+                                ),
+                                const SizedBox(width: 8),
+                                // Filename & Size
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item['pickedName'] as String,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: PmsTheme.textPrimary,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (item['pickedSize'] != null)
+                                        Text(
+                                          _formatFileSize(
+                                              item['pickedSize'] as int),
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            color: PmsTheme.textSecondary,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                // Remove Attachment Button
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    color: Color(0xFFDC2626),
+                                    size: 18,
+                                  ),
+                                  tooltip: 'Remove Attachment',
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () {
+                                    setState(() {
+                                      item['pickedBytes'] = null;
+                                      item['pickedName'] = null;
+                                      item['pickedSize'] = null;
+                                      (item['attachment_ctrl']
+                                              as TextEditingController)
+                                          .clear();
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 6),
+                        // Text Field for custom reference / note
+                        TextField(
+                          controller: item['attachment_ctrl']
+                              as TextEditingController,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: PmsTheme.textPrimary,
+                          ),
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(
+                              Icons.note_alt_outlined,
+                              color: PmsTheme.textSecondary,
+                              size: 15,
+                            ),
+                            hintText:
+                                'Or enter sample link / note (optional)',
+                            hintStyle: const TextStyle(
+                              color: PmsTheme.textMuted,
+                              fontSize: 11,
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFFFFFFF),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+
+            const SizedBox(height: 16),
+
+            // SECTION 3: ORDER LEVEL DETAILS (WING, DELIVERY & REMARKS)
+            const Text(
+              '3. Target Wing & Delivery Schedule',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: PmsTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Wing Selector Dropdown
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: PmsTheme.background,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: PmsTheme.glassBorder),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  value: _selectedWingId,
+                  isExpanded: true,
+                  dropdownColor: const Color(0xFFFFFFFF),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: PmsTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  items: widget.availableWings.map((w) {
+                    return DropdownMenuItem<int>(
+                      value: w.id,
+                      child: Text(w.name),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedWingId = val;
+                    });
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Delivery Date & Time Pickers
+            Row(
+              children: [
+                // Delivery Date Picker
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(
+                          const Duration(days: 365),
+                        ),
+                        builder: (ctx, child) {
+                          return Theme(
+                            data: Theme.of(ctx).copyWith(
+                              colorScheme: const ColorScheme.light(
+                                primary: PmsTheme.primary,
+                                onPrimary: Colors.white,
+                                surface: Colors.white,
+                                onSurface: PmsTheme.textPrimary,
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null && mounted) {
+                        setState(() {
+                          _selectedDate = picked;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: PmsTheme.background,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: PmsTheme.glassBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_rounded,
+                            size: 18,
+                            color: Color(0xFFB91C1C),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Delivery Date *',
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    color: PmsTheme.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: PmsTheme.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Delivery Time Picker
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: _selectedTime,
+                        builder: (ctx, child) {
+                          return Theme(
+                            data: Theme.of(ctx).copyWith(
+                              colorScheme: const ColorScheme.light(
+                                primary: PmsTheme.primary,
+                                onPrimary: Colors.white,
+                                surface: Colors.white,
+                                onSurface: PmsTheme.textPrimary,
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null && mounted) {
+                        setState(() {
+                          _selectedTime = picked;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: PmsTheme.background,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: PmsTheme.glassBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.access_time_rounded,
+                            size: 18,
+                            color: PmsTheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Delivery Time *',
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    color: PmsTheme.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _formatTime(_selectedTime),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: PmsTheme.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Remarks
+            TextField(
+              controller: _remarksCtrl,
+              maxLines: 2,
+              style: const TextStyle(
+                fontSize: 12,
+                color: PmsTheme.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Remarks & finishing instructions...',
+                hintStyle: const TextStyle(
+                  color: PmsTheme.textSecondary,
+                  fontSize: 12,
+                ),
+                filled: true,
+                fillColor: PmsTheme.background,
+                contentPadding: const EdgeInsets.all(12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Submit Button
+            ElevatedButton(
+              onPressed: _itemsList.isEmpty || _selectedWingId == null
+                  ? null
+                  : () {
+                      final formattedItems = _itemsList.map((it) {
+                        final qtyStr =
+                            (it['quantity_ctrl'] as TextEditingController)
+                                .text
+                                .trim();
+                        final sizeStr =
+                            (it['size_ctrl'] as TextEditingController)
+                                .text
+                                .trim();
+                        final attStr =
+                            (it['attachment_ctrl'] as TextEditingController)
+                                .text
+                                .trim();
+                        final Uint8List? bytes =
+                            it['pickedBytes'] as Uint8List?;
+                        final String? pickedName =
+                            it['pickedName'] as String?;
+
+                        return {
+                          'product_type_id': it['product_type_id'],
+                          'product_name': it['product_name'],
+                          'quantity': int.tryParse(qtyStr) ?? 1,
+                          'size': sizeStr.isNotEmpty ? sizeStr : null,
+                          'attachment_path':
+                              attStr.isNotEmpty ? attStr : null,
+                          'attachment_name': pickedName ??
+                              (attStr.isNotEmpty ? attStr : null),
+                          'attachment_base64': bytes != null
+                              ? base64Encode(bytes)
+                              : null,
+                        };
+                      }).toList();
+
+                      final dateFormatted =
+                          '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+
+                      final payload = {
+                        'wing_id': _selectedWingId,
+                        'expected_delivery_date': dateFormatted,
+                        'expected_delivery_time': _formatTime(_selectedTime),
+                        'remarks': _remarksCtrl.text.trim(),
+                        'items': formattedItems,
+                        'created_by_user_id': widget.currentUser?.id,
+                        'phone': widget.currentUser?.phone,
+                      };
+
+                      Navigator.pop(context, payload);
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: PmsTheme.primary,
+                foregroundColor: const Color(0xFFFFFFFF),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Save Purchase Request (PR)',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

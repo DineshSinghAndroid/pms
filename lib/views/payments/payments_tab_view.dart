@@ -8,6 +8,8 @@ import 'package:pms/models/user_model.dart';
 import 'package:pms/views/payments/payment_details_sheet.dart';
 import 'package:pms/views/payments/record_payment_sheet.dart';
 import 'package:pms/theme/pms_theme.dart';
+import 'package:pms/widgets/glass_card.dart';
+import 'package:pms/widgets/pms_ui.dart';
 
 class PaymentsTabView extends StatefulWidget {
   final UserModel? currentUser;
@@ -68,129 +70,120 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.transparent,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [
-            // Top Action Bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              
-              child: Row(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search Payment #, Invoice #, product, or vendor...',
-                        prefixIcon: const Icon(Icons.search, size: 20),
-                        isDense: true,
-                        filled: true,
-                        fillColor: PmsTheme.bgSoft,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      onChanged: (val) {
-                        setState(() {
-                          _searchQuery = val.trim();
-                        });
-                        _loadPayments();
-                      },
+                  PmsPageHeader(
+                    icon: Icons.payments_rounded,
+                    title: 'Payments',
+                    subtitle: 'Vendor settlement and invoice logs',
+                    action: FilledButton.icon(
+                      onPressed: _openRecordPaymentModal,
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('Record'),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.refresh, color: Color(0xFF059669)),
-                    onPressed: _loadPayments,
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _searchController,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: PmsTheme.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      hintText:
+                          'Search Payment #, Invoice #, product, or vendor...',
+                      prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                      suffixIcon: IconButton(
+                        tooltip: 'Refresh',
+                        icon: const Icon(Icons.refresh_rounded, size: 20),
+                        color: PmsTheme.primary,
+                        onPressed: _loadPayments,
+                      ),
+                    ),
+                    onChanged: (val) {
+                      setState(() {
+                        _searchQuery = val.trim();
+                      });
+                      _loadPayments();
+                    },
                   ),
                 ],
               ),
             ),
 
-            // Payments List
             Expanded(
               child: BlocBuilder<PaymentBloc, PaymentState>(
                 builder: (context, state) {
                   if (state is PaymentLoading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(
+                      child: CircularProgressIndicator(color: PmsTheme.primary),
+                    );
                   }
 
                   if (state is PaymentError) {
                     return Center(
                       child: Padding(
                         padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.error_outline,
-                                color: Colors.red, size: 40),
-                            const SizedBox(height: 12),
-                            Text(
-                              state.message,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _loadPayments,
-                              child: const Text('Retry'),
-                            ),
-                          ],
+                        child: GlassCard(
+                          backgroundColor: const Color(0xFFFEF2F2),
+                          border: Border.all(
+                            color: PmsTheme.error.withValues(alpha: 0.35),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: PmsTheme.error,
+                                size: 40,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                state.message,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Color(0xFFB91C1C)),
+                              ),
+                              const SizedBox(height: 16),
+                              FilledButton(
+                                onPressed: _loadPayments,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: PmsTheme.error,
+                                ),
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );
                   }
 
-                  final payments =
-                      state is PaymentLoaded ? state.payments : <ProductPaymentModel>[];
+                  final payments = state is PaymentLoaded
+                      ? state.payments
+                      : <ProductPaymentModel>[];
 
                   if (payments.isEmpty) {
                     return RefreshIndicator(
+                      color: PmsTheme.primary,
                       onRefresh: () async => _loadPayments(),
                       child: ListView(
-                        padding: const EdgeInsets.all(32),
+                        padding: const EdgeInsets.all(20),
                         children: [
-                          const SizedBox(height: 60),
-                          const Icon(
-                            Icons.receipt_long_outlined,
-                            size: 64,
-                            color: Color(0xFFCBD5E1),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'No Payments Recorded Yet',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF334155),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Record payments against delivered products to start tracking vendor settlement logs.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: PmsTheme.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Center(
-                            child: ElevatedButton.icon(
-                              onPressed: _openRecordPaymentModal,
-                              icon: const Icon(Icons.add),
-                              label: const Text('Record Payment'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF059669),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
+                          const SizedBox(height: 40),
+                          PmsEmptyState(
+                            icon: Icons.receipt_long_outlined,
+                            title: 'No Payments Recorded Yet',
+                            subtitle:
+                                'Record payments against delivered products to start tracking vendor settlement logs.',
+                            actionLabel: 'Record Payment',
+                            onAction: _openRecordPaymentModal,
                           ),
                         ],
                       ),
@@ -198,6 +191,7 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
                   }
 
                   return RefreshIndicator(
+                    color: PmsTheme.primary,
                     onRefresh: () async => _loadPayments(),
                     child: ListView.separated(
                       padding: const EdgeInsets.all(16),
@@ -217,7 +211,7 @@ class _PaymentsTabViewState extends State<PaymentsTabView> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openRecordPaymentModal,
-        backgroundColor: const Color(0xFF059669),
+        backgroundColor: PmsTheme.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text(

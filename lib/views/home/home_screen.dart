@@ -169,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               const FetchPurchaseRequestsEvent(),
             );
           }
-          if (isSuperAdmin || isStoreIncharge || isManager) {
+          if (isSuperAdmin || isStoreIncharge || isManager || isWingIncharge) {
             context.read<PrintOrderBloc>().add(FetchPrintOrders(phone: cleanPhone));
             context.read<PrintOrderBloc>().add(const FetchDeliveryLogsEvent());
           }
@@ -306,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (isSuperAdmin) {
         context.read<UserBloc>().add(RefreshUsersEvent(phone: cleanPhone));
       }
-      if (isSuperAdmin || isManager || isStoreIncharge) {
+      if (isSuperAdmin || isManager || isStoreIncharge || isWingIncharge) {
         context.read<PrintOrderBloc>().add(const FetchDeliveryLogsEvent());
       }
     } else if (isDesigner) {
@@ -426,7 +426,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.deliveryLogs:
-        return (!isDigitalStudioEmployee && (isSuperAdmin || isManager || isStoreIncharge))
+        return (!isDigitalStudioEmployee && (isSuperAdmin || isManager || isStoreIncharge || isWingIncharge))
             ? DeliveryLogsTabView(
                 userProfile: _userProfile,
                 isSuperAdmin: isSuperAdmin,
@@ -834,7 +834,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ],
       ),
       drawer: Drawer(
-        backgroundColor: PmsTheme.background,
+        backgroundColor: Colors.transparent,
         child: SideMenuDrawer(
           selectedMenu: _selectedMenu,
           onMenuSelected: (menu) {

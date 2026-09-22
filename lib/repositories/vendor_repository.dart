@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 
 class VendorRepository {
   final ApiService _apiService;
+  static List<VendorModel>? cachedVendors;
 
   VendorRepository({ApiService? apiService})
     : _apiService = apiService ?? ApiService();
@@ -19,9 +20,11 @@ class VendorRepository {
             : Map<String, dynamic>.from(response.data as Map);
 
         final List<dynamic> dataList = body['data'] as List<dynamic>? ?? [];
-        return dataList
+        final list = dataList
             .map((item) => VendorModel.fromJson(item as Map<String, dynamic>))
             .toList();
+        cachedVendors = list;
+        return list;
       } else {
         throw Exception('Failed to load vendors: ${response.statusCode}');
       }
