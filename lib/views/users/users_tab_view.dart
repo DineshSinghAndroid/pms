@@ -43,9 +43,11 @@ class _UsersTabViewState extends State<UsersTabView> {
   final List<String> _roles = [
     'All',
     'Superadmin',
-    'vendor',
     'manager',
+    'vendor',
     'Digital Studio Incharge',
+    'Digital Store Incharge',
+    'Digital Studio Employee',
     'Designer',
     'Store Incharge',
     'Wing Incharge',
@@ -53,9 +55,11 @@ class _UsersTabViewState extends State<UsersTabView> {
 
   final List<String> _assignableRoles = [
     'Superadmin',
-    'vendor',
     'manager',
+    'vendor',
     'Digital Studio Incharge',
+    'Digital Store Incharge',
+    'Digital Studio Employee',
     'Designer',
     'Store Incharge',
     'Wing Incharge',
@@ -75,7 +79,14 @@ class _UsersTabViewState extends State<UsersTabView> {
     final nameCtrl = TextEditingController(text: user?.name ?? '');
     final phoneCtrl = TextEditingController(text: user?.phone ?? '');
     final emailCtrl = TextEditingController(text: user?.email ?? '');
-    String selectedRole = user?.role ?? 'manager';
+    final initialRole = user?.role ?? 'manager';
+    String selectedRole = _assignableRoles.firstWhere(
+      (r) => r.toLowerCase() == initialRole.toLowerCase(),
+      orElse: () => _assignableRoles.firstWhere(
+        (r) => r == initialRole,
+        orElse: () => 'manager',
+      ),
+    );
     bool isActive = user?.isActive ?? true;
 
     showModalBottomSheet(
@@ -166,11 +177,12 @@ class _UsersTabViewState extends State<UsersTabView> {
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
-                              value: _assignableRoles.contains(selectedRole)
-                                  ? selectedRole
-                                  : _assignableRoles.first,
+                              value: _assignableRoles.firstWhere(
+                                (r) => r.toLowerCase() == selectedRole.toLowerCase(),
+                                orElse: () => _assignableRoles.first,
+                              ),
                               isExpanded: true,
-                              dropdownColor: Color(0xFFFFFFFF),
+                              dropdownColor: const Color(0xFFFFFFFF),
                               style: const TextStyle(
                                 fontSize: 13,
                                 color: PmsTheme.textPrimary,
@@ -542,19 +554,37 @@ class _UsersTabViewState extends State<UsersTabView> {
     switch (role.trim().toLowerCase()) {
       case 'superadmin':
       case 'super admin':
+      case 'super_admin':
+      case 'admin':
         return PmsTheme.primary; // Purple
       case 'vendor':
-        return Color(0xFF059669); // Emerald
+        return const Color(0xFF059669); // Emerald
       case 'manager':
-        return PmsTheme.primary; // Blue
+        return const Color(0xFF2563EB); // Blue
       case 'digital studio incharge':
+      case 'digital_studio_incharge':
         return PmsTheme.teal; // Teal
+      case 'digital store incharge':
+      case 'digital_store_incharge':
+      case 'digital store inchrage':
+        return const Color(0xFF0D9488); // Cyan/Teal
+      case 'digital studio employee':
+      case 'digital_studio_employee':
+      case 'cameraman':
+      case 'video editor':
+      case 'drone operator':
+      case 'photographer':
+        return const Color(0xFF0284C7); // Sky / Cyan Blue
       case 'designer':
-        return Color(0xFFD97706); // Amber
+        return const Color(0xFFD97706); // Amber
       case 'store incharge':
-        return PmsTheme.primary; // Indigo
+      case 'store_incharge':
+        return const Color(0xFF6366F1); // Indigo
       case 'wing incharge':
-        return Color(0xFFEA580C); // Orange
+      case 'wing_incharge':
+      case 'counsellor':
+      case 'counselor':
+        return const Color(0xFFEA580C); // Orange
       default:
         return PmsTheme.textSecondary;
     }
@@ -694,17 +724,49 @@ class _UsersTabViewState extends State<UsersTabView> {
 
               if (state is UserLoaded) {
                 final users = state.users.where((u) {
+                  final uRole = u.role.toLowerCase().trim();
+                  final filterRole = _selectedRoleFilter.toLowerCase().trim();
+
                   final matchesQuery =
                       _searchQuery.isEmpty ||
                       u.name.toLowerCase().contains(_searchQuery) ||
                       u.phone.toLowerCase().contains(_searchQuery) ||
                       (u.email?.toLowerCase().contains(_searchQuery) ??
                           false) ||
-                      u.role.toLowerCase().contains(_searchQuery);
+                      uRole.contains(_searchQuery);
 
-                  final matchesRole =
-                      _selectedRoleFilter == 'All' ||
-                      u.role.toLowerCase() == _selectedRoleFilter.toLowerCase();
+                  bool matchesRole = filterRole == 'all' || uRole == filterRole;
+
+                  if (!matchesRole) {
+                    if (filterRole == 'digital studio employee') {
+                      matchesRole = uRole == 'digital studio employee' ||
+                          uRole == 'digital_studio_employee' ||
+                          uRole == 'cameraman' ||
+                          uRole == 'video editor' ||
+                          uRole == 'drone operator' ||
+                          uRole == 'photographer';
+                    } else if (filterRole == 'digital store incharge') {
+                      matchesRole = uRole == 'digital store incharge' ||
+                          uRole == 'digital_store_incharge' ||
+                          uRole == 'digital store inchrage';
+                    } else if (filterRole == 'wing incharge') {
+                      matchesRole = uRole == 'wing incharge' ||
+                          uRole == 'wing_incharge' ||
+                          uRole == 'counsellor' ||
+                          uRole == 'counselor';
+                    } else if (filterRole == 'digital studio incharge') {
+                      matchesRole = uRole == 'digital studio incharge' ||
+                          uRole == 'digital_studio_incharge';
+                    } else if (filterRole == 'store incharge') {
+                      matchesRole = uRole == 'store incharge' ||
+                          uRole == 'store_incharge';
+                    } else if (filterRole == 'superadmin') {
+                      matchesRole = uRole == 'superadmin' ||
+                          uRole == 'super admin' ||
+                          uRole == 'super_admin' ||
+                          uRole == 'admin';
+                    }
+                  }
 
                   return matchesQuery && matchesRole;
                 }).toList();

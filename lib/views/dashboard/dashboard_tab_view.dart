@@ -56,6 +56,8 @@ class DashboardTabView extends StatelessWidget {
       userProfile?.role.toLowerCase() == 'digital_studio_incharge';
   bool get _isDigitalStudioEmployee =>
       userProfile?.isDigitalStudioEmployee ?? false;
+  bool get _isDigitalStoreIncharge =>
+      userProfile?.isDigitalStoreIncharge ?? false;
   bool get _isStoreIncharge =>
       userProfile?.role == 'Store Incharge' ||
       userProfile?.role.toLowerCase() == 'store incharge' ||
@@ -65,6 +67,7 @@ class DashboardTabView extends StatelessWidget {
 
   String get _roleTitle {
     if (_isSuperAdmin) return 'Super Admin Portal';
+    if (_isDigitalStoreIncharge) return 'Digital Store & Duty Portal';
     if (_isDigitalStudioIncharge) return 'Digital Studio Incharge Portal';
     if (_isDigitalStudioEmployee) return 'Digital Studio Crew Portal';
     if (_isStoreIncharge) return 'Store & Receiving Portal';
@@ -88,7 +91,7 @@ class DashboardTabView extends StatelessWidget {
         .replaceAll(RegExp(r'^\+?91'), '')
         .replaceAll(RegExp(r'\D'), '');
 
-    if (_isDigitalStudioIncharge || _isDigitalStudioEmployee) {
+    if (_isDigitalStudioIncharge || _isDigitalStudioEmployee || _isDigitalStoreIncharge) {
       context.read<DigitalStudioBloc>().add(RefreshDigitalStudioEvent(phone: cleanPhone));
     }
 
@@ -144,6 +147,8 @@ class DashboardTabView extends StatelessWidget {
             // 2. Role-Based Content Sections
             if (_isDesigner)
               _buildDesignerSection(context)
+            else if (_isDigitalStoreIncharge)
+              _buildDigitalStoreInchargeSection(context)
             else if (_isStoreIncharge)
               _buildStoreInchargeSection(context)
             else if (_isWingIncharge)
@@ -171,6 +176,9 @@ class DashboardTabView extends StatelessWidget {
     if (_isDesigner) {
       badgeColor = const Color(0xFFD97706);
       badgeIcon = Icons.brush_rounded;
+    } else if (_isDigitalStoreIncharge) {
+      badgeColor = const Color(0xFF0D9488);
+      badgeIcon = Icons.inventory_rounded;
     } else if (_isStoreIncharge) {
       badgeColor = const Color(0xFF0891B2);
       badgeIcon = Icons.inventory_2_rounded;
@@ -1023,6 +1031,314 @@ class DashboardTabView extends StatelessWidget {
                             color: PmsTheme.textSecondary,
                             size: 20,
                           ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ================= 6.8. DIGITAL STORE INCHARGE SECTION =================
+  Widget _buildDigitalStoreInchargeSection(BuildContext context) {
+    return BlocBuilder<DigitalStudioBloc, DigitalStudioState>(
+      builder: (context, state) {
+        if (state is DigitalStudioLoading) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(color: Color(0xFF0D9488)),
+            ),
+          );
+        }
+
+        int totalAssets = 0;
+        int availableAssets = 0;
+        int inUseAssets = 0;
+        List<DigitalStudioCrewRequestModel> upcomingDuties = [];
+        int todayDutiesCount = 0;
+
+        if (state is DigitalStudioLoaded) {
+          totalAssets = state.assets.length;
+          availableAssets = state.availableAssets.length;
+          inUseAssets = state.assets.where((a) => a.currentStatus == 'assigned').length;
+
+          final now = DateTime.now();
+          final todayStr = DateFormat('yyyy-MM-dd').format(now);
+          todayDutiesCount = state.crewRequests.where((r) {
+            return DateFormat('yyyy-MM-dd').format(r.reportingDateTime) == todayStr;
+          }).length;
+
+          upcomingDuties = List.from(state.crewRequests)
+            ..sort((a, b) => a.reportingDateTime.compareTo(b.reportingDateTime));
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Quick action shortcuts
+            Row(
+              children: [
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'Store Products',
+                    icon: Icons.inventory_2_rounded,
+                    color: const Color(0xFF0D9488),
+                    onTap: () => onNavigate?.call(NavMenu.digitalStudio),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'Duty List',
+                    icon: Icons.assignment_turned_in_rounded,
+                    color: const Color(0xFF2563EB),
+                    onTap: () => onNavigate?.call(NavMenu.digitalStudio),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'Calendar',
+                    icon: Icons.calendar_month_rounded,
+                    color: const Color(0xFF7C3AED),
+                    onTap: () => onNavigate?.call(NavMenu.digitalStudio),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 18),
+
+            // Stat Cards Grid
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    title: 'Store Products',
+                    count: '$totalAssets',
+                    subtitle: '$inUseAssets currently in use',
+                    icon: Icons.devices_other_rounded,
+                    color: const Color(0xFF0D9488),
+                    onTap: () => onNavigate?.call(NavMenu.digitalStudio),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    title: 'Ready Equipment',
+                    count: '$availableAssets',
+                    subtitle: 'Available in store',
+                    icon: Icons.check_circle_outline_rounded,
+                    color: const Color(0xFF059669),
+                    onTap: () => onNavigate?.call(NavMenu.digitalStudio),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    title: 'Today\'s Duties',
+                    count: '$todayDutiesCount',
+                    subtitle: 'Active shoot assignments',
+                    icon: Icons.today_rounded,
+                    color: const Color(0xFF2563EB),
+                    onTap: () => onNavigate?.call(NavMenu.digitalStudio),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    title: 'All Scheduled',
+                    count: '${upcomingDuties.length}',
+                    subtitle: 'Total duty allotments',
+                    icon: Icons.assignment_turned_in_outlined,
+                    color: const Color(0xFF7C3AED),
+                    onTap: () => onNavigate?.call(NavMenu.digitalStudio),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 22),
+
+            // Duty Allotments Header with View All
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.assignment_turned_in_rounded, color: Color(0xFF0D9488), size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Upcoming Duty & Equipment Allotments',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: PmsTheme.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                TextButton(
+                  onPressed: () => onNavigate?.call(NavMenu.digitalStudio),
+                  child: const Text(
+                    'View All',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0D9488),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            if (upcomingDuties.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: PmsTheme.glassSurface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: PmsTheme.glassBorder),
+                ),
+                child: const Center(
+                  child: Text(
+                    'No duty allotments scheduled yet.',
+                    style: TextStyle(
+                      color: PmsTheme.textSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              )
+            else
+              Column(
+                children: upcomingDuties.take(5).map((req) {
+                  final dateFormatted = DateFormat('EEE, d MMM').format(req.reportingDateTime);
+                  final timeFormatted =
+                      '${DateFormat('hh:mm a').format(req.reportingDateTime)} - ${DateFormat('hh:mm a').format(req.eventEndTime)}';
+
+                  return InkWell(
+                    onTap: () => onNavigate?.call(NavMenu.digitalStudio),
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: PmsTheme.glassSurface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF99F6E4).withValues(alpha: 0.6)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFCCFBF1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  dateFormatted,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F766E),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                timeFormatted,
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                req.wing?.name ?? 'General',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFEA580C),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            req.eventName,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: PmsTheme.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+
+                          // Employees count & Instruments count
+                          Row(
+                            children: [
+                              const Icon(Icons.people_alt_outlined, size: 14, color: Color(0xFF2563EB)),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${req.allottedEmployees.length} Employee(s): ${req.allottedEmployees.map((e) => e.name).join(", ")}',
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF334155), fontWeight: FontWeight.w500),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+
+                          if (req.allottedAssets.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: req.allottedAssets.map((asset) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.camera_alt_outlined, size: 11, color: Color(0xFF0D9488)),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        '${asset.name} (${asset.assetCode})',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF334155),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
                         ],
                       ),
                     ),

@@ -8,6 +8,7 @@ import '../../models/user_model.dart';
 import 'digital_studio_assets_sub_tab.dart';
 import 'digital_studio_calendar_sub_tab.dart';
 import 'digital_studio_crew_requests_sub_tab.dart';
+import 'digital_studio_duty_allotments_sub_tab.dart';
 import '../../theme/pms_theme.dart';
 
 class DigitalStudioManagementTabView extends StatefulWidget {
@@ -15,6 +16,7 @@ class DigitalStudioManagementTabView extends StatefulWidget {
   final bool isSuperAdmin;
   final bool isManager;
   final bool isDigitalStudioIncharge;
+  final bool isDigitalStoreIncharge;
   final bool isDesigner;
   final bool isWingIncharge;
 
@@ -24,6 +26,7 @@ class DigitalStudioManagementTabView extends StatefulWidget {
     required this.isSuperAdmin,
     required this.isManager,
     required this.isDigitalStudioIncharge,
+    this.isDigitalStoreIncharge = false,
     required this.isDesigner,
     required this.isWingIncharge,
   });
@@ -43,10 +46,14 @@ class _DigitalStudioManagementTabViewState
       widget.isWingIncharge &&
       !widget.isSuperAdmin &&
       !widget.isManager &&
-      !widget.isDigitalStudioIncharge;
+      !widget.isDigitalStudioIncharge &&
+      !isDigitalStoreIncharge;
 
   bool get isDigitalStudioEmployee =>
       widget.currentUser?.isDigitalStudioEmployee ?? false;
+
+  bool get isDigitalStoreIncharge =>
+      widget.currentUser?.isDigitalStoreIncharge ?? widget.isDigitalStoreIncharge;
 
   @override
   void initState() {
@@ -211,9 +218,11 @@ class _DigitalStudioManagementTabViewState
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isDigitalStudioEmployee
-                                    ? 'My Schedule & Duty'
-                                    : 'Digital Studio Management',
+                                isDigitalStoreIncharge
+                                    ? 'Digital Store & Duty'
+                                    : (isDigitalStudioEmployee
+                                        ? 'My Schedule & Duty'
+                                        : 'Digital Studio Management'),
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -223,9 +232,11 @@ class _DigitalStudioManagementTabViewState
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                isDigitalStudioEmployee
-                                    ? 'Your personal shoot schedule & assigned studio gear'
-                                    : 'Assets lifecycle, schedule calendar & crew allotment',
+                                isDigitalStoreIncharge
+                                    ? 'Store equipment inventory, duty allotments & shoot schedules'
+                                    : (isDigitalStudioEmployee
+                                        ? 'Your personal shoot schedule & assigned studio gear'
+                                        : 'Assets lifecycle, schedule calendar & crew allotment'),
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: PmsTheme.textSecondary,
@@ -294,39 +305,9 @@ class _DigitalStudioManagementTabViewState
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
-                          tabs: isDigitalStudioEmployee
+                          tabs: isDigitalStoreIncharge
                               ? [
-                                  // Tab 0: Requests for Employee
-                                  Tab(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: const [
-                                          Icon(Icons.assignment_turned_in_outlined, size: 15),
-                                          SizedBox(width: 4),
-                                          Text('My Duty Requests'),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  // Tab 1: Calendar for Employee
-                                  Tab(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: const [
-                                          Icon(Icons.calendar_month_outlined, size: 15),
-                                          SizedBox(width: 4),
-                                          Text('My Schedule'),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  // Tab 2: Assigned Assets for Employee
+                                  // Tab 0: Store Products (Digital Store Incharge)
                                   Tab(
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,
@@ -336,49 +317,7 @@ class _DigitalStudioManagementTabViewState
                                         children: [
                                           const Icon(Icons.devices_other_outlined, size: 15),
                                           const SizedBox(width: 4),
-                                          const Text('My Equipment'),
-                                          if (totalAssetsCount > 0) ...[
-                                            const SizedBox(width: 4),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 5,
-                                                vertical: 1.5,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: _currentTabIndex == 2
-                                                    ? PmsTheme.primary.withValues(alpha: 0.1)
-                                                    : PmsTheme.glassBorder,
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                              child: Text(
-                                                '$totalAssetsCount',
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: _currentTabIndex == 2
-                                                      ? PmsTheme.primary
-                                                      : PmsTheme.textSecondary,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ]
-                              : [
-                                  // Tab 0: Assets (Admin / Incharge)
-                                  Tab(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(Icons.devices_other_outlined, size: 15),
-                                          const SizedBox(width: 4),
-                                          const Text('Assets'),
+                                          const Text('Store Products'),
                                           if (totalAssetsCount > 0) ...[
                                             const SizedBox(width: 4),
                                             Container(
@@ -408,7 +347,22 @@ class _DigitalStudioManagementTabViewState
                                       ),
                                     ),
                                   ),
-                                  // Tab 1: Calendar (Admin / Incharge)
+                                  // Tab 1: Duty Allotments (Digital Store Incharge)
+                                  Tab(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                          Icon(Icons.assignment_turned_in_outlined, size: 15),
+                                          SizedBox(width: 4),
+                                          Text('Duty Allotments'),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  // Tab 2: Calendar (Digital Store Incharge)
                                   Tab(
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,
@@ -423,43 +377,173 @@ class _DigitalStudioManagementTabViewState
                                       ),
                                     ),
                                   ),
-                                  // Tab 2: Requests (Admin / Incharge)
-                                  Tab(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(Icons.group_outlined, size: 15),
-                                          const SizedBox(width: 4),
-                                          const Text('Requests'),
-                                          if (pendingRequestsCount > 0) ...[
-                                            const SizedBox(width: 4),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 5,
-                                                vertical: 1.5,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: PmsTheme.error,
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                              child: Text(
-                                                '$pendingRequestsCount',
-                                                style: const TextStyle(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
+                                ]
+                              : (isDigitalStudioEmployee
+                                  ? [
+                                      // Tab 0: Requests for Employee
+                                      Tab(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: const [
+                                              Icon(Icons.assignment_turned_in_outlined, size: 15),
+                                              SizedBox(width: 4),
+                                              Text('My Duty Requests'),
+                                            ],
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                ],
+                                      // Tab 1: Calendar for Employee
+                                      Tab(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: const [
+                                              Icon(Icons.calendar_month_outlined, size: 15),
+                                              SizedBox(width: 4),
+                                              Text('My Schedule'),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      // Tab 2: Assigned Assets for Employee
+                                      Tab(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(Icons.devices_other_outlined, size: 15),
+                                              const SizedBox(width: 4),
+                                              const Text('My Equipment'),
+                                              if (totalAssetsCount > 0) ...[
+                                                const SizedBox(width: 4),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 5,
+                                                    vertical: 1.5,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: _currentTabIndex == 2
+                                                        ? PmsTheme.primary.withValues(alpha: 0.1)
+                                                        : PmsTheme.glassBorder,
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  child: Text(
+                                                    '$totalAssetsCount',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: _currentTabIndex == 2
+                                                          ? PmsTheme.primary
+                                                          : PmsTheme.textSecondary,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ]
+                                  : [
+                                      // Tab 0: Assets (Admin / Incharge)
+                                      Tab(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(Icons.devices_other_outlined, size: 15),
+                                              const SizedBox(width: 4),
+                                              const Text('Assets'),
+                                              if (totalAssetsCount > 0) ...[
+                                                const SizedBox(width: 4),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 5,
+                                                    vertical: 1.5,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: _currentTabIndex == 0
+                                                        ? PmsTheme.primary.withValues(alpha: 0.1)
+                                                        : PmsTheme.glassBorder,
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  child: Text(
+                                                    '$totalAssetsCount',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: _currentTabIndex == 0
+                                                          ? PmsTheme.primary
+                                                          : PmsTheme.textSecondary,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      // Tab 1: Calendar (Admin / Incharge)
+                                      Tab(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: const [
+                                              Icon(Icons.calendar_month_outlined, size: 15),
+                                              SizedBox(width: 4),
+                                              Text('Calendar'),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      // Tab 2: Requests (Admin / Incharge)
+                                      Tab(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(Icons.group_outlined, size: 15),
+                                              const SizedBox(width: 4),
+                                              const Text('Requests'),
+                                              if (pendingRequestsCount > 0) ...[
+                                                const SizedBox(width: 4),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 5,
+                                                    vertical: 1.5,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: PmsTheme.error,
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  child: Text(
+                                                    '$pendingRequestsCount',
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ]),
                         ),
                       ),
                   ],
@@ -471,41 +555,23 @@ class _DigitalStudioManagementTabViewState
                 Expanded(
                   child: TabBarView(
                     controller: _tabController!,
-                    children: isDigitalStudioEmployee
+                    children: isDigitalStoreIncharge
                         ? [
-                            // Tab 0: Requests Queue for Employee (shows assigned tasks + Start Work button)
-                            DigitalStudioCrewRequestsSubTab(
-                              currentUser: widget.currentUser,
-                              isSuperAdmin: widget.isSuperAdmin,
-                              isManager: widget.isManager,
-                              isDigitalStudioIncharge: widget.isDigitalStudioIncharge,
-                              isWingIncharge: widget.isWingIncharge,
-                            ),
-
-                            // Tab 1: Schedule Calendar for Employee
-                            DigitalStudioCalendarSubTab(
-                              currentUser: widget.currentUser,
-                              isSuperAdmin: widget.isSuperAdmin,
-                              isManager: widget.isManager,
-                              isDigitalStudioIncharge: widget.isDigitalStudioIncharge,
-                              isDesigner: widget.isDesigner,
-                            ),
-
-                            // Tab 2: Assigned Assets for Employee
+                            // Tab 0: Store Products / Assets Management
                             DigitalStudioAssetsSubTab(
                               currentUser: widget.currentUser,
                               isSuperAdmin: widget.isSuperAdmin,
                               isManager: widget.isManager,
                               isDigitalStudioIncharge: widget.isDigitalStudioIncharge,
                             ),
-                          ]
-                        : [
-                            // Tab 1: Assets Management
-                            DigitalStudioAssetsSubTab(
+
+                            // Tab 1: Duty Allotments List View
+                            DigitalStudioDutyAllotmentsSubTab(
                               currentUser: widget.currentUser,
                               isSuperAdmin: widget.isSuperAdmin,
                               isManager: widget.isManager,
                               isDigitalStudioIncharge: widget.isDigitalStudioIncharge,
+                              isDigitalStoreIncharge: true,
                             ),
 
                             // Tab 2: Schedule Calendar
@@ -516,16 +582,62 @@ class _DigitalStudioManagementTabViewState
                               isDigitalStudioIncharge: widget.isDigitalStudioIncharge,
                               isDesigner: widget.isDesigner,
                             ),
+                          ]
+                        : (isDigitalStudioEmployee
+                            ? [
+                                // Tab 0: Requests Queue for Employee (shows assigned tasks + Start Work button)
+                                DigitalStudioCrewRequestsSubTab(
+                                  currentUser: widget.currentUser,
+                                  isSuperAdmin: widget.isSuperAdmin,
+                                  isManager: widget.isManager,
+                                  isDigitalStudioIncharge: widget.isDigitalStudioIncharge,
+                                  isWingIncharge: widget.isWingIncharge,
+                                ),
 
-                            // Tab 3: Crew Requests Queue & Allotment
-                            DigitalStudioCrewRequestsSubTab(
-                              currentUser: widget.currentUser,
-                              isSuperAdmin: widget.isSuperAdmin,
-                              isManager: widget.isManager,
-                              isDigitalStudioIncharge: widget.isDigitalStudioIncharge,
-                              isWingIncharge: widget.isWingIncharge,
-                            ),
-                          ],
+                                // Tab 1: Schedule Calendar for Employee
+                                DigitalStudioCalendarSubTab(
+                                  currentUser: widget.currentUser,
+                                  isSuperAdmin: widget.isSuperAdmin,
+                                  isManager: widget.isManager,
+                                  isDigitalStudioIncharge: widget.isDigitalStudioIncharge,
+                                  isDesigner: widget.isDesigner,
+                                ),
+
+                                // Tab 2: Assigned Assets for Employee
+                                DigitalStudioAssetsSubTab(
+                                  currentUser: widget.currentUser,
+                                  isSuperAdmin: widget.isSuperAdmin,
+                                  isManager: widget.isManager,
+                                  isDigitalStudioIncharge: widget.isDigitalStudioIncharge,
+                                ),
+                              ]
+                            : [
+                                // Tab 1: Assets Management
+                                DigitalStudioAssetsSubTab(
+                                  currentUser: widget.currentUser,
+                                  isSuperAdmin: widget.isSuperAdmin,
+                                  isManager: widget.isManager,
+                                  isDigitalStudioIncharge: widget.isDigitalStudioIncharge,
+                                ),
+
+                                // Tab 2: Schedule Calendar
+                                DigitalStudioCalendarSubTab(
+                                  currentUser: widget.currentUser,
+                                  isSuperAdmin: widget.isSuperAdmin,
+                                  isManager: widget.isManager,
+                                  isDigitalStudioIncharge: widget.isDigitalStudioIncharge,
+                                  isDesigner: widget.isDesigner,
+                                ),
+
+                                // Tab 3: Crew Requests Queue & Allotment
+                                DigitalStudioCrewRequestsSubTab(
+                                  currentUser: widget.currentUser,
+                                  isSuperAdmin: widget.isSuperAdmin,
+                                  isManager: widget.isManager,
+                                  isDigitalStudioIncharge: widget.isDigitalStudioIncharge,
+                                  isWingIncharge: widget.isWingIncharge,
+                                ),
+                              ]),
                   ),
                 ),
             ],

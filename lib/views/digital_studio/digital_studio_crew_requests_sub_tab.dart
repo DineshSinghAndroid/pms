@@ -662,7 +662,7 @@ class _DigitalStudioCrewRequestsSubTabState
                 ),
               ],
 
-              if (!req.isCompleted && !req.isCancelled && !req.isInProgress) ...[
+              if (isDigitalStudioEmployee && !req.isCompleted && !req.isCancelled && !req.isInProgress) ...[
                 Builder(
                   builder: (context) {
                     final now = DateTime.now();
@@ -701,7 +701,7 @@ class _DigitalStudioCrewRequestsSubTabState
                           ElevatedButton.icon(
                             onPressed: null,
                             icon: const Icon(Icons.lock_outline_rounded, size: 18),
-                            label: const Text('Start Work'),
+                            label: const Text('Start Work (Locked)'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.grey.shade300,
                               foregroundColor: Colors.grey.shade600,
@@ -711,7 +711,6 @@ class _DigitalStudioCrewRequestsSubTabState
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 14,
                                 vertical: 10,
-
                               ),
                               textStyle: const TextStyle(
                                 fontSize: 12.5,
@@ -726,7 +725,6 @@ class _DigitalStudioCrewRequestsSubTabState
                       );
                     } else {
                       return Column(
-                        
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Container(
@@ -757,7 +755,7 @@ class _DigitalStudioCrewRequestsSubTabState
                           ElevatedButton.icon(
                             onPressed: () => _updateRequestStatus(req, 'in_progress'),
                             icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                            label: const Text('Start Work'),
+                            label: const Text('Start Work (GPS Verify)'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF3B82F6),
                               foregroundColor: Colors.white,
@@ -781,8 +779,7 @@ class _DigitalStudioCrewRequestsSubTabState
                   },
                 ),
               ],
-
-              if (req.isInProgress) ...[
+              if (req.isInProgress && (isDigitalStudioEmployee || canAllot)) ...[
                 ElevatedButton.icon(
                   onPressed: () => _updateRequestStatus(req, 'completed'),
                   icon: const Icon(Icons.check_circle_outline, size: 18),

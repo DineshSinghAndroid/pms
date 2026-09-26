@@ -131,12 +131,14 @@ class _DigitalStudioCalendarSubTabState
   Widget _buildCalendarContent(BuildContext context, DigitalStudioLoaded state) {
     final allSchedules = state.schedules;
 
-    // Automatically check for eligible allotted shoots inside campus to auto-start duty
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _checkAndTriggerAutoStartWork(allSchedules);
-      }
-    });
+    // Automatically check for eligible allotted shoots inside campus to auto-start duty (for Digital Studio Employees only)
+    if (_isDigitalStudioEmployee) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _checkAndTriggerAutoStartWork(allSchedules);
+        }
+      });
+    }
 
     // Events on selected date
     final selectedDayEvents = allSchedules.where((s) {
@@ -1257,8 +1259,8 @@ class _DigitalStudioCalendarSubTabState
             ),
           ],
 
-          // Action Buttons for Allotted & In-Progress Events (Start Work / Mark Completed)
-          if (!event.isCompleted && !event.isCancelled && !event.isInProgress) ...[
+          // Action Buttons for Allotted & In-Progress Events (Start Work only for Digital Studio Employee)
+          if (_isDigitalStudioEmployee && !event.isCompleted && !event.isCancelled && !event.isInProgress) ...[
             Builder(
               builder: (context) {
                 final now = DateTime.now();
@@ -1369,7 +1371,7 @@ class _DigitalStudioCalendarSubTabState
               },
             ),
           ],
-          if (event.isInProgress) ...[
+          if (event.isInProgress && (_isDigitalStudioEmployee || _canManage)) ...[
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
@@ -1794,7 +1796,7 @@ class _DigitalStudioCalendarSubTabState
 
     try {
       final currentUserId = widget.currentUser?.id;
-      if (currentUserId == null) return;
+      if (currentUserId == null || !_isDigitalStudioEmployee) return;
 
       final now = DateTime.now();
 
@@ -1804,7 +1806,7 @@ class _DigitalStudioCalendarSubTabState
         if (_autoStartedRequestIds.contains(s.id)) return false;
 
         final isAssigned = s.allottedEmployees.any((e) => e.id == currentUserId);
-        if (!isAssigned && !_isDigitalStudioEmployee) return false;
+        if (!isAssigned) return false;
 
         // Check 15 min window before reporting time up to event end time
         final startWindow = s.reportingDateTime.subtract(const Duration(minutes: 15));

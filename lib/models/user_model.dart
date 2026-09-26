@@ -79,6 +79,12 @@ class UserModel extends Equatable {
       role == 'Store Incharge' ||
       role.toLowerCase() == 'store incharge' ||
       role.toLowerCase() == 'store_incharge';
+  bool get isDigitalStoreIncharge {
+    final r = role.toLowerCase().trim();
+    return r == 'digital store incharge' ||
+        r == 'digital_store_incharge' ||
+        r == 'digital store inchrage';
+  }
   bool get isDigitalStudioEmployee {
     final r = role.toLowerCase().trim();
     return r == 'digital studio employee' ||
@@ -86,15 +92,24 @@ class UserModel extends Equatable {
         r == 'studio employee' ||
         r == 'cameraman' ||
         r == 'video editor' ||
-        r == 'drone operator';
+        r == 'drone operator' ||
+        r == 'crew member' ||
+        r == 'studio technician' ||
+        r == 'photographer';
   }
-  bool get canCreateStudioAssets => isSuperAdmin || isManager;
-  bool get canManageStudio => isSuperAdmin || isManager || isDigitalStudioIncharge;
+  bool get canCreateStudioAssets =>
+      isSuperAdmin || isManager || isDigitalStoreIncharge;
+  bool get canManageStudio =>
+      isSuperAdmin ||
+      isManager ||
+      isDigitalStudioIncharge ||
+      isDigitalStoreIncharge;
   bool get canViewStudioModule =>
       !isDesigner &&
       (isSuperAdmin ||
           isManager ||
           isDigitalStudioIncharge ||
+          isDigitalStoreIncharge ||
           isWingIncharge ||
           isDigitalStudioEmployee);
 

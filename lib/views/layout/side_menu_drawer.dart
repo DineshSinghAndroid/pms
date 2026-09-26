@@ -79,6 +79,9 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
   bool get isDigitalStudioEmployee =>
       widget.userProfile?.isDigitalStudioEmployee ?? false;
 
+  bool get isDigitalStoreIncharge =>
+      widget.userProfile?.isDigitalStoreIncharge ?? false;
+
   bool get isWingIncharge =>
       widget.userProfile?.isWingIncharge ?? false;
   bool get isStoreIncharge =>
@@ -169,6 +172,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
 
                   // --- SECTION 2: PRINT MANAGEMENT (Expandable) ---
                   if (!isDigitalStudioEmployee &&
+                      !isDigitalStoreIncharge &&
                       (widget.isSuperAdmin ||
                           widget.isDesigner ||
                           isDigitalStudioIncharge ||
@@ -348,10 +352,11 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                       (!widget.isDesigner &&
                           (widget.isSuperAdmin ||
                               isDigitalStudioIncharge ||
+                              isDigitalStoreIncharge ||
                               isWingIncharge ||
                               isManager ||
                               isDigitalStudioEmployee))) ...[
-                    _buildSectionHeader('DIGITAL STUDIO'),
+                    _buildSectionHeader(isDigitalStoreIncharge ? 'DIGITAL STORE' : 'DIGITAL STUDIO'),
                     const SizedBox(height: 4),
                     BlocBuilder<DigitalStudioBloc, DigitalStudioState>(
                       builder: (context, state) {
@@ -360,9 +365,11 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                             : 0;
                         return _buildMenuItem(
                           menu: NavMenu.digitalStudio,
-                          icon: Icons.videocam_outlined,
-                          label: isDigitalStudioEmployee ? 'My Duty Schedule' : 'Digital Studio',
-                          badgeCount: isDigitalStudioEmployee ? null : (count > 0 ? count : null),
+                          icon: isDigitalStoreIncharge ? Icons.inventory_rounded : Icons.videocam_outlined,
+                          label: isDigitalStoreIncharge
+                              ? 'Digital Store & Duty'
+                              : (isDigitalStudioEmployee ? 'My Duty Schedule' : 'Digital Studio'),
+                          badgeCount: (isDigitalStudioEmployee || isDigitalStoreIncharge) ? null : (count > 0 ? count : null),
                         );
                       },
                     ),
@@ -370,7 +377,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   ],
 
                   // --- SECTION 3.5: NEWS TRACKING (Superadmin & Manager only) ---
-                  if (!isDigitalStudioEmployee && (widget.isSuperAdmin || isManager)) ...[
+                  if (!isDigitalStudioEmployee && !isDigitalStoreIncharge && (widget.isSuperAdmin || isManager)) ...[
                     _buildSectionHeader('NEWS TRACKING'),
                     const SizedBox(height: 4),
                     BlocBuilder<NewsTrackingBloc, NewsTrackingState>(
@@ -390,7 +397,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   ],
 
                   // --- SECTION 4: USER MANAGEMENT (Admin only) ---
-                  if (!isDigitalStudioEmployee && widget.isSuperAdmin) ...[
+                  if (!isDigitalStudioEmployee && !isDigitalStoreIncharge && widget.isSuperAdmin) ...[
                     _buildExpandableHeading(
                       title: 'USER MANAGEMENT',
                       color: PmsTheme.primary,

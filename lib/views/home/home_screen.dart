@@ -128,10 +128,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       if (mounted) {
         final isDsEmp = profile?.isDigitalStudioEmployee ?? false;
+        final isDsStore = profile?.isDigitalStoreIncharge ?? false;
         setState(() {
           _userProfile = profile;
           _isLoadingProfile = false;
-          if (isDsEmp) {
+          if (isDsEmp || isDsStore) {
             _selectedMenu = NavMenu.digitalStudio;
           }
         });
@@ -152,8 +153,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         } else if (isVendor) {
           context.read<PrintOrderBloc>().add(FetchPrintOrders(phone: cleanPhone));
           context.read<PaymentBloc>().add(const FetchPaymentsEvent());
-        } else if (isDsEmp) {
-          // Digital studio employee ONLY fetches digital studio data
+        } else if (isDsEmp || isDsStore) {
+          // Digital studio employee & Digital store incharge ONLY fetch digital studio data
           context.read<DigitalStudioBloc>().add(FetchDigitalStudioDataEvent(phone: cleanPhone));
         } else if (isDigitalStudioIncharge) {
           context.read<DigitalStudioBloc>().add(FetchDigitalStudioDataEvent(phone: cleanPhone));
@@ -179,28 +180,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           }
         }
 
-        if (!isDsEmp && !isDesigner && (isSuperAdmin || isManager || isWingIncharge)) {
+        if (!isDsEmp && !isDsStore && !isDesigner && (isSuperAdmin || isManager || isWingIncharge)) {
           context.read<DigitalStudioBloc>().add(FetchDigitalStudioDataEvent(phone: cleanPhone));
         }
 
-        if (!isDsEmp && (isSuperAdmin || isManager)) {
+        if (!isDsEmp && !isDsStore && (isSuperAdmin || isManager)) {
           context.read<NewsTrackingBloc>().add(FetchNewsTrackingDataEvent(phone: cleanPhone));
         }
 
-        if (!isDsEmp && isSuperAdmin) {
+        if (!isDsEmp && !isDsStore && isSuperAdmin) {
           debugPrint('👑 [HomeScreen] SuperAdmin detected. Fetching users directory...');
           context.read<UserBloc>().add(FetchUsersEvent(phone: standardPhone));
         }
 
         // Pre-fetch active designers so the Assign button opens instantly with 0ms delay
         final roleLower = (_userProfile?.role ?? '').toLowerCase().trim();
-        if (!isDsEmp && (isSuperAdmin || isManager || roleLower == 'admin')) {
+        if (!isDsEmp && !isDsStore && (isSuperAdmin || isManager || roleLower == 'admin')) {
           debugPrint('🎨 [HomeScreen] Pre-fetching designers for PR assignment...');
           PurchaseRequestRepository().getDesigners();
         }
 
         // Pre-fetch product types and wings so Create PR opens instantly with 0ms delay
-        if (!isDsEmp && (isSuperAdmin || isManager || isWingIncharge || roleLower == 'admin')) {
+        if (!isDsEmp && !isDsStore && (isSuperAdmin || isManager || isWingIncharge || roleLower == 'admin')) {
           debugPrint('📦 [HomeScreen] Pre-fetching Product Types and Wings for PR creation...');
           context.read<ProductTypeBloc>().add(const FetchProductTypesEvent());
           context.read<WingBloc>().add(const FetchWingsEvent());
@@ -247,6 +248,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _userProfile?.role.toLowerCase() == 'digital_studio_incharge';
   bool get isDigitalStudioEmployee =>
       _userProfile?.isDigitalStudioEmployee ?? false;
+  bool get isDigitalStoreIncharge =>
+      _userProfile?.isDigitalStoreIncharge ?? false;
   bool get isStoreIncharge =>
       _userProfile?.role == 'Store Incharge' ||
       _userProfile?.role.toLowerCase() == 'store incharge' ||
@@ -267,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final phone = widget.user.phoneNumber ?? '';
     final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
 
-    if (isDigitalStudioEmployee) {
+    if (isDigitalStudioEmployee || isDigitalStoreIncharge) {
       context.read<DigitalStudioBloc>().add(RefreshDigitalStudioEvent(phone: cleanPhone));
       _fetchUnreadCount();
       return;
@@ -341,8 +344,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildBody() {
     final effectiveUserPhone = widget.user.phoneNumber ?? _userProfile?.phone ?? '';
 
-    // If Digital Studio Employee, strictly restrict views to Digital Studio and System tabs
-    if (isDigitalStudioEmployee) {
+    // If Digital Studio Employee or Digital Store Incharge, strictly restrict views to Digital Studio and System tabs
+    if (isDigitalStudioEmployee || isDigitalStoreIncharge) {
       switch (_selectedMenu) {
         case NavMenu.digitalStudio:
           return DigitalStudioManagementTabView(
@@ -350,6 +353,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             isSuperAdmin: false,
             isManager: false,
             isDigitalStudioIncharge: false,
+            isDigitalStoreIncharge: isDigitalStoreIncharge,
             isDesigner: false,
             isWingIncharge: false,
           );
@@ -369,6 +373,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             isSuperAdmin: false,
             isManager: false,
             isDigitalStudioIncharge: false,
+            isDigitalStoreIncharge: isDigitalStoreIncharge,
             isDesigner: false,
             isWingIncharge: false,
           );
@@ -389,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           },
         );
       case NavMenu.vendors:
-        return (!isDigitalStudioEmployee && (isSuperAdmin || isManager))
+        return (!isDigitalStudioEmployee && !isDigitalStoreIncharge && (isSuperAdmin || isManager))
             ? const VendorsTabView()
             : DashboardTabView(
                 isSuperAdmin: isSuperAdmin,
@@ -399,7 +404,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.purchaseRequests:
-        return (!isDigitalStudioIncharge && !isDigitalStudioEmployee)
+        return (!isDigitalStudioIncharge && !isDigitalStudioEmployee && !isDigitalStoreIncharge)
             ? PurchaseRequestsTabView(
                 isSuperAdmin: isSuperAdmin,
                 currentUser: _userProfile,
@@ -412,7 +417,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.printOrders:
-        return (!isDigitalStudioIncharge && !isDigitalStudioEmployee && (isSuperAdmin || isStoreIncharge || isManager || isDesigner || _userProfile?.role.toLowerCase() == 'vendor'))
+        return (!isDigitalStudioIncharge && !isDigitalStudioEmployee && !isDigitalStoreIncharge && (isSuperAdmin || isStoreIncharge || isManager || isDesigner || _userProfile?.role.toLowerCase() == 'vendor'))
             ? PrintOrdersTabView(
                 isSuperAdmin: isSuperAdmin || isStoreIncharge || isManager,
                 isDesigner: isDesigner,
@@ -426,7 +431,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.deliveryLogs:
-        return (!isDigitalStudioEmployee && (isSuperAdmin || isManager || isStoreIncharge || isWingIncharge))
+        return (!isDigitalStudioEmployee && !isDigitalStoreIncharge && (isSuperAdmin || isManager || isStoreIncharge || isWingIncharge))
             ? DeliveryLogsTabView(
                 userProfile: _userProfile,
                 isSuperAdmin: isSuperAdmin,
@@ -439,7 +444,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.payments:
-        return (!isDigitalStudioEmployee && (isSuperAdmin || isManager))
+        return (!isDigitalStudioEmployee && !isDigitalStoreIncharge && (isSuperAdmin || isManager))
             ? PaymentsTabView(
                 currentUser: _userProfile,
                 isSuperAdmin: isSuperAdmin,
@@ -452,7 +457,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
       case NavMenu.postOrders:
-        return (!isDigitalStudioEmployee && (isSuperAdmin || isDigitalStudioIncharge || isDesigner || isManager))
+        return (!isDigitalStudioEmployee && !isDigitalStoreIncharge && (isSuperAdmin || isDigitalStudioIncharge || isDesigner || isManager))
             ? PostOrdersTabView(
                 isSuperAdmin: isSuperAdmin || isDigitalStudioIncharge || isManager,
                 isDesigner: isDesigner,
@@ -470,6 +475,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 (isSuperAdmin ||
                     isManager ||
                     isDigitalStudioIncharge ||
+                    isDigitalStoreIncharge ||
                     isWingIncharge ||
                     (_userProfile?.isDigitalStudioEmployee ?? false)))
             ? DigitalStudioManagementTabView(
@@ -477,6 +483,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 isSuperAdmin: isSuperAdmin,
                 isManager: isManager,
                 isDigitalStudioIncharge: isDigitalStudioIncharge,
+                isDigitalStoreIncharge: isDigitalStoreIncharge,
                 isDesigner: isDesigner,
                 isWingIncharge: isWingIncharge,
               )
@@ -640,6 +647,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     } else if (isManager) {
       roleTitle = 'Manager';
       roleColor = PmsTheme.primary;
+    } else if (isDigitalStoreIncharge) {
+      roleTitle = 'Digital Store Incharge';
+      roleColor = const Color(0xFF0D9488);
     } else if (isDigitalStudioIncharge) {
       roleTitle = 'Digital Studio Incharge';
       roleColor = PmsTheme.secondary;
@@ -668,7 +678,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ? _userProfile!.name.trim()
         : (isSuperAdmin ? 'Super Admin' : roleTitle);
 
-    final defaultHomeMenu = isDigitalStudioEmployee ? NavMenu.digitalStudio : NavMenu.dashboard;
+    final defaultHomeMenu = (isDigitalStudioEmployee || isDigitalStoreIncharge) ? NavMenu.digitalStudio : NavMenu.dashboard;
 
     return PopScope(
       canPop: false,
@@ -754,9 +764,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   Text(
                     isDesigner
                         ? 'PMS Designer'
-                        : (isDigitalStudioEmployee
-                            ? 'PMS Digital Studio'
-                            : 'PMS Admin'),
+                        : (isDigitalStoreIncharge
+                            ? 'PMS Store & Duty'
+                            : (isDigitalStudioEmployee
+                                ? 'PMS Digital Studio'
+                                : 'PMS Admin')),
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
