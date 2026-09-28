@@ -180,13 +180,28 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
       }
     }
 
-    if (allProductTypes.isEmpty || availableWings.isEmpty) {
+    List<ProductTypeModel> availableProductTypes = allProductTypes;
+    if (widget.currentUser?.isWingIncharge == true) {
+      final assignedCatIds =
+          widget.currentUser!.assignedCategories.map((c) => c.id).toSet();
+      if (assignedCatIds.isNotEmpty) {
+        availableProductTypes = allProductTypes
+            .where((pt) =>
+                assignedCatIds.contains(pt.categoryId) ||
+                (pt.category != null && assignedCatIds.contains(pt.category!.id)))
+            .toList();
+      }
+    }
+
+    if (availableProductTypes.isEmpty || availableWings.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             widget.currentUser?.isWingIncharge == true && availableWings.isEmpty
                 ? 'No assigned wings found for your Wing Incharge account. Please contact Super Admin.'
-                : 'Unable to load Product Types or Wings from server. Please check internet connection.',
+                : widget.currentUser?.isWingIncharge == true && availableProductTypes.isEmpty
+                    ? 'No products found matching your assigned categories. Please contact Super Admin.'
+                    : 'Unable to load Product Types or Wings from server. Please check internet connection.',
           ),
           backgroundColor: const Color(0xFFDC2626),
           behavior: SnackBarBehavior.floating,
@@ -203,7 +218,7 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (modalCtx) => _CreatePurchaseRequestSheet(
-        allProductTypes: allProductTypes,
+        allProductTypes: availableProductTypes,
         availableWings: availableWings,
         currentUser: widget.currentUser,
       ),
@@ -1521,9 +1536,9 @@ class _CreatePurchaseRequestSheetState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '1. Select Product to Add (Search from 614 Master Items) *',
-                    style: TextStyle(
+                  Text(
+                    '1. Select Product to Add (Search from ${widget.allProductTypes.length} Master Items) *',
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: PmsTheme.primary,

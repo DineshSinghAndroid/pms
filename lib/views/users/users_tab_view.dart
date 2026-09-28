@@ -6,8 +6,12 @@ import '../../bloc/user/user_event.dart';
 import '../../bloc/user/user_state.dart';
 import '../../bloc/wing/wing_bloc.dart';
 import '../../bloc/wing/wing_state.dart';
+import '../../bloc/category/category_bloc.dart';
+import '../../bloc/category/category_event.dart';
+import '../../bloc/category/category_state.dart';
 import '../../models/user_model.dart';
 import '../../models/wing_model.dart';
+import '../../models/category_model.dart';
 import '../../theme/pms_theme.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/pms_status_chip.dart';
@@ -75,6 +79,13 @@ class _UsersTabViewState extends State<UsersTabView> {
     final wingState = context.read<WingBloc>().state;
     final allWings = wingState is WingLoaded ? wingState.wings : <WingModel>[];
     List<int> selectedWingIds = user?.assignedWings.map((w) => w.id).toList() ?? [];
+
+    final catState = context.read<CategoryBloc>().state;
+    final allCategories = catState is CategoryLoaded ? catState.categories : <CategoryModel>[];
+    List<int> selectedCategoryIds = user?.assignedCategories.map((c) => c.id).toList() ?? [];
+    if (catState is! CategoryLoaded) {
+      context.read<CategoryBloc>().add(const RefreshCategoriesEvent());
+    }
 
     final nameCtrl = TextEditingController(text: user?.name ?? '');
     final phoneCtrl = TextEditingController(text: user?.phone ?? '');
@@ -289,6 +300,96 @@ class _UsersTabViewState extends State<UsersTabView> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Assigned Category(ies) *',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF166534),
+                                  ),
+                                ),
+                                Text(
+                                  'Multi-select allowed',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFF16A34A),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Select categories this Wing Incharge can view and choose products from during PR creation.',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: PmsTheme.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (allCategories.isEmpty)
+                              const Text(
+                                'No categories available.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: PmsTheme.textSecondary,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              )
+                            else
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                children: allCategories.map((c) {
+                                  final isSelected = selectedCategoryIds.contains(c.id);
+                                  return FilterChip(
+                                    label: Text(
+                                      c.name,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                        color: isSelected ? Colors.white : PmsTheme.textPrimary,
+                                      ),
+                                    ),
+                                    selected: isSelected,
+                                    selectedColor: const Color(0xFF16A34A),
+                                    backgroundColor: PmsTheme.glassSurface,
+                                    checkmarkColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      side: BorderSide(
+                                        color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFCBD5E1),
+                                      ),
+                                    ),
+                                    onSelected: (selected) {
+                                      setModalState(() {
+                                        if (selected) {
+                                          selectedCategoryIds.add(c.id);
+                                        } else {
+                                          selectedCategoryIds.remove(c.id);
+                                        }
+                                      });
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                          ],
+                        ),
+                      ),
                     ],
 
                     const SizedBox(height: 14),
@@ -383,6 +484,7 @@ class _UsersTabViewState extends State<UsersTabView> {
 
                         if (selectedRole == 'Wing Incharge') {
                           payload['wing_ids'] = selectedWingIds;
+                          payload['category_ids'] = selectedCategoryIds;
                         }
 
                         if (user != null) {
@@ -957,6 +1059,20 @@ class _UsersTabViewState extends State<UsersTabView> {
                   label: w.name,
                   color: PmsTheme.teal,
                   icon: Icons.apartment_rounded,
+                );
+              }).toList(),
+            ),
+          ],
+          if (user.assignedCategories.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: user.assignedCategories.map((c) {
+                return PmsStatusChip(
+                  label: c.name,
+                  color: const Color(0xFF16A34A),
+                  icon: Icons.category_rounded,
                 );
               }).toList(),
             ),

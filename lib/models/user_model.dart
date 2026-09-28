@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'wing_model.dart';
+import 'category_model.dart';
 
 class UserModel extends Equatable {
   final int id;
@@ -9,6 +10,7 @@ class UserModel extends Equatable {
   final String role;
   final bool isActive;
   final List<WingModel> assignedWings;
+  final List<CategoryModel> assignedCategories;
   final DateTime? createdAt;
 
   const UserModel({
@@ -19,6 +21,7 @@ class UserModel extends Equatable {
     required this.role,
     required this.isActive,
     this.assignedWings = const [],
+    this.assignedCategories = const [],
     this.createdAt,
   });
 
@@ -38,6 +41,13 @@ class UserModel extends Equatable {
               ?.map((w) => WingModel.fromJson(w as Map<String, dynamic>))
               .toList() ??
           const [],
+      assignedCategories: (json['assigned_categories'] as List<dynamic>?)
+              ?.map((c) => CategoryModel.fromJson(c as Map<String, dynamic>))
+              .toList() ??
+          (json['assignedCategories'] as List<dynamic>?)
+              ?.map((c) => CategoryModel.fromJson(c as Map<String, dynamic>))
+              .toList() ??
+          const [],
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
@@ -53,6 +63,7 @@ class UserModel extends Equatable {
       'role': role,
       'is_active': isActive,
       'assigned_wings': assignedWings.map((w) => w.toJson()).toList(),
+      'assigned_categories': assignedCategories.map((c) => c.toJson()).toList(),
       'created_at': createdAt?.toIso8601String(),
     };
   }
@@ -122,6 +133,7 @@ class UserModel extends Equatable {
     role,
     isActive,
     assignedWings,
+    assignedCategories,
     createdAt,
   ];
 }
