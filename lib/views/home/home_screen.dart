@@ -21,6 +21,9 @@ import '../../bloc/digital_studio/digital_studio_bloc.dart';
 import '../../bloc/digital_studio/digital_studio_event.dart';
 import '../../bloc/news_tracking/news_tracking_bloc.dart';
 import '../../bloc/news_tracking/news_tracking_event.dart';
+import '../../bloc/hoarding/hoarding_bloc.dart';
+import '../../bloc/hoarding/hoarding_event.dart';
+import '../hoarding/hoarding_dashboard_tab_view.dart';
 import '../../models/user_model.dart';
 import '../../repositories/user_repository.dart';
 import '../../repositories/purchase_request_repository.dart';
@@ -134,6 +137,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _isLoadingProfile = false;
           if (isDsEmp || isDsStore) {
             _selectedMenu = NavMenu.digitalStudio;
+          } else if (profile?.isHoardingVendor ?? false) {
+            _selectedMenu = NavMenu.hoardingManagement;
           }
         });
 
@@ -159,6 +164,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         } else if (isDigitalStudioIncharge) {
           context.read<DigitalStudioBloc>().add(FetchDigitalStudioDataEvent(phone: cleanPhone));
           context.read<PurchaseRequestBloc>().add(FetchPurchaseRequestsEvent(phone: cleanPhone));
+        } else if (profile?.isHoardingVendor ?? false) {
+          // Hoarding Vendor only accesses hoarding sites
+          context.read<HoardingBloc>().add(const FetchHoardingDataEvent());
         } else {
           // Admins, Managers, Wing Incharges, Store Incharges
           if (isWingIncharge) {
@@ -180,11 +188,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           }
         }
 
-        if (!isDsEmp && !isDsStore && !isDesigner && (isSuperAdmin || isManager || isWingIncharge)) {
+        if (!isDsEmp && !isDsStore && !isDesigner && !(profile?.isHoardingVendor ?? false) && (isSuperAdmin || isManager || isWingIncharge)) {
           context.read<DigitalStudioBloc>().add(FetchDigitalStudioDataEvent(phone: cleanPhone));
         }
 
-        if (!isDsEmp && !isDsStore && (isSuperAdmin || isManager)) {
+        if (!isDsEmp && !isDsStore && !(profile?.isHoardingVendor ?? false) && (isSuperAdmin || isManager)) {
           context.read<NewsTrackingBloc>().add(FetchNewsTrackingDataEvent(phone: cleanPhone));
         }
 
@@ -201,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
 
         // Pre-fetch product types and wings so Create PR opens instantly with 0ms delay
-        if (!isDsEmp && !isDsStore && (isSuperAdmin || isManager || isWingIncharge || roleLower == 'admin')) {
+        if (!isDsEmp && !isDsStore && (isSuperAdmin || isManager || isWingIncharge || isStoreIncharge || roleLower == 'admin')) {
           debugPrint('📦 [HomeScreen] Pre-fetching Product Types and Wings for PR creation...');
           context.read<ProductTypeBloc>().add(const FetchProductTypesEvent());
           context.read<WingBloc>().add(const FetchWingsEvent());
@@ -256,10 +264,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _userProfile?.role.toLowerCase() == 'store_incharge';
   bool get isWingIncharge => _userProfile?.isWingIncharge ?? false;
   bool get isVendor => _userProfile?.role.toLowerCase() == 'vendor';
+  bool get isHoardingVendor => _userProfile?.isHoardingVendor ?? false;
 
   void _onMenuSelected(NavMenu menu) {
     setState(() {
-      _selectedMenu = menu;
+      if (isHoardingVendor && menu == NavMenu.dashboard) {
+        _selectedMenu = NavMenu.hoardingManagement;
+      } else {
+        _selectedMenu = menu;
+      }
     });
     if (menu == NavMenu.dashboard) {
       _checkAppUpdate();
@@ -272,6 +285,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     if (isDigitalStudioEmployee || isDigitalStoreIncharge) {
       context.read<DigitalStudioBloc>().add(RefreshDigitalStudioEvent(phone: cleanPhone));
+      _fetchUnreadCount();
+      return;
+    }
+
+    if (isHoardingVendor) {
+      context.read<HoardingBloc>().add(const RefreshHoardingDataEvent());
       _fetchUnreadCount();
       return;
     }
@@ -323,6 +342,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     } else {
       context.read<VendorBloc>().add(const RefreshVendorsEvent());
       context.read<PrintOrderBloc>().add(FetchPrintOrders(phone: cleanPhone));
+    }
+    if (isSuperAdmin || isManager || (_userProfile?.isHoardingVendor ?? false)) {
+      context.read<HoardingBloc>().add(const RefreshHoardingDataEvent());
     }
     _fetchUnreadCount();
   }
@@ -376,6 +398,30 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             isDigitalStoreIncharge: isDigitalStoreIncharge,
             isDesigner: false,
             isWingIncharge: false,
+          );
+      }
+    }
+
+    // If Hoarding Vendor, strictly restrict views to Hoarding Management and System tabs
+    if (isHoardingVendor) {
+      switch (_selectedMenu) {
+        case NavMenu.hoardingManagement:
+          return HoardingDashboardTabView(
+            currentUser: _userProfile,
+          );
+        case NavMenu.settings:
+          return SettingsTabView(
+            isSuperAdmin: false,
+            isAdmin: false,
+            userPhone: effectiveUserPhone,
+          );
+        case NavMenu.privacyPolicy:
+          return const LegalDocTabView(type: LegalDocType.privacyPolicy);
+        case NavMenu.termsAndConditions:
+          return const LegalDocTabView(type: LegalDocType.termsAndConditions);
+        default:
+          return HoardingDashboardTabView(
+            currentUser: _userProfile,
           );
       }
     }
@@ -501,6 +547,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 isSuperAdmin: isSuperAdmin,
                 userPhone: effectiveUserPhone,
               )
+            : DashboardTabView(
+                isSuperAdmin: isSuperAdmin,
+                isDesigner: isDesigner,
+                userProfile: _userProfile,
+                userPhone: effectiveUserPhone,
+                onNavigate: (m) => setState(() => _selectedMenu = m),
+              );
+      case NavMenu.hoardingManagement:
+        return (_userProfile?.canAccessHoarding ?? false)
+            ? HoardingDashboardTabView(currentUser: _userProfile)
             : DashboardTabView(
                 isSuperAdmin: isSuperAdmin,
                 isDesigner: isDesigner,
@@ -678,7 +734,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ? _userProfile!.name.trim()
         : (isSuperAdmin ? 'Super Admin' : roleTitle);
 
-    final defaultHomeMenu = (isDigitalStudioEmployee || isDigitalStoreIncharge) ? NavMenu.digitalStudio : NavMenu.dashboard;
+    final isHoardingVendor = _userProfile?.isHoardingVendor ?? false;
+    final defaultHomeMenu = (isDigitalStudioEmployee || isDigitalStoreIncharge)
+        ? NavMenu.digitalStudio
+        : (isHoardingVendor ? NavMenu.hoardingManagement : NavMenu.dashboard);
 
     return PopScope(
       canPop: false,
@@ -762,13 +821,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    isDesigner
-                        ? 'PMS Designer'
-                        : (isDigitalStoreIncharge
-                            ? 'PMS Store & Duty'
-                            : (isDigitalStudioEmployee
-                                ? 'PMS Digital Studio'
-                                : 'PMS Admin')),
+                    displayName,
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
@@ -776,28 +829,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       color: PmsTheme.textPrimary,
                       height: 1.1,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 3),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          displayName,
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: PmsTheme.textSecondary,
-                            height: 1.1,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      PmsStatusChip(label: roleTitle, color: roleColor),
-                    ],
-                  ),
+                  PmsStatusChip(label: roleTitle, color: roleColor),
                 ],
               ),
             ),

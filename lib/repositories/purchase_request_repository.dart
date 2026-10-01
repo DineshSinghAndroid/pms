@@ -154,6 +154,10 @@ class PurchaseRequestRepository {
       final response = await _apiService.client.post(
         '/api/purchase-requests',
         data: payload,
+        options: Options(
+          sendTimeout: const Duration(seconds: 120),
+          receiveTimeout: const Duration(seconds: 120),
+        ),
       );
 
       if ((response.statusCode == 200 || response.statusCode == 201) &&

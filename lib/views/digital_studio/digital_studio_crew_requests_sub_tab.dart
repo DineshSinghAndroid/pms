@@ -1143,9 +1143,15 @@ class _DigitalStudioCrewRequestsSubTabState
     String crewQuery = '';
     String assetQuery = '';
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (dialogCtx) => StatefulBuilder(
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetCtx) => StatefulBuilder(
         builder: (context, setDialogState) {
           bool matchesCrew(UserModel member) {
             if (crewQuery.isEmpty) return true;
@@ -1167,348 +1173,624 @@ class _DigitalStudioCrewRequestsSubTabState
           final visibleBusyAssets =
               busyAssetsList.where(matchesAsset).toList();
 
-          return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text('Allot Crew & Assets: ${req.eventName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: PmsTheme.bgSoft,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.schedule, size: 14, color: PmsTheme.textSecondary),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                '${DateFormat('dd MMM, hh:mm a').format(req.reportingDateTime)} - ${DateFormat('hh:mm a').format(req.eventEndTime)}',
-                                style: const TextStyle(fontSize: 12, color: PmsTheme.textPrimary, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
+          return DefaultTabController(
+            length: 2,
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.94,
+              child: Scaffold(
+                backgroundColor: Colors.white,
+                resizeToAvoidBottomInset: true,
+                body: Column(
+                  children: [
+                    // Top drag handle
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 4,
+                        margin: const EdgeInsets.only(top: 10, bottom: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Required Crew Count: ${req.requiredCrewCount}',
-                          style: const TextStyle(fontSize: 11, color: PmsTheme.textSecondary, fontWeight: FontWeight.w600),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
 
-                  // 1. Crew Selection Section
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Select Crew *',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                      ),
-                      if (busyCrew.isNotEmpty)
-                        GestureDetector(
-                          onTap: () => setDialogState(() => showBusyCrew = !showBusyCrew),
-                          child: Text(
-                            showBusyCrew ? 'Hide Occupied (${busyCrew.length})' : 'Show Occupied (${busyCrew.length})',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: showBusyCrew ? Colors.indigo : Colors.grey.shade600,
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  if (busyCrew.isNotEmpty && !showBusyCrew)
+                    // Header
                     Padding(
-                      padding: const EdgeInsets.only(top: 4, bottom: 2),
-                      child: Text(
-                        'ℹ️ ${busyCrew.length} crew member(s) hidden (already allotted to concurrent events)',
-                        style: TextStyle(fontSize: 10, color: Colors.orange.shade800, fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    onChanged: (val) => setDialogState(
-                      () => crewQuery = val.trim().toLowerCase(),
-                    ),
-                    decoration: const InputDecoration(
-                      hintText: 'Search crew by name or phone...',
-                      prefixIcon: Icon(Icons.search_rounded, size: 18),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 160,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: (visibleCrew.isEmpty && (!showBusyCrew || visibleBusyCrew.isEmpty))
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Text(
-                                busyCrew.isNotEmpty
-                                    ? '⚠️ All crew members are allotted to concurrent events during this time slot.'
-                                    : 'No crew members available',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: busyCrew.isNotEmpty ? Colors.red.shade700 : Colors.grey,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          )
-                        : ListView(
-                            children: [
-                              ...visibleCrew.map((member) {
-                                final isSelected = selectedEmployees.contains(member.id);
-                                return CheckboxListTile(
-                                  dense: true,
-                                  title: Text(member.name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                                  subtitle: Text(member.phone, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                                  value: isSelected,
-                                  onChanged: (val) {
-                                    setDialogState(() {
-                                      if (val == true) {
-                                        selectedEmployees.add(member.id);
-                                      } else {
-                                        selectedEmployees.remove(member.id);
-                                      }
-                                    });
-                                  },
-                                );
-                              }),
-                              if (showBusyCrew && visibleBusyCrew.isNotEmpty) ...[
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                  color: Colors.red.shade50,
-                                  child: Text(
-                                    'Occupied / Allotted to Other Events (${visibleBusyCrew.length})',
-                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red.shade800),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Allot Crew & Assets',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: PmsTheme.textPrimary,
                                   ),
                                 ),
-                                ...visibleBusyCrew.map((member) {
-                                  return Opacity(
-                                    opacity: 0.6,
-                                    child: CheckboxListTile(
-                                      dense: true,
-                                      title: Text(
-                                        member.name,
-                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey),
-                                      ),
-                                      subtitle: Text(
-                                        'Allotted to: "${busyCrewMap[member.id]}"',
-                                        style: TextStyle(fontSize: 10, color: Colors.red.shade700, fontWeight: FontWeight.w600),
-                                      ),
-                                      value: false,
-                                      onChanged: null,
-                                    ),
-                                  );
-                                }),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${req.eventName} (${req.wing?.name ?? "Wing"})',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: PmsTheme.primary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ],
-                            ],
-                          ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // 2. Asset Selection Section
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Select Equipment & Assets',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                      ),
-                      if (busyAssetsList.isNotEmpty)
-                        GestureDetector(
-                          onTap: () => setDialogState(() => showBusyAssets = !showBusyAssets),
-                          child: Text(
-                            showBusyAssets ? 'Hide Occupied (${busyAssetsList.length})' : 'Show Occupied (${busyAssetsList.length})',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: showBusyAssets ? Colors.indigo : Colors.grey.shade600,
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                  if (busyAssetsList.isNotEmpty && !showBusyAssets)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4, bottom: 2),
-                      child: Text(
-                        'ℹ️ ${busyAssetsList.length} asset(s) hidden (already allotted to concurrent events)',
-                        style: TextStyle(fontSize: 10, color: Colors.orange.shade800, fontWeight: FontWeight.w500),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            tooltip: 'Close',
+                            onPressed: () => Navigator.pop(bottomSheetCtx),
+                          ),
+                        ],
                       ),
                     ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    onChanged: (val) => setDialogState(
-                      () => assetQuery = val.trim().toLowerCase(),
-                    ),
-                    decoration: const InputDecoration(
-                      hintText: 'Search equipment by name or code...',
-                      prefixIcon: Icon(Icons.search_rounded, size: 18),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 160,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: (visibleAssets.isEmpty && (!showBusyAssets || visibleBusyAssets.isEmpty))
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Text(
-                                busyAssetsList.isNotEmpty
-                                    ? '⚠️ All matching assets are allotted to concurrent events during this time slot.'
-                                    : 'No assets available',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: busyAssetsList.isNotEmpty ? Colors.red.shade700 : Colors.grey,
-                                  fontWeight: FontWeight.w600,
-                                ),
+
+                    // Event Time & Requirement Summary Banner
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: PmsTheme.bgSoft,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: PmsTheme.glassBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.schedule, size: 16, color: PmsTheme.primary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${DateFormat('dd MMM, hh:mm a').format(req.reportingDateTime)} - ${DateFormat('hh:mm a').format(req.eventEndTime)}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: PmsTheme.textPrimary,
                               ),
                             ),
-                          )
-                        : ListView(
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: selectedEmployees.length >= req.requiredCrewCount
+                                  ? PmsTheme.success.withOpacity(0.15)
+                                  : Colors.orange.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Crew: ${selectedEmployees.length}/${req.requiredCrewCount}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: selectedEmployees.length >= req.requiredCrewCount
+                                    ? PmsTheme.success
+                                    : Colors.orange.shade800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Segmented Tabs
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: TabBar(
+                        labelColor: Colors.white,
+                        unselectedLabelColor: PmsTheme.textSecondary,
+                        indicator: BoxDecoration(
+                          color: PmsTheme.primary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        dividerColor: Colors.transparent,
+                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        tabs: [
+                          Tab(
+                            icon: const Icon(Icons.people_alt_outlined, size: 18),
+                            text: 'Crew Members (${selectedEmployees.length})',
+                          ),
+                          Tab(
+                            icon: const Icon(Icons.videocam_outlined, size: 18),
+                            text: 'Equipment (${selectedAssets.length})',
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Tab Views
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          // Tab 1: Crew Members
+                          Column(
                             children: [
-                              ...visibleAssets.map((asset) {
-                                final isSelected = selectedAssets.contains(asset.id);
-                                return CheckboxListTile(
-                                  dense: true,
-                                  title: Text('${asset.name} (${asset.assetCode})', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                                  subtitle: Text('${asset.category} · ${asset.currentStatus}', style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                                  value: isSelected,
-                                  onChanged: (val) {
-                                    setDialogState(() {
-                                      if (val == true) {
-                                        selectedAssets.add(asset.id);
-                                      } else {
-                                        selectedAssets.remove(asset.id);
-                                      }
-                                    });
-                                  },
-                                );
-                              }),
-                              if (showBusyAssets && visibleBusyAssets.isNotEmpty) ...[
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                  color: Colors.red.shade50,
-                                  child: Text(
-                                    'Occupied Assets (${visibleBusyAssets.length})',
-                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red.shade800),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+                                child: TextField(
+                                  onChanged: (val) => setDialogState(() => crewQuery = val.trim().toLowerCase()),
+                                  decoration: InputDecoration(
+                                    hintText: 'Search crew by name or phone...',
+                                    prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                                    suffixIcon: crewQuery.isNotEmpty
+                                        ? IconButton(
+                                            icon: const Icon(Icons.clear, size: 18),
+                                            onPressed: () => setDialogState(() => crewQuery = ''),
+                                          )
+                                        : null,
+                                    isDense: true,
+                                    filled: true,
+                                    fillColor: Colors.grey.shade50,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide(color: Colors.grey.shade300),
+                                    ),
                                   ),
                                 ),
-                                ...visibleBusyAssets.map((asset) {
-                                  return Opacity(
-                                    opacity: 0.6,
-                                    child: CheckboxListTile(
-                                      dense: true,
-                                      title: Text(
-                                        '${asset.name} (${asset.assetCode})',
-                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey),
+                              ),
+                              if (busyCrew.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  child: InkWell(
+                                    onTap: () => setDialogState(() => showBusyCrew = !showBusyCrew),
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: showBusyCrew ? Colors.orange.shade50 : Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: showBusyCrew ? Colors.orange.shade200 : Colors.grey.shade300,
+                                        ),
                                       ),
-                                      subtitle: Text(
-                                        'Allotted to: "${busyAssetMap[asset.id]}"',
-                                        style: TextStyle(fontSize: 10, color: Colors.red.shade700, fontWeight: FontWeight.w600),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            showBusyCrew ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                            size: 16,
+                                            color: showBusyCrew ? Colors.orange.shade900 : Colors.grey.shade700,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              showBusyCrew
+                                                  ? 'Occupied crew members are visible (${busyCrew.length})'
+                                                  : '${busyCrew.length} occupied crew hidden (allotted to other events)',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: showBusyCrew ? Colors.orange.shade900 : Colors.grey.shade700,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            showBusyCrew ? 'Hide' : 'Show',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: showBusyCrew ? Colors.orange.shade900 : PmsTheme.primary,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      value: false,
-                                      onChanged: null,
                                     ),
-                                  );
-                                }),
-                              ],
+                                  ),
+                                ),
+                              Expanded(
+                                child: (visibleCrew.isEmpty && (!showBusyCrew || visibleBusyCrew.isEmpty))
+                                    ? Center(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(24),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(Icons.person_off_outlined, size: 48, color: Colors.grey.shade400),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                busyCrew.isNotEmpty
+                                                    ? 'All matching crew members are allotted to concurrent events.'
+                                                    : 'No crew members found',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    : ListView(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                        children: [
+                                          ...visibleCrew.map((member) {
+                                            final isSelected = selectedEmployees.contains(member.id);
+                                            return Card(
+                                              margin: const EdgeInsets.only(bottom: 6),
+                                              elevation: isSelected ? 1 : 0,
+                                              color: isSelected ? PmsTheme.primary.withOpacity(0.06) : Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(10),
+                                                side: BorderSide(
+                                                  color: isSelected ? PmsTheme.primary : Colors.grey.shade200,
+                                                  width: isSelected ? 1.5 : 1,
+                                                ),
+                                              ),
+                                              child: CheckboxListTile(
+                                                dense: false,
+                                                value: isSelected,
+                                                activeColor: PmsTheme.primary,
+                                                title: Text(
+                                                  member.name,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                                  ),
+                                                ),
+                                                subtitle: Text(
+                                                  '${member.role.isNotEmpty ? member.role : "Crew"} · ${member.phone}',
+                                                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                                ),
+                                                onChanged: (val) {
+                                                  setDialogState(() {
+                                                    if (val == true) {
+                                                      selectedEmployees.add(member.id);
+                                                    } else {
+                                                      selectedEmployees.remove(member.id);
+                                                    }
+                                                  });
+                                                },
+                                              ),
+                                            );
+                                          }),
+                                          if (showBusyCrew && visibleBusyCrew.isNotEmpty) ...[
+                                            Padding(
+                                              padding: const EdgeInsets.only(top: 8, bottom: 6),
+                                              child: Text(
+                                                'Occupied on Concurrent Events (${visibleBusyCrew.length})',
+                                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.red.shade800),
+                                              ),
+                                            ),
+                                            ...visibleBusyCrew.map((member) {
+                                              return Card(
+                                                margin: const EdgeInsets.only(bottom: 6),
+                                                color: Colors.grey.shade50,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  side: BorderSide(color: Colors.red.shade100),
+                                                ),
+                                                child: Opacity(
+                                                  opacity: 0.65,
+                                                  child: CheckboxListTile(
+                                                    dense: false,
+                                                    value: false,
+                                                    title: Text(
+                                                      member.name,
+                                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
+                                                    ),
+                                                    subtitle: Text(
+                                                      'Occupied: "${busyCrewMap[member.id]}"',
+                                                      style: TextStyle(fontSize: 11, color: Colors.red.shade700, fontWeight: FontWeight.w500),
+                                                    ),
+                                                    onChanged: null,
+                                                  ),
+                                                ),
+                                              );
+                                            }),
+                                          ],
+                                        ],
+                                      ),
+                              ),
                             ],
                           ),
-                  ),
-                  const SizedBox(height: 12),
 
-                  TextField(
-                    controller: remarksController,
-                    decoration: const InputDecoration(labelText: 'Allotment Remarks', isDense: true),
-                    maxLines: 2,
-                  ),
-                ],
+                          // Tab 2: Equipment & Assets
+                          Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+                                child: TextField(
+                                  onChanged: (val) => setDialogState(() => assetQuery = val.trim().toLowerCase()),
+                                  decoration: InputDecoration(
+                                    hintText: 'Search equipment by name or code...',
+                                    prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                                    suffixIcon: assetQuery.isNotEmpty
+                                        ? IconButton(
+                                            icon: const Icon(Icons.clear, size: 18),
+                                            onPressed: () => setDialogState(() => assetQuery = ''),
+                                          )
+                                        : null,
+                                    isDense: true,
+                                    filled: true,
+                                    fillColor: Colors.grey.shade50,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide(color: Colors.grey.shade300),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              if (busyAssetsList.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  child: InkWell(
+                                    onTap: () => setDialogState(() => showBusyAssets = !showBusyAssets),
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: showBusyAssets ? Colors.orange.shade50 : Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: showBusyAssets ? Colors.orange.shade200 : Colors.grey.shade300,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            showBusyAssets ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                            size: 16,
+                                            color: showBusyAssets ? Colors.orange.shade900 : Colors.grey.shade700,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              showBusyAssets
+                                                  ? 'Occupied equipment is visible (${busyAssetsList.length})'
+                                                  : '${busyAssetsList.length} occupied assets hidden (allotted to other events)',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: showBusyAssets ? Colors.orange.shade900 : Colors.grey.shade700,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            showBusyAssets ? 'Hide' : 'Show',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: showBusyAssets ? Colors.orange.shade900 : PmsTheme.primary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              Expanded(
+                                child: (visibleAssets.isEmpty && (!showBusyAssets || visibleBusyAssets.isEmpty))
+                                    ? Center(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(24),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(Icons.videocam_off_outlined, size: 48, color: Colors.grey.shade400),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                busyAssetsList.isNotEmpty
+                                                    ? 'All matching assets are allotted to concurrent events.'
+                                                    : 'No equipment found',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    : ListView(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                        children: [
+                                          ...visibleAssets.map((asset) {
+                                            final isSelected = selectedAssets.contains(asset.id);
+                                            return Card(
+                                              margin: const EdgeInsets.only(bottom: 6),
+                                              elevation: isSelected ? 1 : 0,
+                                              color: isSelected ? PmsTheme.primary.withOpacity(0.06) : Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(10),
+                                                side: BorderSide(
+                                                  color: isSelected ? PmsTheme.primary : Colors.grey.shade200,
+                                                  width: isSelected ? 1.5 : 1,
+                                                ),
+                                              ),
+                                              child: CheckboxListTile(
+                                                dense: false,
+                                                value: isSelected,
+                                                activeColor: PmsTheme.primary,
+                                                title: Text(
+                                                  '${asset.name} (${asset.assetCode})',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                                  ),
+                                                ),
+                                                subtitle: Text(
+                                                  '${asset.category} · ${asset.currentStatus}',
+                                                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                                ),
+                                                onChanged: (val) {
+                                                  setDialogState(() {
+                                                    if (val == true) {
+                                                      selectedAssets.add(asset.id);
+                                                    } else {
+                                                      selectedAssets.remove(asset.id);
+                                                    }
+                                                  });
+                                                },
+                                              ),
+                                            );
+                                          }),
+                                          if (showBusyAssets && visibleBusyAssets.isNotEmpty) ...[
+                                            Padding(
+                                              padding: const EdgeInsets.only(top: 8, bottom: 6),
+                                              child: Text(
+                                                'Occupied Equipment (${visibleBusyAssets.length})',
+                                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.red.shade800),
+                                              ),
+                                            ),
+                                            ...visibleBusyAssets.map((asset) {
+                                              return Card(
+                                                margin: const EdgeInsets.only(bottom: 6),
+                                                color: Colors.grey.shade50,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  side: BorderSide(color: Colors.red.shade100),
+                                                ),
+                                                child: Opacity(
+                                                  opacity: 0.65,
+                                                  child: CheckboxListTile(
+                                                    dense: false,
+                                                    value: false,
+                                                    title: Text(
+                                                      '${asset.name} (${asset.assetCode})',
+                                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
+                                                    ),
+                                                    subtitle: Text(
+                                                      'Occupied: "${busyAssetMap[asset.id]}"',
+                                                      style: TextStyle(fontSize: 11, color: Colors.red.shade700, fontWeight: FontWeight.w500),
+                                                    ),
+                                                    onChanged: null,
+                                                  ),
+                                                ),
+                                              );
+                                            }),
+                                          ],
+                                        ],
+                                      ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Bottom Bar with Remarks & Actions
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            offset: const Offset(0, -2),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            controller: remarksController,
+                            decoration: InputDecoration(
+                              hintText: 'Add allotment remarks/notes (optional)...',
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide(color: Colors.grey.shade300),
+                              ),
+                            ),
+                            maxLines: 1,
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              OutlinedButton(
+                                onPressed: () => Navigator.pop(bottomSheetCtx),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                                child: const Text('Cancel'),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    if (selectedEmployees.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Please select at least 1 crew member.')),
+                                      );
+                                      return;
+                                    }
+
+                                    // Check for conflict
+                                    for (final empId in selectedEmployees) {
+                                      if (busyCrewMap.containsKey(empId) &&
+                                          !req.allottedEmployees.any((e) => e.id == empId)) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Crew member is already allotted to "${busyCrewMap[empId]}" during this time slot.',
+                                            ),
+                                            backgroundColor: Colors.red.shade700,
+                                          ),
+                                        );
+                                        return;
+                                      }
+                                    }
+
+                                    for (final astId in selectedAssets) {
+                                      if (busyAssetMap.containsKey(astId) &&
+                                          !req.allottedAssets.any((a) => a.id == astId)) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Asset is already allotted to "${busyAssetMap[astId]}" during this time slot.',
+                                            ),
+                                            backgroundColor: Colors.red.shade700,
+                                          ),
+                                        );
+                                        return;
+                                      }
+                                    }
+
+                                    Navigator.pop(bottomSheetCtx);
+                                    context.read<DigitalStudioBloc>().add(
+                                          AllotCrewRequestEvent(
+                                            requestId: req.id,
+                                            employeeIds: selectedEmployees.toList(),
+                                            assetIds: selectedAssets.toList(),
+                                            remarks: remarksController.text.trim(),
+                                            phone: widget.currentUser?.phone,
+                                          ),
+                                        );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: PmsTheme.primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  child: Text(
+                                    'Confirm Allotment (${selectedEmployees.length} Crew, ${selectedAssets.length} Gear)',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (selectedEmployees.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please select at least 1 employee')),
-                  );
-                  return;
-                }
-
-                // Check for conflict
-                for (final empId in selectedEmployees) {
-                  if (busyCrewMap.containsKey(empId) && !req.allottedEmployees.any((e) => e.id == empId)) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Crew member is already allotted to "${busyCrewMap[empId]}" during this time slot.'),
-                        backgroundColor: Colors.red.shade700,
-                      ),
-                    );
-                    return;
-                  }
-                }
-
-                for (final astId in selectedAssets) {
-                  if (busyAssetMap.containsKey(astId) && !req.allottedAssets.any((a) => a.id == astId)) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Asset is already allotted to "${busyAssetMap[astId]}" during this time slot.'),
-                        backgroundColor: Colors.red.shade700,
-                      ),
-                    );
-                    return;
-                  }
-                }
-
-                Navigator.pop(dialogCtx);
-                context.read<DigitalStudioBloc>().add(
-                      AllotCrewRequestEvent(
-                        requestId: req.id,
-                        employeeIds: selectedEmployees.toList(),
-                        assetIds: selectedAssets.toList(),
-                        remarks: remarksController.text.trim(),
-                        phone: widget.currentUser?.phone,
-                      ),
-                    );
-              },
-              child: const Text('Confirm Allotment'),
-            ),
-          ],
-        );
+          );
         },
       ),
     );

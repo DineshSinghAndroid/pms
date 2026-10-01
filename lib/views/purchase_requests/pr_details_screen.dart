@@ -480,7 +480,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                               final picker = ImagePicker();
                               final photo = await picker.pickImage(
                                 source: ImageSource.camera,
-                                imageQuality: 100,
+                                maxWidth: 1600,
+                                maxHeight: 1600,
+                                imageQuality: 75,
                               );
                               if (photo != null) {
                                 final bytes = await photo.readAsBytes();
@@ -4931,7 +4933,9 @@ class _PRDetailsScreenState extends State<PRDetailsScreen> {
                     final picker = ImagePicker();
                     final photo = await picker.pickImage(
                       source: ImageSource.camera,
-                      imageQuality: 90,
+                      maxWidth: 1600,
+                      maxHeight: 1600,
+                      imageQuality: 75,
                     );
                     if (photo != null) {
                       final bytes = await photo.readAsBytes();

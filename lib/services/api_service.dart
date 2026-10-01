@@ -18,24 +18,20 @@ class ApiService {
   // Base URL: Local LAN for device/dev, or live production
   static const String liveServerUrl = 'https://pms.bytscop.com/';
 
-  static const String localServerUrl = 'http://192.168.1.9:8000/';
+  static const String localServerUrl = 'https://pms.bytscop.com/';
 
   /// Prefer local admin when debugging; use live in release builds.
   static String get baseUrl {
-
-    if (kDebugMode) {
-      return liveServerUrl;
-    }
-
-    return liveServerUrl;
+    return localServerUrl;
   }
 
   ApiService() {
     _dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 30),
+        connectTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(seconds: 90),
+        receiveTimeout: const Duration(seconds: 90),
         headers: {'Accept': 'application/json'},
       ),
     );
@@ -44,19 +40,22 @@ class ApiService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          // Trigger screen-overlapped Prince Group loading animation
-          String msg = 'Connecting to server';
-          final method = options.method.toUpperCase();
-          if (method == 'GET') {
-            msg = 'Fetching data';
-          } else if (method == 'POST') {
-            msg = 'Saving data';
-          } else if (method == 'PUT' || method == 'PATCH') {
-            msg = 'Updating record';
-          } else if (method == 'DELETE') {
-            msg = 'Deleting record';
+          // Trigger screen-overlapped Prince Group loading animation unless silent
+          final bool isSilent = options.extra['silent'] == true || options.extra['showLoading'] == false;
+          if (!isSilent) {
+            String msg = 'Connecting to server';
+            final method = options.method.toUpperCase();
+            if (method == 'GET') {
+              msg = 'Fetching data';
+            } else if (method == 'POST') {
+              msg = 'Saving data';
+            } else if (method == 'PUT' || method == 'PATCH') {
+              msg = 'Updating record';
+            } else if (method == 'DELETE') {
+              msg = 'Deleting record';
+            }
+            LoadingService().startLoading(message: msg);
           }
-          LoadingService().startLoading(message: msg);
 
           // 1. Resolve phone from ApiService.activeUserPhone or FirebaseAuth
           String? phone = activeUserPhone;
@@ -82,12 +81,18 @@ class ApiService {
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          LoadingService().stopLoading();
+          final bool isSilent = response.requestOptions.extra['silent'] == true || response.requestOptions.extra['showLoading'] == false;
+          if (!isSilent) {
+            LoadingService().stopLoading();
+          }
           debugPrint('🌐 [ApiService Response] ${response.statusCode} from [${response.requestOptions.method}] ${response.requestOptions.path}');
           return handler.next(response);
         },
         onError: (DioException error, handler) {
-          LoadingService().stopLoading();
+          final bool isSilent = error.requestOptions.extra['silent'] == true || error.requestOptions.extra['showLoading'] == false;
+          if (!isSilent) {
+            LoadingService().stopLoading();
+          }
           debugPrint('🚨 [ApiService Error] Status: ${error.response?.statusCode} on [${error.requestOptions.method}] ${error.requestOptions.path}');
           debugPrint('🚨 [ApiService Error Data]: ${error.response?.data}');
           return handler.next(error);

@@ -22,6 +22,8 @@ import '../../bloc/digital_studio/digital_studio_bloc.dart';
 import '../../bloc/digital_studio/digital_studio_state.dart';
 import '../../bloc/news_tracking/news_tracking_bloc.dart';
 import '../../bloc/news_tracking/news_tracking_state.dart';
+import '../../bloc/hoarding/hoarding_bloc.dart';
+import '../../bloc/hoarding/hoarding_state.dart';
 import '../../models/user_model.dart';
 import '../../widgets/app_logo.dart';
 import '../../theme/pms_theme.dart';
@@ -37,6 +39,7 @@ enum NavMenu {
   postOrders,
   digitalStudio,
   newsTracking,
+  hoardingManagement,
   categories,
   productTypes,
   wings,
@@ -89,6 +92,8 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
       widget.userProfile?.role.toLowerCase() == 'store incharge' ||
       widget.userProfile?.role.toLowerCase() == 'store_incharge';
   bool get isManager => widget.userProfile?.role.toLowerCase() == 'manager';
+  bool get isHoardingVendor => widget.userProfile?.isHoardingVendor ?? false;
+  bool get canAccessHoarding => widget.userProfile?.canAccessHoarding ?? false;
 
   @override
   Widget build(BuildContext context) {
@@ -158,8 +163,8 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   vertical: 16,
                 ),
                 children: [
-                  // --- SECTION 1: GENERAL (Hidden for Digital Studio Employee) ---
-                  if (!isDigitalStudioEmployee) ...[
+                  // --- SECTION 1: GENERAL (Hidden for Digital Studio Employee and Hoarding Vendor) ---
+                  if (!isDigitalStudioEmployee && !isHoardingVendor) ...[
                     _buildSectionHeader('GENERAL'),
                     const SizedBox(height: 4),
                     _buildMenuItem(
@@ -173,6 +178,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   // --- SECTION 2: PRINT MANAGEMENT (Expandable) ---
                   if (!isDigitalStudioEmployee &&
                       !isDigitalStoreIncharge &&
+                      !isHoardingVendor &&
                       (widget.isSuperAdmin ||
                           widget.isDesigner ||
                           isDigitalStudioIncharge ||
@@ -348,14 +354,15 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   ],
 
                   // --- SECTION 3: DIGITAL STUDIO ---
-                  if (widget.userProfile?.canViewStudioModule ??
-                      (!widget.isDesigner &&
-                          (widget.isSuperAdmin ||
-                              isDigitalStudioIncharge ||
-                              isDigitalStoreIncharge ||
-                              isWingIncharge ||
-                              isManager ||
-                              isDigitalStudioEmployee))) ...[
+                  if (!isHoardingVendor &&
+                      (widget.userProfile?.canViewStudioModule ??
+                          (!widget.isDesigner &&
+                              (widget.isSuperAdmin ||
+                                  isDigitalStudioIncharge ||
+                                  isDigitalStoreIncharge ||
+                                  isWingIncharge ||
+                                  isManager ||
+                                  isDigitalStudioEmployee)))) ...[
                     _buildSectionHeader(isDigitalStoreIncharge ? 'DIGITAL STORE' : 'DIGITAL STUDIO'),
                     const SizedBox(height: 4),
                     BlocBuilder<DigitalStudioBloc, DigitalStudioState>(
@@ -377,7 +384,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   ],
 
                   // --- SECTION 3.5: NEWS TRACKING (Superadmin & Manager only) ---
-                  if (!isDigitalStudioEmployee && !isDigitalStoreIncharge && (widget.isSuperAdmin || isManager)) ...[
+                  if (!isDigitalStudioEmployee && !isDigitalStoreIncharge && !isHoardingVendor && (widget.isSuperAdmin || isManager)) ...[
                     _buildSectionHeader('NEWS TRACKING'),
                     const SizedBox(height: 4),
                     BlocBuilder<NewsTrackingBloc, NewsTrackingState>(
@@ -396,8 +403,26 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                     const SizedBox(height: 18),
                   ],
 
+                  // --- SECTION 3.6: HOARDING & FLEX MANAGEMENT ---
+                  if (!isDigitalStudioEmployee && !isDigitalStoreIncharge && canAccessHoarding) ...[
+                    _buildSectionHeader('HOARDING & FLEX'),
+                    const SizedBox(height: 4),
+                    BlocBuilder<HoardingBloc, HoardingState>(
+                      builder: (context, state) {
+                        final count = state is HoardingLoaded ? state.totalSites : 0;
+                        return _buildMenuItem(
+                          menu: NavMenu.hoardingManagement,
+                          icon: Icons.view_carousel_rounded,
+                          label: isHoardingVendor ? 'My Hoarding Sites' : 'Hoarding Dashboard',
+                          badgeCount: count > 0 ? count : null,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+
                   // --- SECTION 4: USER MANAGEMENT (Admin only) ---
-                  if (!isDigitalStudioEmployee && !isDigitalStoreIncharge && widget.isSuperAdmin) ...[
+                  if (!isDigitalStudioEmployee && !isDigitalStoreIncharge && !isHoardingVendor && widget.isSuperAdmin) ...[
                     _buildExpandableHeading(
                       title: 'USER MANAGEMENT',
                       color: PmsTheme.primary,

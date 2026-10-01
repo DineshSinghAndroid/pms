@@ -5,6 +5,7 @@ import '../../bloc/user/user_bloc.dart';
 import '../../bloc/user/user_event.dart';
 import '../../bloc/user/user_state.dart';
 import '../../bloc/wing/wing_bloc.dart';
+import '../../bloc/wing/wing_event.dart';
 import '../../bloc/wing/wing_state.dart';
 import '../../bloc/category/category_bloc.dart';
 import '../../bloc/category/category_event.dart';
@@ -40,6 +41,14 @@ class _UsersTabViewState extends State<UsersTabView> {
       if (state is! UserLoaded || state.users.isEmpty) {
         debugPrint('👥 [UsersTabView] Auto-fetching users for phone: ${widget.userPhone}');
         context.read<UserBloc>().add(FetchUsersEvent(phone: widget.userPhone));
+      }
+      final catState = context.read<CategoryBloc>().state;
+      if (catState is! CategoryLoaded || catState.categories.isEmpty) {
+        context.read<CategoryBloc>().add(const RefreshCategoriesEvent());
+      }
+      final wingState = context.read<WingBloc>().state;
+      if (wingState is! WingLoaded || wingState.wings.isEmpty) {
+        context.read<WingBloc>().add(const RefreshWingsEvent());
       }
     });
   }
@@ -77,15 +86,16 @@ class _UsersTabViewState extends State<UsersTabView> {
 
   void _showUserForm(BuildContext context, {UserModel? user}) {
     final wingState = context.read<WingBloc>().state;
-    final allWings = wingState is WingLoaded ? wingState.wings : <WingModel>[];
+    if (wingState is! WingLoaded || wingState.wings.isEmpty) {
+      context.read<WingBloc>().add(const RefreshWingsEvent());
+    }
     List<int> selectedWingIds = user?.assignedWings.map((w) => w.id).toList() ?? [];
 
     final catState = context.read<CategoryBloc>().state;
-    final allCategories = catState is CategoryLoaded ? catState.categories : <CategoryModel>[];
-    List<int> selectedCategoryIds = user?.assignedCategories.map((c) => c.id).toList() ?? [];
-    if (catState is! CategoryLoaded) {
+    if (catState is! CategoryLoaded || catState.categories.isEmpty) {
       context.read<CategoryBloc>().add(const RefreshCategoriesEvent());
     }
+    List<int> selectedCategoryIds = user?.assignedCategories.map((c) => c.id).toList() ?? [];
 
     final nameCtrl = TextEditingController(text: user?.name ?? '');
     final phoneCtrl = TextEditingController(text: user?.phone ?? '');
@@ -251,52 +261,83 @@ class _UsersTabViewState extends State<UsersTabView> {
                               ],
                             ),
                             const SizedBox(height: 8),
-                            if (allWings.isEmpty)
-                              const Text(
-                                'No wings loaded. Please refresh wings.',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: PmsTheme.textSecondary,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              )
-                            else
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 6,
-                                children: allWings.map((w) {
-                                  final isSelected = selectedWingIds.contains(w.id);
-                                  return FilterChip(
-                                    label: Text(
-                                      w.name,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                        color: isSelected ? Colors.white : PmsTheme.textPrimary,
-                                      ),
+                            BlocBuilder<WingBloc, WingState>(
+                              builder: (wCtx, wState) {
+                                if (wState is WingLoading) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(strokeWidth: 2, color: PmsTheme.teal),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text('Loading wings...', style: TextStyle(fontSize: 11, color: PmsTheme.textSecondary)),
+                                      ],
                                     ),
-                                    selected: isSelected,
-                                    selectedColor: PmsTheme.teal,
-                                    backgroundColor: PmsTheme.glassSurface,
-                                    checkmarkColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      side: BorderSide(
-                                        color: isSelected ? PmsTheme.teal : const Color(0xFFCBD5E1),
-                                      ),
-                                    ),
-                                    onSelected: (selected) {
-                                      setModalState(() {
-                                        if (selected) {
-                                          selectedWingIds.add(w.id);
-                                        } else {
-                                          selectedWingIds.remove(w.id);
-                                        }
-                                      });
-                                    },
                                   );
-                                }).toList(),
-                              ),
+                                }
+                                final wings = wState is WingLoaded ? wState.wings : <WingModel>[];
+                                if (wings.isEmpty) {
+                                  return Row(
+                                    children: [
+                                      const Expanded(
+                                        child: Text(
+                                          'No wings loaded. Please refresh wings.',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: PmsTheme.textSecondary,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => context.read<WingBloc>().add(const RefreshWingsEvent()),
+                                        child: const Text('Retry', style: TextStyle(fontSize: 11, color: PmsTheme.teal, fontWeight: FontWeight.bold)),
+                                      ),
+                                    ],
+                                  );
+                                }
+                                return Wrap(
+                                  spacing: 8,
+                                  runSpacing: 6,
+                                  children: wings.map((w) {
+                                    final isSelected = selectedWingIds.contains(w.id);
+                                    return FilterChip(
+                                      label: Text(
+                                        w.name,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                          color: isSelected ? Colors.white : PmsTheme.textPrimary,
+                                        ),
+                                      ),
+                                      selected: isSelected,
+                                      selectedColor: PmsTheme.teal,
+                                      backgroundColor: PmsTheme.glassSurface,
+                                      checkmarkColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        side: BorderSide(
+                                          color: isSelected ? PmsTheme.teal : const Color(0xFFCBD5E1),
+                                        ),
+                                      ),
+                                      onSelected: (selected) {
+                                        setModalState(() {
+                                          if (selected) {
+                                            selectedWingIds.add(w.id);
+                                          } else {
+                                            selectedWingIds.remove(w.id);
+                                          }
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -341,52 +382,83 @@ class _UsersTabViewState extends State<UsersTabView> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            if (allCategories.isEmpty)
-                              const Text(
-                                'No categories available.',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: PmsTheme.textSecondary,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              )
-                            else
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 6,
-                                children: allCategories.map((c) {
-                                  final isSelected = selectedCategoryIds.contains(c.id);
-                                  return FilterChip(
-                                    label: Text(
-                                      c.name,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                        color: isSelected ? Colors.white : PmsTheme.textPrimary,
-                                      ),
+                            BlocBuilder<CategoryBloc, CategoryState>(
+                              builder: (cCtx, cState) {
+                                if (cState is CategoryLoading) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF16A34A)),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text('Loading categories...', style: TextStyle(fontSize: 11, color: PmsTheme.textSecondary)),
+                                      ],
                                     ),
-                                    selected: isSelected,
-                                    selectedColor: const Color(0xFF16A34A),
-                                    backgroundColor: PmsTheme.glassSurface,
-                                    checkmarkColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      side: BorderSide(
-                                        color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFCBD5E1),
-                                      ),
-                                    ),
-                                    onSelected: (selected) {
-                                      setModalState(() {
-                                        if (selected) {
-                                          selectedCategoryIds.add(c.id);
-                                        } else {
-                                          selectedCategoryIds.remove(c.id);
-                                        }
-                                      });
-                                    },
                                   );
-                                }).toList(),
-                              ),
+                                }
+                                final categories = cState is CategoryLoaded ? cState.categories : <CategoryModel>[];
+                                if (categories.isEmpty) {
+                                  return Row(
+                                    children: [
+                                      const Expanded(
+                                        child: Text(
+                                          'No categories available.',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: PmsTheme.textSecondary,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => context.read<CategoryBloc>().add(const RefreshCategoriesEvent()),
+                                        child: const Text('Retry', style: TextStyle(fontSize: 11, color: Color(0xFF16A34A), fontWeight: FontWeight.bold)),
+                                      ),
+                                    ],
+                                  );
+                                }
+                                return Wrap(
+                                  spacing: 8,
+                                  runSpacing: 6,
+                                  children: categories.map((c) {
+                                    final isSelected = selectedCategoryIds.contains(c.id);
+                                    return FilterChip(
+                                      label: Text(
+                                        c.name,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                          color: isSelected ? Colors.white : PmsTheme.textPrimary,
+                                        ),
+                                      ),
+                                      selected: isSelected,
+                                      selectedColor: const Color(0xFF16A34A),
+                                      backgroundColor: PmsTheme.glassSurface,
+                                      checkmarkColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        side: BorderSide(
+                                          color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFCBD5E1),
+                                        ),
+                                      ),
+                                      onSelected: (selected) {
+                                        setModalState(() {
+                                          if (selected) {
+                                            selectedCategoryIds.add(c.id);
+                                          } else {
+                                            selectedCategoryIds.remove(c.id);
+                                          }
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ),

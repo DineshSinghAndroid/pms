@@ -8,6 +8,7 @@ class ProductTypeModel extends Equatable {
   final String name;
   final String? productCode;
   final String? subName;
+  final String? description;
   final CategoryModel? category;
   final DateTime? createdAt;
 
@@ -17,17 +18,21 @@ class ProductTypeModel extends Equatable {
     required this.name,
     this.productCode,
     this.subName,
+    this.description,
     this.category,
     this.createdAt,
   });
 
   factory ProductTypeModel.fromJson(Map<String, dynamic> json) {
+    final sub = json['sub_name'] as String?;
+    final desc = json['description'] as String?;
     return ProductTypeModel(
       id: json['id'] as int? ?? 0,
       categoryId: json['category_id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
       productCode: json['product_code'] as String?,
-      subName: json['sub_name'] as String?,
+      subName: sub ?? desc,
+      description: desc ?? sub,
       category:
           json['category'] != null && json['category'] is Map<String, dynamic>
           ? CategoryModel.fromJson(json['category'] as Map<String, dynamic>)
@@ -45,6 +50,7 @@ class ProductTypeModel extends Equatable {
       'name': name,
       'product_code': productCode,
       'sub_name': subName,
+      'description': description,
       'created_at': createdAt?.toIso8601String(),
     };
   }
@@ -56,6 +62,7 @@ class ProductTypeModel extends Equatable {
     name,
     productCode,
     subName,
+    description,
     category,
     createdAt,
   ];

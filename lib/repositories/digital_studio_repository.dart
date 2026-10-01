@@ -32,6 +32,7 @@ class DigitalStudioRepository {
       final response = await _apiService.client.get(
         '/api/digital-studio/assets',
         queryParameters: queryParams,
+        options: Options(extra: {'silent': true}),
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -86,7 +87,10 @@ class DigitalStudioRepository {
   /// Get single asset with logs
   Future<DigitalStudioAssetModel> getAsset(int id) async {
     try {
-      final response = await _apiService.client.get('/api/digital-studio/assets/$id');
+      final response = await _apiService.client.get(
+        '/api/digital-studio/assets/$id',
+        options: Options(extra: {'silent': true}),
+      );
       if (response.statusCode == 200 && response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>
@@ -237,6 +241,7 @@ class DigitalStudioRepository {
       final response = await _apiService.client.get(
         '/api/digital-studio/crew-requests',
         queryParameters: queryParams,
+        options: Options(extra: {'silent': true}),
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -381,6 +386,7 @@ class DigitalStudioRepository {
       final response = await _apiService.client.get(
         '/api/digital-studio/schedule-calendar',
         queryParameters: queryParams,
+        options: Options(extra: {'silent': true}),
       );
 
       if (response.statusCode == 200 && response.data != null) {
@@ -409,7 +415,10 @@ class DigitalStudioRepository {
   /// List eligible crew members (Designers / Studio team)
   Future<List<UserModel>> getCrewMembers() async {
     try {
-      final response = await _apiService.client.get('/api/digital-studio/crew-members');
+      final response = await _apiService.client.get(
+        '/api/digital-studio/crew-members',
+        options: Options(extra: {'silent': true}),
+      );
       if (response.statusCode == 200 && response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>
@@ -429,7 +438,10 @@ class DigitalStudioRepository {
   /// List available assets
   Future<List<DigitalStudioAssetModel>> getAvailableAssets() async {
     try {
-      final response = await _apiService.client.get('/api/digital-studio/available-assets');
+      final response = await _apiService.client.get(
+        '/api/digital-studio/available-assets',
+        options: Options(extra: {'silent': true}),
+      );
       if (response.statusCode == 200 && response.data != null) {
         final Map<String, dynamic> body = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>

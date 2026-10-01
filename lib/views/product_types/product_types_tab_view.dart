@@ -38,6 +38,9 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
     ProductTypeModel? productType,
   }) {
     final nameCtrl = TextEditingController(text: productType?.name ?? '');
+    final descCtrl = TextEditingController(
+      text: productType?.description ?? productType?.subName ?? '',
+    );
     final codeCtrl = TextEditingController(
       text: productType?.productCode ?? '',
     );
@@ -150,6 +153,13 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                     const SizedBox(height: 12),
 
                     _buildTextField(
+                      controller: descCtrl,
+                      label: 'Description / Sub-Name',
+                      hint: 'e.g. Legal size, Flex, Catalog (optional)',
+                    ),
+                    const SizedBox(height: 12),
+
+                    _buildTextField(
                       controller: codeCtrl,
                       label: 'Product Code (Auto-Generated e.g. 000112)',
                       hint: 'Leave blank to auto-generate',
@@ -160,6 +170,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                     ElevatedButton(
                       onPressed: () {
                         final name = nameCtrl.text.trim();
+                        final desc = descCtrl.text.trim();
                         final code = codeCtrl.text.trim();
 
                         if (name.isEmpty || chosenCatId == null) {
@@ -174,6 +185,10 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
                         final payload = {
                           'category_id': chosenCatId,
                           'name': name,
+                          if (desc.isNotEmpty) ...{
+                            'description': desc,
+                            'sub_name': desc,
+                          },
                           if (code.isNotEmpty) 'product_code': code,
                         };
 
@@ -486,11 +501,13 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
 
                 if (state is ProductTypeLoaded) {
                   final types = state.productTypes.where((pt) {
+                    final desc = (pt.description ?? pt.subName ?? '').toLowerCase();
                     final matchesQuery =
                         _searchQuery.isEmpty ||
                         pt.name.toLowerCase().contains(_searchQuery) ||
                         (pt.productCode?.toLowerCase().contains(_searchQuery) ??
                             false) ||
+                        desc.contains(_searchQuery) ||
                         (pt.category?.name
                                 .toLowerCase()
                                 .contains(_searchQuery) ??
@@ -542,6 +559,7 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
   Widget _buildProductTypeCard(BuildContext context, ProductTypeModel pt) {
     final isHospital = pt.category?.name == 'Hospital';
     final categoryColor = isHospital ? PmsTheme.error : PmsTheme.primary;
+    final desc = pt.description ?? pt.subName ?? '';
 
     return GlassCard(
       padding: const EdgeInsets.all(16),
@@ -605,24 +623,65 @@ class _ProductTypesTabViewState extends State<ProductTypesTabView> {
             ],
           ),
 
-          if (widget.isSuperAdmin) ...[
+          if (desc.isNotEmpty || widget.isSuperAdmin) ...[
             const SizedBox(height: 14),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                PmsIconAction(
-                  icon: Icons.edit_rounded,
-                  tooltip: 'Edit product type',
-                  onPressed: () =>
-                      _showProductTypeForm(context, productType: pt),
-                ),
-                const SizedBox(width: 8),
-                PmsIconAction(
-                  icon: Icons.delete_outline_rounded,
-                  tooltip: 'Delete product type',
-                  color: PmsTheme.error,
-                  onPressed: () => _confirmDelete(context, pt),
-                ),
+                if (desc.isNotEmpty) ...[
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: PmsTheme.background,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: PmsTheme.glassBorder),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.description_outlined,
+                            size: 13,
+                            color: PmsTheme.textSecondary,
+                          ),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              desc,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: PmsTheme.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ] else
+                  const Spacer(),
+                if (widget.isSuperAdmin) ...[
+                  PmsIconAction(
+                    icon: Icons.edit_rounded,
+                    tooltip: 'Edit product type',
+                    onPressed: () =>
+                        _showProductTypeForm(context, productType: pt),
+                  ),
+                  const SizedBox(width: 8),
+                  PmsIconAction(
+                    icon: Icons.delete_outline_rounded,
+                    tooltip: 'Delete product type',
+                    color: PmsTheme.error,
+                    onPressed: () => _confirmDelete(context, pt),
+                  ),
+                ],
               ],
             ),
           ],

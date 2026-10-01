@@ -28,7 +28,9 @@ class DigitalStudioBloc extends Bloc<DigitalStudioEvent, DigitalStudioState> {
     FetchDigitalStudioDataEvent event,
     Emitter<DigitalStudioState> emit,
   ) async {
-    emit(const DigitalStudioLoading());
+    if (state is! DigitalStudioLoaded) {
+      emit(const DigitalStudioLoading());
+    }
     try {
       final assetsFuture = repository.getAssets(phone: event.phone).catchError((_) => <DigitalStudioAssetModel>[]);
       final crewRequestsFuture = repository.getCrewRequests(

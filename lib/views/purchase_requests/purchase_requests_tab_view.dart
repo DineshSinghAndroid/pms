@@ -460,7 +460,8 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                   : 'Create, assign, and track design requests',
               action: (widget.isSuperAdmin ||
                       widget.currentUser?.role.toLowerCase() == 'manager' ||
-                      widget.currentUser?.isWingIncharge == true)
+                      widget.currentUser?.isWingIncharge == true ||
+                      widget.currentUser?.isStoreIncharge == true)
                   ? FilledButton.icon(
                       onPressed: () => _showCreatePRForm(context),
                       icon: const Icon(Icons.add_rounded, size: 18),
@@ -720,13 +721,22 @@ class _PurchaseRequestsTabViewState extends State<PurchaseRequestsTabView> {
                     }
                   }
 
+                  // Strict isolation: Wing Incharges only see their own created PRs
+                  if (widget.currentUser?.isWingIncharge == true &&
+                      pr.createdByUserId != null &&
+                      widget.currentUser?.id != null &&
+                      pr.createdByUserId != widget.currentUser!.id) {
+                    return false;
+                  }
+
                   return matchesQ && matchesStatus && matchesScope;
                 }).toList();
 
                 if (list.isEmpty) {
                   final canCreate = widget.isSuperAdmin ||
                       widget.currentUser?.role.toLowerCase() == 'manager' ||
-                      widget.currentUser?.isWingIncharge == true;
+                      widget.currentUser?.isWingIncharge == true ||
+                      widget.currentUser?.isStoreIncharge == true;
                   return PmsEmptyState(
                     icon: Icons.assignment_outlined,
                     title: 'No purchase requests found',
@@ -1826,7 +1836,7 @@ class _CreatePurchaseRequestSheetState
                         ),
                         const SizedBox(height: 6),
 
-                        // Dual Action Buttons: Camera & Upload Any File
+                        // Triple Action Buttons: Camera, Gallery & Upload Any File
                         Row(
                           children: [
                             // Option 1: Camera Photo
@@ -1839,7 +1849,9 @@ class _CreatePurchaseRequestSheetState
                                     final picker = ImagePicker();
                                     final photo = await picker.pickImage(
                                       source: ImageSource.camera,
-                                      imageQuality: 90,
+                                      maxWidth: 1600,
+                                      maxHeight: 1600,
+                                      imageQuality: 75,
                                     );
                                     if (photo != null) {
                                       final bytes =
@@ -1867,11 +1879,11 @@ class _CreatePurchaseRequestSheetState
                                   }
                                 },
                                 icon: const Icon(Icons.camera_alt_rounded,
-                                    size: 14),
+                                    size: 13),
                                 label: const Text(
                                   'Camera',
                                   style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.bold),
                                 ),
                                 style: OutlinedButton.styleFrom(
@@ -1879,15 +1891,75 @@ class _CreatePurchaseRequestSheetState
                                   side: const BorderSide(
                                       color: PmsTheme.primary),
                                   padding: const EdgeInsets.symmetric(
-                                      vertical: 8, horizontal: 8),
+                                      vertical: 8, horizontal: 4),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            // Option 2: Upload Any File
+                            const SizedBox(width: 6),
+                            // Option 2: Gallery Photo
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final messenger =
+                                      ScaffoldMessenger.of(context);
+                                  try {
+                                    final picker = ImagePicker();
+                                    final photo = await picker.pickImage(
+                                      source: ImageSource.gallery,
+                                      maxWidth: 1600,
+                                      maxHeight: 1600,
+                                      imageQuality: 75,
+                                    );
+                                    if (photo != null) {
+                                      final bytes =
+                                          await photo.readAsBytes();
+                                      if (mounted) {
+                                        setState(() {
+                                          item['pickedBytes'] = bytes;
+                                          item['pickedName'] = photo.name;
+                                          item['pickedSize'] = bytes.length;
+                                          (item['attachment_ctrl']
+                                                  as TextEditingController)
+                                              .text = photo.name;
+                                        });
+                                      }
+                                    }
+                                  } catch (e) {
+                                    messenger.showSnackBar(
+                                      SnackBar(
+                                        content:
+                                            Text('Error opening gallery: $e'),
+                                        backgroundColor:
+                                            const Color(0xFFDC2626),
+                                      ),
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.photo_library_rounded,
+                                    size: 13),
+                                label: const Text(
+                                  'Gallery',
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF2563EB),
+                                  side: const BorderSide(
+                                      color: Color(0xFF2563EB)),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 8, horizontal: 4),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            // Option 3: Upload Any File
                             Expanded(
                               child: OutlinedButton.icon(
                                 onPressed: () async {
@@ -1898,9 +1970,20 @@ class _CreatePurchaseRequestSheetState
                                         await FilePicker.pickFile(
                                             type: FileType.any);
                                     if (file != null) {
+                                      final size = await file.length();
+                                      if (size > 8 * 1024 * 1024) {
+                                        messenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                'File is too large (${(size / (1024 * 1024)).toStringAsFixed(1)} MB). Limit is 8 MB. Please use Camera/Gallery or a smaller file.'),
+                                            backgroundColor:
+                                                const Color(0xFFDC2626),
+                                          ),
+                                        );
+                                        return;
+                                      }
                                       final bytes =
                                           await file.readAsBytes();
-                                      final size = await file.length();
                                       if (mounted) {
                                         setState(() {
                                           item['pickedBytes'] = bytes;
@@ -1925,11 +2008,11 @@ class _CreatePurchaseRequestSheetState
                                 },
                                 icon: const Icon(
                                     Icons.upload_file_rounded,
-                                    size: 14),
+                                    size: 13),
                                 label: const Text(
-                                  'Upload File',
+                                  'File',
                                   style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.bold),
                                 ),
                                 style: OutlinedButton.styleFrom(
@@ -1938,7 +2021,7 @@ class _CreatePurchaseRequestSheetState
                                   side: const BorderSide(
                                       color: Color(0xFF059669)),
                                   padding: const EdgeInsets.symmetric(
-                                      vertical: 8, horizontal: 8),
+                                      vertical: 8, horizontal: 4),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),

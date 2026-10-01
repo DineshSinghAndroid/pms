@@ -11,6 +11,7 @@ class UserModel extends Equatable {
   final bool isActive;
   final List<WingModel> assignedWings;
   final List<CategoryModel> assignedCategories;
+  final int? hoardingVendorId;
   final DateTime? createdAt;
 
   const UserModel({
@@ -22,6 +23,7 @@ class UserModel extends Equatable {
     required this.isActive,
     this.assignedWings = const [],
     this.assignedCategories = const [],
+    this.hoardingVendorId,
     this.createdAt,
   });
 
@@ -48,6 +50,9 @@ class UserModel extends Equatable {
               ?.map((c) => CategoryModel.fromJson(c as Map<String, dynamic>))
               .toList() ??
           const [],
+      hoardingVendorId: json['hoarding_vendor_id'] != null
+          ? int.tryParse(json['hoarding_vendor_id'].toString())
+          : null,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
@@ -64,6 +69,7 @@ class UserModel extends Equatable {
       'is_active': isActive,
       'assigned_wings': assignedWings.map((w) => w.toJson()).toList(),
       'assigned_categories': assignedCategories.map((c) => c.toJson()).toList(),
+      'hoarding_vendor_id': hoardingVendorId,
       'created_at': createdAt?.toIso8601String(),
     };
   }
@@ -85,11 +91,18 @@ class UserModel extends Equatable {
       role.toLowerCase() == 'counsellor' ||
       role.toLowerCase() == 'counselor';
   bool get isVendor => role.toLowerCase() == 'vendor';
+  bool get isHoardingVendor {
+    final r = role.toLowerCase().trim();
+    return r == 'hoarding vendor' || r == 'hoarding_vendor';
+  }
+  bool get canAccessHoarding => isSuperAdmin || isManager || isHoardingVendor;
   bool get isManager => role.toLowerCase() == 'manager';
   bool get isStoreIncharge =>
       role == 'Store Incharge' ||
       role.toLowerCase() == 'store incharge' ||
       role.toLowerCase() == 'store_incharge';
+  bool get canCreatePurchaseRequest =>
+      isSuperAdmin || isManager || isWingIncharge || isStoreIncharge;
   bool get isDigitalStoreIncharge {
     final r = role.toLowerCase().trim();
     return r == 'digital store incharge' ||
@@ -134,6 +147,7 @@ class UserModel extends Equatable {
     isActive,
     assignedWings,
     assignedCategories,
+    hoardingVendorId,
     createdAt,
   ];
 }

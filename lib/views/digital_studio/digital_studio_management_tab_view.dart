@@ -70,10 +70,13 @@ class _DigitalStudioManagementTabViewState
       });
     }
 
-    // Ensure data is loaded
-    context.read<DigitalStudioBloc>().add(
-          FetchDigitalStudioDataEvent(phone: widget.currentUser?.phone),
-        );
+    // Ensure data is loaded if not already loaded
+    final bloc = context.read<DigitalStudioBloc>();
+    if (bloc.state is! DigitalStudioLoaded) {
+      bloc.add(
+        FetchDigitalStudioDataEvent(phone: widget.currentUser?.phone),
+      );
+    }
   }
 
   @override

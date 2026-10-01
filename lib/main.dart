@@ -23,6 +23,9 @@ import 'repositories/vendor_repository.dart';
 import 'repositories/wing_repository.dart';
 import 'repositories/news_tracking_repository.dart';
 import 'bloc/news_tracking/news_tracking_bloc.dart';
+import 'repositories/hoarding_repository.dart';
+import 'bloc/hoarding/hoarding_bloc.dart';
+import 'bloc/hoarding/hoarding_event.dart';
 import 'services/notification_service.dart';
 import 'services/permission_service.dart';
 import 'theme/pms_theme.dart';
@@ -84,6 +87,9 @@ class PmsApp extends StatelessWidget {
         RepositoryProvider<NewsTrackingRepository>(
           create: (context) => NewsTrackingRepository(),
         ),
+        RepositoryProvider<HoardingRepository>(
+          create: (context) => HoardingRepository(),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -132,6 +138,11 @@ class PmsApp extends StatelessWidget {
             create: (context) => NewsTrackingBloc(
               repository: context.read<NewsTrackingRepository>(),
             ),
+          ),
+          BlocProvider<HoardingBloc>(
+            create: (context) => HoardingBloc(
+              repository: context.read<HoardingRepository>(),
+            )..add(const FetchHoardingDataEvent()),
           ),
         ],
         child: MaterialApp(
