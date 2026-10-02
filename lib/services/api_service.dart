@@ -20,9 +20,9 @@ class ApiService {
 
   static const String localServerUrl = 'https://pms.bytscop.com/';
 
-  /// Prefer local admin when debugging; use live in release builds.
+  /// Always use production server.
   static String get baseUrl {
-    return localServerUrl;
+    return liveServerUrl;
   }
 
   ApiService() {

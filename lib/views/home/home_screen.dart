@@ -34,6 +34,10 @@ import '../../bloc/payment/payment_event.dart';
 import '../categories/categories_tab_view.dart';
 import '../dashboard/dashboard_tab_view.dart';
 import '../delivery_logs/delivery_logs_tab_view.dart';
+import '../store/store_inventory_tab_view.dart';
+import '../../bloc/sub_store/sub_store_bloc.dart';
+import '../../bloc/sub_store/sub_store_event.dart';
+import '../sub_store/sub_store_inventory_tab_view.dart';
 import '../digital_studio/digital_studio_management_tab_view.dart';
 import '../news_tracking/news_tracking_tab_view.dart';
 import '../payments/payments_tab_view.dart';
@@ -132,6 +136,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (mounted) {
         final isDsEmp = profile?.isDigitalStudioEmployee ?? false;
         final isDsStore = profile?.isDigitalStoreIncharge ?? false;
+        final isSubStore = profile?.isSubStoreIncharge ?? false;
         setState(() {
           _userProfile = profile;
           _isLoadingProfile = false;
@@ -139,6 +144,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             _selectedMenu = NavMenu.digitalStudio;
           } else if (profile?.isHoardingVendor ?? false) {
             _selectedMenu = NavMenu.hoardingManagement;
+          } else if (isSubStore) {
+            _selectedMenu = NavMenu.subStoreInventory;
           }
         });
 
@@ -167,6 +174,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         } else if (profile?.isHoardingVendor ?? false) {
           // Hoarding Vendor only accesses hoarding sites
           context.read<HoardingBloc>().add(const FetchHoardingDataEvent());
+        } else if (isSubStore) {
+          // Sub Store Incharge only accesses Sub Store Inventory & own PRs
+          context.read<PurchaseRequestBloc>().add(FetchPurchaseRequestsEvent(phone: cleanPhone));
+          context.read<SubStoreBloc>().add(const FetchSubStoreInventoryEvent());
         } else {
           // Admins, Managers, Wing Incharges, Store Incharges
           if (isWingIncharge) {
@@ -185,31 +196,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           if (isSuperAdmin || isManager) {
             context.read<PaymentBloc>().add(const FetchPaymentsEvent());
             context.read<PaymentBloc>().add(const FetchEligiblePaymentItemsEvent());
+            context.read<VendorBloc>().add(const FetchVendorsEvent());
           }
         }
 
-        if (!isDsEmp && !isDsStore && !isDesigner && !(profile?.isHoardingVendor ?? false) && (isSuperAdmin || isManager || isWingIncharge)) {
+        if (!isDsEmp && !isDsStore && !isSubStore && !isDesigner && !(profile?.isHoardingVendor ?? false) && (isSuperAdmin || isManager || isWingIncharge)) {
           context.read<DigitalStudioBloc>().add(FetchDigitalStudioDataEvent(phone: cleanPhone));
         }
 
-        if (!isDsEmp && !isDsStore && !(profile?.isHoardingVendor ?? false) && (isSuperAdmin || isManager)) {
+        if (!isDsEmp && !isDsStore && !isSubStore && !(profile?.isHoardingVendor ?? false) && (isSuperAdmin || isManager)) {
           context.read<NewsTrackingBloc>().add(FetchNewsTrackingDataEvent(phone: cleanPhone));
         }
 
-        if (!isDsEmp && !isDsStore && isSuperAdmin) {
+        if (!isDsEmp && !isDsStore && !isSubStore && isSuperAdmin) {
           debugPrint('👑 [HomeScreen] SuperAdmin detected. Fetching users directory...');
           context.read<UserBloc>().add(FetchUsersEvent(phone: standardPhone));
         }
 
         // Pre-fetch active designers so the Assign button opens instantly with 0ms delay
         final roleLower = (_userProfile?.role ?? '').toLowerCase().trim();
-        if (!isDsEmp && !isDsStore && (isSuperAdmin || isManager || roleLower == 'admin')) {
+        if (!isDsEmp && !isDsStore && !isSubStore && (isSuperAdmin || isManager || roleLower == 'admin')) {
           debugPrint('🎨 [HomeScreen] Pre-fetching designers for PR assignment...');
           PurchaseRequestRepository().getDesigners();
         }
 
         // Pre-fetch product types and wings so Create PR opens instantly with 0ms delay
-        if (!isDsEmp && !isDsStore && (isSuperAdmin || isManager || isWingIncharge || isStoreIncharge || roleLower == 'admin')) {
+        if (!isDsEmp && !isDsStore && (isSuperAdmin || isManager || isWingIncharge || isStoreIncharge || isSubStore || roleLower == 'admin')) {
           debugPrint('📦 [HomeScreen] Pre-fetching Product Types and Wings for PR creation...');
           context.read<ProductTypeBloc>().add(const FetchProductTypesEvent());
           context.read<WingBloc>().add(const FetchWingsEvent());
@@ -291,6 +303,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     if (isHoardingVendor) {
       context.read<HoardingBloc>().add(const RefreshHoardingDataEvent());
+      _fetchUnreadCount();
+      return;
+    }
+
+    final isSubStore = _userProfile?.isSubStoreIncharge ?? false;
+    if (isSubStore) {
+      context.read<PurchaseRequestBloc>().add(FetchPurchaseRequestsEvent(phone: cleanPhone));
+      context.read<SubStoreBloc>().add(const RefreshSubStoreInventoryEvent());
       _fetchUnreadCount();
       return;
     }
@@ -489,6 +509,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 userPhone: effectiveUserPhone,
                 onNavigate: (m) => setState(() => _selectedMenu = m),
               );
+      case NavMenu.storeInventory:
+        return (!isDigitalStudioEmployee && !isDigitalStoreIncharge && (isSuperAdmin || isManager || isStoreIncharge))
+            ? StoreInventoryTabView(
+                userProfile: _userProfile,
+                isSuperAdmin: isSuperAdmin,
+              )
+            : DashboardTabView(
+                isSuperAdmin: isSuperAdmin,
+                isDesigner: isDesigner,
+                userProfile: _userProfile,
+                userPhone: effectiveUserPhone,
+                onNavigate: (m) => setState(() => _selectedMenu = m),
+              );
+      case NavMenu.subStoreInventory:
+        return SubStoreInventoryTabView(
+          userProfile: _userProfile,
+        );
       case NavMenu.payments:
         return (!isDigitalStudioEmployee && !isDigitalStoreIncharge && (isSuperAdmin || isManager))
             ? PaymentsTabView(

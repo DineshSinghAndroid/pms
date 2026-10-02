@@ -14,6 +14,9 @@ import '../../bloc/print_order/print_order_state.dart';
 import '../../bloc/purchase_request/purchase_request_bloc.dart';
 import '../../bloc/purchase_request/purchase_request_event.dart';
 import '../../bloc/purchase_request/purchase_request_state.dart';
+import '../../bloc/sub_store/sub_store_bloc.dart';
+import '../../bloc/sub_store/sub_store_event.dart';
+import '../../bloc/sub_store/sub_store_state.dart';
 import '../../models/digital_studio_crew_request_model.dart';
 import '../../models/user_model.dart';
 import '../layout/side_menu_drawer.dart';
@@ -63,10 +66,17 @@ class DashboardTabView extends StatelessWidget {
       userProfile?.role.toLowerCase() == 'store incharge' ||
       userProfile?.role.toLowerCase() == 'store_incharge';
   bool get _isWingIncharge => userProfile?.isWingIncharge ?? false;
+  bool get _isSubStoreIncharge => userProfile?.isSubStoreIncharge ?? false;
   bool get _isVendor => userProfile?.role.toLowerCase() == 'vendor';
 
   String get _roleTitle {
     if (_isSuperAdmin) return 'Super Admin Portal';
+    if (_isSubStoreIncharge) {
+      if (userProfile?.subStoreName != null && userProfile!.subStoreName!.isNotEmpty) {
+        return 'Sub-Store Portal · ${userProfile!.subStoreName}';
+      }
+      return 'Sub-Store Operations Portal';
+    }
     if (_isDigitalStoreIncharge) return 'Digital Store & Duty Portal';
     if (_isDigitalStudioIncharge) return 'Digital Studio Incharge Portal';
     if (_isDigitalStudioEmployee) return 'Digital Studio Crew Portal';
@@ -90,6 +100,12 @@ class DashboardTabView extends StatelessWidget {
     final cleanPhone = (userProfile?.phone ?? userPhone)
         .replaceAll(RegExp(r'^\+?91'), '')
         .replaceAll(RegExp(r'\D'), '');
+
+    if (_isSubStoreIncharge) {
+      context.read<PurchaseRequestBloc>().add(FetchPurchaseRequestsEvent(phone: cleanPhone));
+      context.read<SubStoreBloc>().add(const RefreshSubStoreInventoryEvent());
+      return;
+    }
 
     if (_isDigitalStudioIncharge || _isDigitalStudioEmployee || _isDigitalStoreIncharge) {
       context.read<DigitalStudioBloc>().add(RefreshDigitalStudioEvent(phone: cleanPhone));
@@ -147,6 +163,8 @@ class DashboardTabView extends StatelessWidget {
             // 2. Role-Based Content Sections
             if (_isDesigner)
               _buildDesignerSection(context)
+            else if (_isSubStoreIncharge)
+              _buildSubStoreInchargeSection(context)
             else if (_isDigitalStoreIncharge)
               _buildDigitalStoreInchargeSection(context)
             else if (_isStoreIncharge)
@@ -176,6 +194,9 @@ class DashboardTabView extends StatelessWidget {
     if (_isDesigner) {
       badgeColor = const Color(0xFFD97706);
       badgeIcon = Icons.brush_rounded;
+    } else if (_isSubStoreIncharge) {
+      badgeColor = const Color(0xFF0D9488); // Teal
+      badgeIcon = Icons.warehouse_rounded;
     } else if (_isDigitalStoreIncharge) {
       badgeColor = const Color(0xFF0D9488);
       badgeIcon = Icons.inventory_rounded;
@@ -276,13 +297,140 @@ class DashboardTabView extends StatelessWidget {
     );
   }
 
+  // ================= 2.5 SUB-STORE INCHARGE SECTION =================
+  Widget _buildSubStoreInchargeSection(BuildContext context) {
+    final subStoreName = userProfile?.subStoreName;
+    final subStoreCode = userProfile?.subStoreCode;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Assigned Sub-Store Banner
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0FDFA),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF99F6E4)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0D9488).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.warehouse_rounded, color: Color(0xFF0D9488), size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      subStoreName != null && subStoreName.isNotEmpty
+                          ? subStoreName
+                          : 'Assigned Campus Sub-Store',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF134E4A),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subStoreCode != null && subStoreCode.isNotEmpty
+                          ? 'Store Code: $subStoreCode · Active Incharge'
+                          : 'Authorized Sub-Store Incharge',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF0F766E),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Sub-Store Stock Stat Card
+        BlocBuilder<SubStoreBloc, SubStoreState>(
+          builder: (context, state) {
+            int totalStock = 0;
+            int totalProducts = 0;
+            if (state is SubStoreLoaded) {
+              totalStock = state.stats.totalStock;
+              totalProducts = state.stats.totalProducts;
+            }
+            return _buildStatCard(
+              title: 'My Sub-Store Stock',
+              count: '$totalStock',
+              subtitle: '$totalProducts Master Products in Balance',
+              icon: Icons.store_rounded,
+              color: const Color(0xFF0D9488),
+              onTap: () => onNavigate?.call(NavMenu.subStoreInventory),
+            );
+          },
+        ),
+
+        const SizedBox(height: 12),
+
+        // Purchase Requests Card
+        BlocBuilder<PurchaseRequestBloc, PurchaseRequestState>(
+          builder: (context, state) {
+            final count = state is PurchaseRequestLoaded ? state.requests.length : 0;
+            return _buildStatCard(
+              title: 'Purchase Requests',
+              count: '$count',
+              subtitle: 'Requisitions, approvals & tracking',
+              icon: Icons.assignment_outlined,
+              color: PmsTheme.primary,
+              onTap: () => onNavigate?.call(NavMenu.purchaseRequests),
+            );
+          },
+        ),
+
+        const SizedBox(height: 20),
+
+        // Primary Action Button
+        ElevatedButton.icon(
+          onPressed: () => onNavigate?.call(NavMenu.subStoreInventory),
+          icon: const Icon(Icons.inventory_2_rounded),
+          label: const Text(
+            'Open Sub-Store Stock & Record Consumption',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF0D9488),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 24),
+        _buildRecentPRsList(context),
+      ],
+    );
+  }
+
   // ================= 2. ADMIN & MANAGEMENT SECTION =================
   // Shows 5 Core Cards: 1. Purchase Request, 2. Print Orders, 3. Post Orders, 4. Delivery Logs, 5. Add Payment
   Widget _buildAdminAndManagementSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Unique shortcuts — these modules are not duplicated in the cards below
+        // Unique shortcuts — Row 1
         Row(
           children: [
             Expanded(
@@ -318,6 +466,49 @@ class DashboardTabView extends StatelessWidget {
                 icon: Icons.storefront_outlined,
                 color: const Color(0xFF059669),
                 onTap: () => onNavigate?.call(NavMenu.vendors),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+
+        // Unique shortcuts — Row 2 (Stores & Inventory)
+        Row(
+          children: [
+            Expanded(
+              child: _buildQuickActionButton(
+                label: 'Main Store',
+                icon: Icons.warehouse_rounded,
+                color: const Color(0xFF0D9488),
+                onTap: () => onNavigate?.call(NavMenu.storeInventory),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildQuickActionButton(
+                label: 'Sub-Stores',
+                icon: Icons.store_rounded,
+                color: const Color(0xFF2563EB),
+                onTap: () => onNavigate?.call(NavMenu.subStoreInventory),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildQuickActionButton(
+                label: 'Wings',
+                icon: Icons.apartment_rounded,
+                color: const Color(0xFFD97706),
+                onTap: () => onNavigate?.call(NavMenu.wings),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildQuickActionButton(
+                label: 'News',
+                icon: Icons.newspaper_rounded,
+                color: const Color(0xFF7C3AED),
+                onTap: () => onNavigate?.call(NavMenu.newsTracking),
               ),
             ),
           ],

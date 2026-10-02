@@ -35,6 +35,8 @@ enum NavMenu {
   purchaseRequests,
   printOrders,
   deliveryLogs,
+  storeInventory,
+  subStoreInventory,
   payments,
   postOrders,
   digitalStudio,
@@ -74,6 +76,9 @@ class SideMenuDrawer extends StatefulWidget {
 class _SideMenuDrawerState extends State<SideMenuDrawer> {
   bool _isPrintManagementExpanded = true;
   bool _isUserManagementExpanded = true;
+
+  bool get isSubStoreIncharge =>
+      widget.userProfile?.isSubStoreIncharge ?? false;
 
   bool get isDigitalStudioIncharge =>
       widget.userProfile?.role == 'Digital Studio Incharge' ||
@@ -163,6 +168,31 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   vertical: 16,
                 ),
                 children: [
+                  // --- SECTION: SUB-STORE INCHARGE DEDICATED MENU ---
+                  if (isSubStoreIncharge) ...[
+                    _buildSectionHeader('SUB-STORE OPERATIONS'),
+                    const SizedBox(height: 4),
+                    _buildMenuItem(
+                      menu: NavMenu.subStoreInventory,
+                      icon: Icons.warehouse_rounded,
+                      label: 'My Sub-Store Stock',
+                    ),
+                    BlocBuilder<PurchaseRequestBloc, PurchaseRequestState>(
+                      builder: (context, state) {
+                        final count = state is PurchaseRequestLoaded
+                            ? state.requests.length
+                            : 0;
+                        return _buildMenuItem(
+                          menu: NavMenu.purchaseRequests,
+                          icon: Icons.assignment_outlined,
+                          label: 'Purchase Requests',
+                          badgeCount: count > 0 ? count : null,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+
                   // --- SECTION 1: GENERAL (Hidden for Digital Studio Employee and Hoarding Vendor) ---
                   if (!isDigitalStudioEmployee && !isHoardingVendor) ...[
                     _buildSectionHeader('GENERAL'),
@@ -179,6 +209,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   if (!isDigitalStudioEmployee &&
                       !isDigitalStoreIncharge &&
                       !isHoardingVendor &&
+                      !isSubStoreIncharge &&
                       (widget.isSuperAdmin ||
                           widget.isDesigner ||
                           isDigitalStudioIncharge ||
@@ -264,6 +295,20 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                               badgeCount: count > 0 ? count : null,
                             );
                           },
+                        ),
+                      // 2.65 Store Inventory - AVAILABLE TO ADMIN, MANAGER & STORE INCHARGE
+                      if (widget.isSuperAdmin || isManager || isStoreIncharge)
+                        _buildMenuItem(
+                          menu: NavMenu.storeInventory,
+                          icon: Icons.warehouse_rounded,
+                          label: 'Store Inventory',
+                        ),
+                      // 2.66 Sub-Store Inventory - AVAILABLE TO ADMIN, MANAGER & STORE INCHARGE
+                      if (widget.isSuperAdmin || isManager || isStoreIncharge)
+                        _buildMenuItem(
+                          menu: NavMenu.subStoreInventory,
+                          icon: Icons.store_rounded,
+                          label: 'Sub-Store Inventory',
                         ),
                       // 2.7 Add Payment - AVAILABLE TO ADMIN & MANAGER ONLY
                       if (widget.isSuperAdmin || isManager)
@@ -354,7 +399,8 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   ],
 
                   // --- SECTION 3: DIGITAL STUDIO ---
-                  if (!isHoardingVendor &&
+                  if (!isSubStoreIncharge &&
+                      !isHoardingVendor &&
                       (widget.userProfile?.canViewStudioModule ??
                           (!widget.isDesigner &&
                               (widget.isSuperAdmin ||
@@ -384,7 +430,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   ],
 
                   // --- SECTION 3.5: NEWS TRACKING (Superadmin & Manager only) ---
-                  if (!isDigitalStudioEmployee && !isDigitalStoreIncharge && !isHoardingVendor && (widget.isSuperAdmin || isManager)) ...[
+                  if (!isSubStoreIncharge && !isDigitalStudioEmployee && !isDigitalStoreIncharge && !isHoardingVendor && (widget.isSuperAdmin || isManager)) ...[
                     _buildSectionHeader('NEWS TRACKING'),
                     const SizedBox(height: 4),
                     BlocBuilder<NewsTrackingBloc, NewsTrackingState>(
@@ -404,7 +450,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   ],
 
                   // --- SECTION 3.6: HOARDING & FLEX MANAGEMENT ---
-                  if (!isDigitalStudioEmployee && !isDigitalStoreIncharge && canAccessHoarding) ...[
+                  if (!isSubStoreIncharge && !isDigitalStudioEmployee && !isDigitalStoreIncharge && canAccessHoarding) ...[
                     _buildSectionHeader('HOARDING & FLEX'),
                     const SizedBox(height: 4),
                     BlocBuilder<HoardingBloc, HoardingState>(
@@ -422,7 +468,7 @@ class _SideMenuDrawerState extends State<SideMenuDrawer> {
                   ],
 
                   // --- SECTION 4: USER MANAGEMENT (Admin only) ---
-                  if (!isDigitalStudioEmployee && !isDigitalStoreIncharge && !isHoardingVendor && widget.isSuperAdmin) ...[
+                  if (!isSubStoreIncharge && !isDigitalStudioEmployee && !isDigitalStoreIncharge && !isHoardingVendor && widget.isSuperAdmin) ...[
                     _buildExpandableHeading(
                       title: 'USER MANAGEMENT',
                       color: PmsTheme.primary,

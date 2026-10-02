@@ -24,8 +24,12 @@ import 'repositories/wing_repository.dart';
 import 'repositories/news_tracking_repository.dart';
 import 'bloc/news_tracking/news_tracking_bloc.dart';
 import 'repositories/hoarding_repository.dart';
+import 'repositories/store_repository.dart';
+import 'repositories/sub_store_repository.dart';
 import 'bloc/hoarding/hoarding_bloc.dart';
 import 'bloc/hoarding/hoarding_event.dart';
+import 'bloc/store/store_bloc.dart';
+import 'bloc/sub_store/sub_store_bloc.dart';
 import 'services/notification_service.dart';
 import 'services/permission_service.dart';
 import 'theme/pms_theme.dart';
@@ -90,6 +94,12 @@ class PmsApp extends StatelessWidget {
         RepositoryProvider<HoardingRepository>(
           create: (context) => HoardingRepository(),
         ),
+        RepositoryProvider<StoreRepository>(
+          create: (context) => StoreRepository(),
+        ),
+        RepositoryProvider<SubStoreRepository>(
+          create: (context) => SubStoreRepository(),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -144,6 +154,16 @@ class PmsApp extends StatelessWidget {
               repository: context.read<HoardingRepository>(),
             )..add(const FetchHoardingDataEvent()),
           ),
+          BlocProvider<StoreBloc>(
+            create: (context) => StoreBloc(
+              repository: context.read<StoreRepository>(),
+            ),
+          ),
+          BlocProvider<SubStoreBloc>(
+            create: (context) => SubStoreBloc(
+              repository: context.read<SubStoreRepository>(),
+            ),
+          ),
         ],
         child: MaterialApp(
           navigatorKey: rootNavigatorKey,
@@ -164,11 +184,53 @@ class PmsApp extends StatelessWidget {
 }
 
 /// Authentication State Listener Gate
-class AuthGate extends StatelessWidget {
+///
+/// SECURITY: On every cold start we forcibly sign out any persisted Firebase
+/// session BEFORE listening to authStateChanges.  This prevents the bug where
+/// Firebase restores the last user's session and auto-logs in a random person
+/// without them entering their phone number or OTP.
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
   @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  bool _cleared = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _clearPersistedSession();
+  }
+
+  /// Sign out any Firebase session left over from a previous app run so that
+  /// every cold start always begins at the LoginScreen.
+  Future<void> _clearPersistedSession() async {
+    try {
+      if (FirebaseAuth.instance.currentUser != null) {
+        debugPrint('🔒 [AuthGate] Stale Firebase session detected — signing out to enforce fresh login.');
+        await FirebaseAuth.instance.signOut();
+      }
+    } catch (e) {
+      debugPrint('⚠️ [AuthGate] Error clearing Firebase session: $e');
+    } finally {
+      if (mounted) setState(() => _cleared = true);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Show spinner until we have cleared the stale session
+    if (!_cleared) {
+      return const Scaffold(
+        body: AppGradientBackground(
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {

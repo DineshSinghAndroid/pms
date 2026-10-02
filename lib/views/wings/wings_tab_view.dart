@@ -9,6 +9,7 @@ import '../../theme/pms_theme.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/pms_status_chip.dart';
 import '../../widgets/pms_ui.dart';
+import 'wing_form_sheet.dart';
 
 class WingsTabView extends StatefulWidget {
   final bool isSuperAdmin;
@@ -30,127 +31,7 @@ class _WingsTabViewState extends State<WingsTabView> {
   }
 
   void _showWingForm(BuildContext context, {WingModel? wing}) {
-    final nameCtrl = TextEditingController(text: wing?.name ?? '');
-    final codeCtrl = TextEditingController(text: wing?.code ?? '');
-    final locCtrl = TextEditingController(text: wing?.location ?? '');
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: PmsTheme.glassSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (modalCtx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 24,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                PmsSheetHeader(
-                  title: wing != null
-                      ? 'Edit Institute Wing'
-                      : 'Add Institute Wing',
-                  subtitle: wing != null
-                      ? 'Update wing name, code and location'
-                      : 'Register a campus or institute wing',
-                  onClose: () => Navigator.pop(modalCtx),
-                ),
-                const SizedBox(height: 8),
-
-                _buildTextField(
-                  controller: nameCtrl,
-                  label: 'Wing / Campus Name *',
-                  hint: 'e.g. Prince Academy (CBSE), PCP Sikar',
-                ),
-                const SizedBox(height: 12),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        controller: codeCtrl,
-                        label: 'Wing Code',
-                        hint: 'PA-01, PCP-01',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildTextField(
-                        controller: locCtrl,
-                        label: 'Campus Location',
-                        hint: 'Palwas Road, Sikar',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                ElevatedButton(
-                  onPressed: () {
-                    final name = nameCtrl.text.trim();
-                    final code = codeCtrl.text.trim();
-                    final loc = locCtrl.text.trim();
-
-                    if (name.isEmpty) {
-                      showPmsSnackBar(
-                        context,
-                        'Please enter Wing Name',
-                        kind: PmsSnackKind.error,
-                      );
-                      return;
-                    }
-
-                    final payload = {
-                      'name': name,
-                      'code': code.isNotEmpty ? code : null,
-                      'location': loc.isNotEmpty ? loc : null,
-                    };
-
-                    if (wing != null) {
-                      context.read<WingBloc>().add(
-                        UpdateWingEvent(wingId: wing.id, payload: payload),
-                      );
-                    } else {
-                      context.read<WingBloc>().add(CreateWingEvent(payload));
-                    }
-
-                    Navigator.pop(modalCtx);
-                    showPmsSnackBar(
-                      context,
-                      wing != null ? '✓ Wing updated!' : '✓ Wing created!',
-                      kind: PmsSnackKind.success,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: PmsTheme.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    wing != null ? 'Save Changes' : 'Create Wing',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    WingFormSheet.show(context, wing: wing);
   }
 
   void _confirmDelete(BuildContext context, WingModel wing) {
@@ -200,54 +81,6 @@ class _WingsTabViewState extends State<WingsTabView> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            color: PmsTheme.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(
-              color: PmsTheme.textSecondary,
-              fontSize: 12,
-            ),
-            filled: true,
-            fillColor: PmsTheme.background,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: PmsTheme.glassBorder),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: PmsTheme.primary,
-                width: 1.5,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -490,14 +323,97 @@ class _WingsTabViewState extends State<WingsTabView> {
             ],
           ),
 
+          // Geofence & Coordinates details
+          if (wing.latitude != null && wing.longitude != null) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.pin_drop_rounded, size: 12, color: PmsTheme.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${wing.latitude!.toStringAsFixed(4)}, ${wing.longitude!.toStringAsFixed(4)}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF334155),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF2FF),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFC7D2FE)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.radar_rounded, size: 12, color: PmsTheme.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${wing.geofenceRadiusMeters}m Geofence',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: PmsTheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.warning_amber_rounded, size: 12, color: Color(0xFFD97706)),
+                  SizedBox(width: 4),
+                  Text(
+                    'Geofence not configured',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF92400E),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           if (widget.isSuperAdmin) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 PmsIconAction(
-                  icon: Icons.edit_rounded,
-                  tooltip: 'Edit wing',
+                  icon: Icons.edit_location_alt_rounded,
+                  tooltip: 'Edit wing & geofence',
                   onPressed: () => _showWingForm(context, wing: wing),
                 ),
                 const SizedBox(width: 8),

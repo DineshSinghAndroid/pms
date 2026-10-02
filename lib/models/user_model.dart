@@ -12,6 +12,9 @@ class UserModel extends Equatable {
   final List<WingModel> assignedWings;
   final List<CategoryModel> assignedCategories;
   final int? hoardingVendorId;
+  final int? subStoreId;
+  final String? subStoreName;
+  final String? subStoreCode;
   final DateTime? createdAt;
 
   const UserModel({
@@ -24,6 +27,9 @@ class UserModel extends Equatable {
     this.assignedWings = const [],
     this.assignedCategories = const [],
     this.hoardingVendorId,
+    this.subStoreId,
+    this.subStoreName,
+    this.subStoreCode,
     this.createdAt,
   });
 
@@ -53,6 +59,11 @@ class UserModel extends Equatable {
       hoardingVendorId: json['hoarding_vendor_id'] != null
           ? int.tryParse(json['hoarding_vendor_id'].toString())
           : null,
+      subStoreId: json['sub_store_id'] != null
+          ? int.tryParse(json['sub_store_id'].toString())
+          : (json['sub_store'] is Map ? (json['sub_store']['id'] as num?)?.toInt() : null),
+      subStoreName: json['sub_store'] is Map ? json['sub_store']['name'] as String? : null,
+      subStoreCode: json['sub_store'] is Map ? json['sub_store']['code'] as String? : null,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
@@ -70,6 +81,7 @@ class UserModel extends Equatable {
       'assigned_wings': assignedWings.map((w) => w.toJson()).toList(),
       'assigned_categories': assignedCategories.map((c) => c.toJson()).toList(),
       'hoarding_vendor_id': hoardingVendorId,
+      'sub_store_id': subStoreId,
       'created_at': createdAt?.toIso8601String(),
     };
   }
@@ -101,8 +113,12 @@ class UserModel extends Equatable {
       role == 'Store Incharge' ||
       role.toLowerCase() == 'store incharge' ||
       role.toLowerCase() == 'store_incharge';
+  bool get isSubStoreIncharge {
+    final r = role.toLowerCase().replaceAll(RegExp(r'[\s\-_]'), '');
+    return r == 'substoreincharge';
+  }
   bool get canCreatePurchaseRequest =>
-      isSuperAdmin || isManager || isWingIncharge || isStoreIncharge;
+      isSuperAdmin || isManager || isWingIncharge || isStoreIncharge || isSubStoreIncharge;
   bool get isDigitalStoreIncharge {
     final r = role.toLowerCase().trim();
     return r == 'digital store incharge' ||
@@ -148,6 +164,9 @@ class UserModel extends Equatable {
     assignedWings,
     assignedCategories,
     hoardingVendorId,
+    subStoreId,
+    subStoreName,
+    subStoreCode,
     createdAt,
   ];
 }

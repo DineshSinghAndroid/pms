@@ -13,6 +13,8 @@ import '../../bloc/category/category_state.dart';
 import '../../models/user_model.dart';
 import '../../models/wing_model.dart';
 import '../../models/category_model.dart';
+import '../../models/sub_store_model.dart';
+import '../../repositories/sub_store_repository.dart';
 import '../../theme/pms_theme.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/pms_status_chip.dart';
@@ -63,7 +65,9 @@ class _UsersTabViewState extends State<UsersTabView> {
     'Digital Studio Employee',
     'Designer',
     'Store Incharge',
+    'Sub Store Incharge',
     'Wing Incharge',
+    'Hoarding Vendor',
   ];
 
   final List<String> _assignableRoles = [
@@ -75,7 +79,9 @@ class _UsersTabViewState extends State<UsersTabView> {
     'Digital Studio Employee',
     'Designer',
     'Store Incharge',
+    'Sub Store Incharge',
     'Wing Incharge',
+    'Hoarding Vendor',
   ];
 
   @override
@@ -101,6 +107,23 @@ class _UsersTabViewState extends State<UsersTabView> {
     final phoneCtrl = TextEditingController(text: user?.phone ?? '');
     final emailCtrl = TextEditingController(text: user?.email ?? '');
     final initialRole = user?.role ?? 'manager';
+    int? selectedSubStoreId = user?.subStoreId;
+    List<SubStoreEntityModel> subStoresList = [];
+    bool isLoadingSubStores = false;
+    bool hasFetchedSubStores = false;
+
+    // Pre-fetch sub-stores when editing an existing Sub Store Incharge user
+    if (user?.role.toLowerCase().replaceAll(' ', '_') == 'sub_store_incharge') {
+      hasFetchedSubStores = true;
+      isLoadingSubStores = true;
+      SubStoreRepository().fetchSubStores().then((stores) {
+        subStoresList = stores;
+        isLoadingSubStores = false;
+      }).catchError((_) {
+        isLoadingSubStores = false;
+      });
+    }
+
     String selectedRole = _assignableRoles.firstWhere(
       (r) => r.toLowerCase() == initialRole.toLowerCase(),
       orElse: () => _assignableRoles.firstWhere(
@@ -220,6 +243,19 @@ class _UsersTabViewState extends State<UsersTabView> {
                                   setModalState(() {
                                     selectedRole = val;
                                   });
+                                  // Lazy-load sub-stores when Sub Store Incharge is selected
+                                  if (val == 'Sub Store Incharge' && !hasFetchedSubStores) {
+                                    hasFetchedSubStores = true;
+                                    setModalState(() { isLoadingSubStores = true; });
+                                    SubStoreRepository().fetchSubStores().then((stores) {
+                                      setModalState(() {
+                                        subStoresList = stores;
+                                        isLoadingSubStores = false;
+                                      });
+                                    }).catchError((_) {
+                                      setModalState(() { isLoadingSubStores = false; });
+                                    });
+                                  }
                                 }
                               },
                             ),
@@ -341,6 +377,9 @@ class _UsersTabViewState extends State<UsersTabView> {
                           ],
                         ),
                       ),
+                    ],
+
+                    if (selectedRole == 'Wing Incharge' || selectedRole == 'Store Incharge') ...[
                       const SizedBox(height: 12),
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -352,18 +391,20 @@ class _UsersTabViewState extends State<UsersTabView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Row(
+                            Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Assigned Category(ies) *',
-                                  style: TextStyle(
+                                  selectedRole == 'Store Incharge'
+                                      ? 'Assigned Store Category(ies) *'
+                                      : 'Assigned Product Category(ies) *',
+                                  style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF166534),
                                   ),
                                 ),
-                                Text(
+                                const Text(
                                   'Multi-select allowed',
                                   style: TextStyle(
                                     fontSize: 10,
@@ -374,9 +415,11 @@ class _UsersTabViewState extends State<UsersTabView> {
                               ],
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              'Select categories this Wing Incharge can view and choose products from during PR creation.',
-                              style: TextStyle(
+                            Text(
+                              selectedRole == 'Store Incharge'
+                                  ? 'Store Incharge can only view and manage stock and inventory for products belonging to their assigned categories.'
+                                  : 'Select categories this Wing Incharge can view and choose products from during PR creation.',
+                              style: const TextStyle(
                                 fontSize: 10,
                                 color: PmsTheme.textSecondary,
                               ),
@@ -464,6 +507,95 @@ class _UsersTabViewState extends State<UsersTabView> {
                       ),
                     ],
 
+                    // Sub Store Incharge picker
+                    if (selectedRole == 'Sub Store Incharge') ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF93C5FD)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Assigned Sub-Store *',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E3A5F),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Sub Store Incharge manages inventory for this sub-store.',
+                              style: TextStyle(fontSize: 10, color: PmsTheme.textSecondary),
+                            ),
+                            const SizedBox(height: 10),
+                            if (isLoadingSubStores)
+                              const Row(
+                                children: [
+                                  SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF2563EB)),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text('Loading sub-stores...', style: TextStyle(fontSize: 11, color: PmsTheme.textSecondary)),
+                                ],
+                              )
+                            else if (subStoresList.isEmpty)
+                              Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'No sub-stores available. Create one from the Sub-Store panel.',
+                                      style: TextStyle(fontSize: 11, color: PmsTheme.textSecondary, fontStyle: FontStyle.italic),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      setModalState(() { isLoadingSubStores = true; hasFetchedSubStores = true; });
+                                      SubStoreRepository().fetchSubStores().then((stores) {
+                                        setModalState(() { subStoresList = stores; isLoadingSubStores = false; });
+                                      }).catchError((_) { setModalState(() { isLoadingSubStores = false; }); });
+                                    },
+                                    child: const Text('Retry', style: TextStyle(fontSize: 11, color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
+                                  ),
+                                ],
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFF93C5FD)),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<int>(
+                                    value: selectedSubStoreId,
+                                    isExpanded: true,
+                                    hint: const Text('Select sub-store', style: TextStyle(fontSize: 13, color: PmsTheme.textSecondary)),
+                                    dropdownColor: Colors.white,
+                                    style: const TextStyle(fontSize: 13, color: PmsTheme.textPrimary, fontWeight: FontWeight.w600),
+                                    items: subStoresList.map((s) {
+                                      return DropdownMenuItem<int>(
+                                        value: s.id,
+                                        child: Text('${s.name}${(s.code?.isNotEmpty ?? false) ? " (${s.code})" : ""}'),
+                                      );
+                                    }).toList(),
+                                    onChanged: (val) => setModalState(() => selectedSubStoreId = val),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     const SizedBox(height: 14),
 
                     // Account Active Checkbox
@@ -546,6 +678,30 @@ class _UsersTabViewState extends State<UsersTabView> {
                           return;
                         }
 
+                        if (selectedRole == 'Store Incharge' && selectedCategoryIds.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please select at least one assigned category for the Store Incharge.',
+                              ),
+                              backgroundColor: Color(0xFFDC2626),
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (selectedRole == 'Sub Store Incharge' && selectedSubStoreId == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please select a sub-store for the Sub Store Incharge.',
+                              ),
+                              backgroundColor: Color(0xFFDC2626),
+                            ),
+                          );
+                          return;
+                        }
+
                         final payload = <String, dynamic>{
                           'name': name,
                           'phone': phone,
@@ -557,6 +713,10 @@ class _UsersTabViewState extends State<UsersTabView> {
                         if (selectedRole == 'Wing Incharge') {
                           payload['wing_ids'] = selectedWingIds;
                           payload['category_ids'] = selectedCategoryIds;
+                        } else if (selectedRole == 'Store Incharge') {
+                          payload['category_ids'] = selectedCategoryIds;
+                        } else if (selectedRole == 'Sub Store Incharge') {
+                          payload['sub_store_id'] = selectedSubStoreId;
                         }
 
                         if (user != null) {
@@ -754,11 +914,17 @@ class _UsersTabViewState extends State<UsersTabView> {
       case 'store incharge':
       case 'store_incharge':
         return const Color(0xFF6366F1); // Indigo
+      case 'sub store incharge':
+      case 'sub_store_incharge':
+        return const Color(0xFF0284C7); // Cyan / Sky Blue
       case 'wing incharge':
       case 'wing_incharge':
       case 'counsellor':
       case 'counselor':
         return const Color(0xFFEA580C); // Orange
+      case 'hoarding vendor':
+      case 'hoarding_vendor':
+        return const Color(0xFF9333EA); // Purple
       default:
         return PmsTheme.textSecondary;
     }
@@ -934,6 +1100,12 @@ class _UsersTabViewState extends State<UsersTabView> {
                     } else if (filterRole == 'store incharge') {
                       matchesRole = uRole == 'store incharge' ||
                           uRole == 'store_incharge';
+                    } else if (filterRole == 'sub store incharge') {
+                      matchesRole = uRole == 'sub store incharge' ||
+                          uRole == 'sub_store_incharge';
+                    } else if (filterRole == 'hoarding vendor') {
+                      matchesRole = uRole == 'hoarding vendor' ||
+                          uRole == 'hoarding_vendor';
                     } else if (filterRole == 'superadmin') {
                       matchesRole = uRole == 'superadmin' ||
                           uRole == 'super admin' ||
@@ -1147,6 +1319,15 @@ class _UsersTabViewState extends State<UsersTabView> {
                   icon: Icons.category_rounded,
                 );
               }).toList(),
+            ),
+          ],
+
+          if (user.subStoreName != null && user.subStoreName!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            PmsStatusChip(
+              label: user.subStoreName!,
+              color: const Color(0xFF2563EB),
+              icon: Icons.store_mall_directory_rounded,
             ),
           ],
 

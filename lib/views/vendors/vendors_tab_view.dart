@@ -7,8 +7,26 @@ import '../../bloc/vendor/vendor_state.dart';
 import 'vendor_list_section.dart';
 import '../../theme/pms_theme.dart';
 
-class VendorsTabView extends StatelessWidget {
+class VendorsTabView extends StatefulWidget {
   const VendorsTabView({super.key});
+
+  @override
+  State<VendorsTabView> createState() => _VendorsTabViewState();
+}
+
+class _VendorsTabViewState extends State<VendorsTabView> {
+  @override
+  void initState() {
+    super.initState();
+    // Load vendors when this tab opens (home prefetch was previously missing)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final state = context.read<VendorBloc>().state;
+      if (state is! VendorLoaded && state is! VendorLoading) {
+        context.read<VendorBloc>().add(const FetchVendorsEvent());
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,4 +46,3 @@ class VendorsTabView extends StatelessWidget {
     );
   }
 }
-

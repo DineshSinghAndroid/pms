@@ -33,7 +33,7 @@ class WingBloc extends Bloc<WingEvent, WingState> {
     Emitter<WingState> emit,
   ) async {
     try {
-      final wings = await repository.getWings();
+      final wings = await repository.getWings(forceRefresh: true);
       emit(WingLoaded(wings: wings));
     } catch (e) {
       emit(WingError(errorMessage: e.toString().replaceAll('Exception: ', '')));
@@ -46,7 +46,7 @@ class WingBloc extends Bloc<WingEvent, WingState> {
   ) async {
     try {
       await repository.createWing(event.payload);
-      final wings = await repository.getWings();
+      final wings = await repository.getWings(forceRefresh: true);
       emit(WingLoaded(wings: wings));
     } catch (e) {
       emit(WingError(errorMessage: e.toString().replaceAll('Exception: ', '')));
@@ -59,7 +59,7 @@ class WingBloc extends Bloc<WingEvent, WingState> {
   ) async {
     try {
       await repository.updateWing(event.wingId, event.payload);
-      final wings = await repository.getWings();
+      final wings = await repository.getWings(forceRefresh: true);
       emit(WingLoaded(wings: wings));
     } catch (e) {
       emit(WingError(errorMessage: e.toString().replaceAll('Exception: ', '')));
@@ -72,7 +72,7 @@ class WingBloc extends Bloc<WingEvent, WingState> {
   ) async {
     try {
       await repository.deleteWing(event.wingId);
-      final wings = await repository.getWings();
+      final wings = await repository.getWings(forceRefresh: true);
       emit(WingLoaded(wings: wings));
     } catch (e) {
       emit(WingError(errorMessage: e.toString().replaceAll('Exception: ', '')));
